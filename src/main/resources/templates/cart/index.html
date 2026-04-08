@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carrito — BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+
+  <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+  <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
+
+    <!-- Alerts -->
+    <div th:if="${cartSuccess}" class="alert d-flex align-items-center gap-2 mb-4"
+         style="background:rgba(45,76,62,0.08); border:1px solid rgba(45,76,62,0.2); border-radius:0.75rem; color:var(--bs-primary);">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span th:text="${cartSuccess}"></span>
+    </div>
+    <div th:if="${cartError}" class="alert d-flex align-items-center gap-2 mb-4"
+         style="background:rgba(186,26,26,0.08); border:1px solid rgba(186,26,26,0.2); border-radius:0.75rem; color:#ba1a1a;">
+      <span class="material-symbols-outlined">error</span>
+      <span th:text="${cartError}"></span>
+    </div>
+
+    <!-- Header -->
+    <header class="mb-5">
+      <p class="filter-section-title mb-1">BookSocial</p>
+      <h1 class="font-serif" style="font-size:clamp(2rem,4vw,3rem); font-weight:700; color:var(--bs-primary);">
+        Tu Colección Curada
+      </h1>
+      <p style="color:var(--color-muted); max-width:36rem;">
+        Revisa tus selecciones antes de confirmar la compra.
+      </p>
+    </header>
+
+    <div class="row g-5 align-items-start">
+
+      <!-- ================================================
+           COLUMNA IZQUIERDA — Items del carrito
+           ================================================ -->
+      <div class="col-lg-7">
+
+        <!-- Carrito vacío -->
+        <div th:if="${cartItems == null or cartItems.isEmpty()}"
+             class="text-center py-5" style="background:var(--color-surface-l); border-radius:1.25rem;">
+          <span class="material-symbols-outlined d-block mb-3"
+                style="font-size:4rem; color:var(--color-outline-l);">shopping_cart</span>
+          <p class="font-serif mb-2" style="font-size:1.2rem; color:var(--bs-primary);">Tu carrito está vacío</p>
+          <p style="color:var(--color-muted); font-size:0.875rem; margin-bottom:1.5rem;">
+            Explora el catálogo y añade obras a tu colección.
+          </p>
+          <a href="/catalog" class="btn-primary-pill" style="text-decoration:none; padding:0.7rem 1.75rem; font-size:0.875rem;">
+            Explorar catálogo
+          </a>
+        </div>
+
+        <!-- Lista de ítems -->
+        <div th:if="${cartItems != null and !cartItems.isEmpty()}"
+             class="d-flex flex-column gap-4">
+
+          <div th:each="item : ${cartItems}" class="cart-item">
+
+            <!-- Portada -->
+            <div class="cart-item-cover">
+              <img th:if="${item.workImg != null and !item.workImg.isEmpty()}"
+                   th:src="${item.workImg}"
+                   th:alt="${item.workTitle}"
+                   class="cart-item-img">
+              <div th:unless="${item.workImg != null and !item.workImg.isEmpty()}"
+                   class="cart-item-img-placeholder">
+                <span class="material-symbols-outlined" style="font-size:2rem; color:var(--color-outline-l);">menu_book</span>
+              </div>
+            </div>
+
+            <!-- Info -->
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-start mb-1">
+                <div>
+                  <h3 class="font-serif cart-item-title" th:text="${item.workTitle}">Título</h3>
+                  <p class="cart-item-sub" th:text="${item.editionTitle + (item.editorialName != null ? ' • ' + item.editorialName : '')}">Edición</p>
+                </div>
+                <span class="cart-item-price" th:text="'€' + ${#numbers.formatDecimal(item.price, 1, 2)}">€0.00</span>
+              </div>
+
+              <!-- Cantidad + eliminar -->
+              <div class="d-flex align-items-center justify-content-between mt-3">
+                <form th:action="@{/cart/update}" method="post" class="d-flex align-items-center gap-0">
+                  <input type="hidden" name="productId" th:value="${item.productId}">
+                  <div class="cart-qty-control">
+                    <button type="submit" name="quantity" th:value="${item.quantity - 1}"
+                            class="cart-qty-btn">
+                      <span class="material-symbols-outlined" style="font-size:1rem;">remove</span>
+                    </button>
+                    <span class="cart-qty-num" th:text="${item.quantity}">1</span>
+                    <button type="submit" name="quantity" th:value="${item.quantity + 1}"
+                            class="cart-qty-btn">
+                      <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+                    </button>
+                  </div>
+                </form>
+
+                <form th:action="@{'/cart/remove/' + ${item.productId}}" method="post">
+                  <button type="submit" class="cart-remove-btn">
+                    <span class="material-symbols-outlined" style="font-size:1.1rem;">delete</span>
+                    Eliminar
+                  </button>
+                </form>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Volver al catálogo -->
+          <div class="pt-2">
+            <a href="/catalog" class="btn-ghost-pill text-decoration-none">
+              <span class="material-symbols-outlined" style="font-size:1.1rem;">arrow_back</span>
+              Seguir explorando
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ================================================
+           COLUMNA DERECHA — Resumen y checkout
+           ================================================ -->
+      <div class="col-lg-5" th:if="${cartItems != null and !cartItems.isEmpty()}">
+        <div class="cart-summary">
+
+          <h2 class="font-serif mb-4" style="font-size:1.4rem; color:var(--bs-primary);">Resumen de Compra</h2>
+
+          <!-- Envío info -->
+          <div class="cart-summary-row mb-4 pb-3" style="border-bottom:1px solid var(--color-outline-l);">
+            <div class="d-flex align-items-center gap-3">
+              <div class="cart-summary-icon">
+                <span class="material-symbols-outlined" style="color:var(--bs-primary);">local_shipping</span>
+              </div>
+              <div>
+                <p class="fw-bold mb-0" style="font-size:0.875rem; color:var(--bs-primary);">Envío estándar</p>
+                <p class="mb-0" style="font-size:0.75rem; color:var(--color-muted);">3-5 días hábiles</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Totales -->
+          <div class="d-flex flex-column gap-3 mb-4">
+            <div class="d-flex justify-content-between" style="font-size:0.9rem;">
+              <span style="color:var(--color-muted);">Subtotal</span>
+              <span class="fw-bold" style="color:var(--bs-primary);"
+                    th:text="'€' + ${#numbers.formatDecimal(subtotal, 1, 2)}">€0.00</span>
+            </div>
+            <div class="d-flex justify-content-between" style="font-size:0.9rem;">
+              <span style="color:var(--color-muted);">Envío editorial</span>
+              <span class="fw-bold" style="color:var(--bs-primary);"
+                    th:text="'€' + ${#numbers.formatDecimal(shipping, 1, 2)}">€5.50</span>
+            </div>
+            <div class="d-flex justify-content-between pt-3"
+                 style="border-top:1.5px dashed var(--color-outline-l); font-size:1.1rem;">
+              <span class="font-serif fw-bold" style="color:var(--bs-primary);">Total</span>
+              <span class="font-serif fw-bold" style="color:var(--bs-primary);"
+                    th:text="'€' + ${#numbers.formatDecimal(total, 1, 2)}">€0.00</span>
+            </div>
+          </div>
+
+          <!-- Botón confirmar -->
+          <form th:action="@{/cart/checkout}" method="post">
+            <button type="submit" class="btn-primary-pill w-100" style="padding:1rem; font-size:1rem;">
+              Confirmar Compra
+            </button>
+          </form>
+
+          <p class="text-center mt-3 d-flex align-items-center justify-content-center gap-1"
+             style="font-size:0.75rem; color:var(--color-outline);">
+            <span class="material-symbols-outlined" style="font-size:0.9rem;">verified_user</span>
+            Transacción encriptada y segura
+          </p>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================
+         SUGERENCIAS
+         ================================================ -->
+    <section class="mt-5 pt-4" th:if="${suggestions != null and !suggestions.isEmpty()}">
+      <div class="mb-4">
+        <p class="filter-section-title mb-1">También te puede interesar</p>
+        <h2 class="font-serif mb-0" style="font-size:1.5rem; color:var(--bs-primary);">Más del catálogo</h2>
+      </div>
+
+      <div class="row g-4 align-items-end">
+        <div th:each="p, stat : ${suggestions}"
+             th:classappend="${stat.index == 1 or stat.index == 3} ? 'col-sm-6 col-lg-3 home-work-offset' : 'col-sm-6 col-lg-3'">
+          <div class="home-work-card">
+            <div class="home-work-cover-wrap">
+              <span class="home-work-type-badge" th:text="${p.editorialName}"></span>
+              <div class="home-work-cover-placeholder">
+                <span class="material-symbols-outlined">menu_book</span>
+              </div>
+            </div>
+            <div class="home-work-info">
+              <h3 class="home-work-title font-serif" th:text="${p.workTitle}">Título</h3>
+              <p class="home-work-authors mb-2" th:text="${p.editorialName}"></p>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-bold" style="color:var(--bs-primary); font-size:0.95rem;"
+                      th:text="'€' + ${#numbers.formatDecimal(p.price, 1, 2)}">€0.00</span>
+                <form th:action="@{/cart/add}" method="post">
+                  <input type="hidden" name="productId" th:value="${p.id}">
+                  <button type="submit" class="event-card-join-btn">Añadir</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div th:replace="~{fragments/footer :: footer}"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

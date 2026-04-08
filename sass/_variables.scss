@@ -1,0 +1,47 @@
+// ============================================================
+// BOOKSOCIAL — Variables SCSS
+// ============================================================
+
+// --- COLORES BASE ---
+$primary:          #2D4C3E;
+$secondary:        #c0ecda;
+$tertiary:         #472803;
+
+$background:       #fcf9f3;
+$surface:          #f0eee8;
+$surface-light:    #f6f3ed;
+$surface-high:     #ebe8e2;
+$surface-highest:  #e5e2dc;
+
+$text-main:        #1c1c18;
+$text-muted:       #414844;
+
+$outline:          #727974;
+$outline-light:    #c1c8c2;
+
+// --- BOOTSTRAP OVERRIDES ---
+$body-bg:                  $background;
+$body-color:               $text-main;
+$headings-color:           $primary;
+
+// Bordes
+$border-radius:       0.5rem;
+$border-radius-lg:    1rem;
+$border-radius-pill:  9999px;
+$border-color:        $outline-light;
+
+// Tipografía
+$font-family-sans-serif: 'Manrope', sans-serif;
+$headings-font-family:   'Noto Serif', serif;
+$font-size-base:         0.9375rem;
+
+// Inputs
+$input-bg:                  $surface-light;
+$input-border-color:        $outline-light;
+$input-focus-border-color:  $primary;
+$input-focus-box-shadow:    0 0 0 0.2rem rgba($primary, 0.15);
+
+// Navbar
+$navbar-light-color:        $text-muted;
+$navbar-light-active-color: $primary;
+$navbar-light-brand-color:  $primary;

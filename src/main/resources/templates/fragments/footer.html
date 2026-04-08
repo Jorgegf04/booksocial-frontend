@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<footer th:fragment="footer" class="site-footer">
+  <div class="container">
+    <div class="row g-5">
+
+      <!-- Brand -->
+      <div class="col-lg-4">
+        <p class="footer-brand fst-italic mb-3">BookSocial</p>
+        <p class="mb-4" style="font-size:0.875rem; max-width:18rem;">
+          Tu comunidad de lectores. Descubre, comenta y comparte las mejores obras de literatura, manga y cómic.
+        </p>
+        <div class="d-flex gap-2">
+          <a href="#" class="social-icon" aria-label="Twitter">
+            <span class="material-symbols-outlined" style="font-size:1.1rem;">public</span>
+          </a>
+          <a href="#" class="social-icon" aria-label="Instagram">
+            <span class="material-symbols-outlined" style="font-size:1.1rem;">photo_camera</span>
+          </a>
+          <a href="#" class="social-icon" aria-label="Discord">
+            <span class="material-symbols-outlined" style="font-size:1.1rem;">forum</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Explorar -->
+      <div class="col-6 col-lg-2">
+        <p class="footer-heading">Explorar</p>
+        <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+          <li><a href="/catalog">Catálogo</a></li>
+          <li><a href="#">Novedades</a></li>
+          <li><a href="#">Más valorados</a></li>
+          <li><a href="#">Colecciones</a></li>
+          <li><a href="#">Eventos</a></li>
+        </ul>
+      </div>
+
+      <!-- Géneros -->
+      <div class="col-6 col-lg-2">
+        <p class="footer-heading">Géneros</p>
+        <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+          <li><a href="#">Fantasía</a></li>
+          <li><a href="#">Ciencia Ficción</a></li>
+          <li><a href="#">Romance</a></li>
+          <li><a href="#">Thriller</a></li>
+          <li><a href="#">Ver todos</a></li>
+        </ul>
+      </div>
+
+      <!-- Comunidad -->
+      <div class="col-6 col-lg-2">
+        <p class="footer-heading">Comunidad</p>
+        <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+          <li><a href="#">Reseñas</a></li>
+          <li><a href="#">Listas</a></li>
+          <li><a href="#">Foros</a></li>
+          <li><a href="#">Blog</a></li>
+        </ul>
+      </div>
+
+      <!-- Soporte -->
+      <div class="col-6 col-lg-2">
+        <p class="footer-heading">Soporte</p>
+        <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
+          <li><a href="#">Ayuda</a></li>
+          <li><a href="#">Contacto</a></li>
+          <li><a href="#">Privacidad</a></li>
+          <li><a href="#">Términos</a></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <hr style="border-color: rgba(192,236,218,0.15); margin-top: 3rem; margin-bottom: 1.5rem;">
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2"
+         style="font-size:0.8rem;">
+      <span>&copy; 2026 BookSocial. Todos los derechos reservados.</span>
+      <span>Hecho con <span style="color:#c0ecda;">&#9825;</span> para los amantes de la lectura.</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

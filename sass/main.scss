@@ -1,0 +1,318 @@
+@import "variables";
+@import "bootstrap/scss/bootstrap";
+
+// ============================================================
+// BOOKSOCIAL — Estilos globales
+// ============================================================
+
+// Fuentes Google (cargadas en el fragment head)
+body {
+  background-color: $background;
+  font-family: $font-family-sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .font-serif {
+  font-family: $headings-font-family;
+}
+
+// ============================================================
+// NAVBAR
+// ============================================================
+
+.nav-glass {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background-color: rgba($background, 0.85) !important;
+  border-bottom: 1px solid rgba($outline-light, 0.4);
+}
+
+.navbar-brand {
+  font-family: $headings-font-family;
+  font-style: italic;
+  color: darken($primary, 10%) !important;
+  font-size: 1.4rem;
+}
+
+// ============================================================
+// CATÁLOGO — Sidebar de filtros
+// ============================================================
+
+.filter-sidebar {
+  .filter-section-title {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $primary;
+    margin-bottom: 0.75rem;
+  }
+
+  .genre-list {
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+
+    &::-webkit-scrollbar { width: 4px; }
+    &::-webkit-scrollbar-track { background: $surface; }
+    &::-webkit-scrollbar-thumb {
+      background: $primary;
+      border-radius: 10px;
+    }
+  }
+
+  .demographic-pill {
+    background: $surface-light;
+    border: 1px solid transparent;
+    border-radius: $border-radius;
+    padding: 0.35rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: $text-muted;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+
+    &:hover {
+      border-color: $outline-light;
+      color: $primary;
+    }
+  }
+
+  .type-btn {
+    padding: 0.35rem 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: $border-radius;
+    border: 1px solid transparent;
+    transition: all 0.2s;
+
+    &.active {
+      background-color: $primary;
+      color: #fff;
+      border-color: $primary;
+    }
+
+    &:not(.active) {
+      background-color: $surface-high;
+      color: $text-muted;
+
+      &:hover {
+        background-color: $surface-highest;
+      }
+    }
+  }
+}
+
+// ============================================================
+// CATÁLOGO — Cards de obras
+// ============================================================
+
+.book-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  .book-cover-wrapper {
+    position: relative;
+    aspect-ratio: 3 / 4;
+    overflow: hidden;
+    background-color: $surface;
+    border-radius: $border-radius-lg;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.4s;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: $border-radius;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+      transition: transform 0.4s ease;
+    }
+
+    .book-badge {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      font-size: 0.6rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.25rem 0.65rem;
+      border-radius: $border-radius-pill;
+    }
+
+    .book-badge-new    { background-color: $primary;   color: #fff; }
+    .book-badge-collector { background-color: $tertiary; color: #fff; }
+  }
+
+  .book-info {
+    padding: 0.75rem 0.5rem 0;
+  }
+
+  .book-title {
+    font-family: $headings-font-family;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $primary;
+    line-height: 1.3;
+    transition: opacity 0.2s;
+  }
+
+  .book-author {
+    font-size: 0.82rem;
+    color: $text-muted;
+    margin-bottom: 0.5rem;
+  }
+
+  .book-price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $primary;
+  }
+
+  .book-stars {
+    font-size: 0.85rem;
+    color: $primary;
+
+    .reviews-count {
+      font-size: 0.75rem;
+      color: $text-muted;
+    }
+  }
+
+  &:hover {
+    .book-cover-wrapper {
+      background-color: $surface-high;
+
+      img { transform: scale(1.05); }
+    }
+
+    .book-title { opacity: 0.75; }
+  }
+}
+
+// ============================================================
+// CATÁLOGO — Barra de ordenación
+// ============================================================
+
+.sort-bar {
+  background-color: $surface-light;
+  border: 1px solid rgba($outline-light, 0.3);
+  border-radius: $border-radius-lg;
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 2rem;
+}
+
+// ============================================================
+// PAGINACIÓN
+// ============================================================
+
+.pagination-bs {
+  .page-link {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50% !important;
+    border: 1px solid $outline-light;
+    color: $primary;
+    font-weight: 700;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: $primary;
+      color: #fff;
+      border-color: $primary;
+    }
+  }
+
+  .page-item.active .page-link {
+    background-color: $primary;
+    border-color: $primary;
+    color: #fff;
+  }
+}
+
+// ============================================================
+// FOOTER
+// ============================================================
+
+.site-footer {
+  background-color: darken($primary, 10%);
+  color: rgba(#fcf9f3, 0.75);
+
+  .footer-brand {
+    font-family: $headings-font-family;
+    font-size: 1.5rem;
+    color: $secondary;
+  }
+
+  .footer-heading {
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    margin-bottom: 1.25rem;
+  }
+
+  a {
+    color: rgba($secondary, 0.75);
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: color 0.2s;
+
+    &:hover { color: #fff; }
+  }
+
+  .social-icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 1px solid rgba($secondary, 0.25);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba($secondary, 0.75);
+    transition: all 0.2s;
+
+    &:hover {
+      background-color: $secondary;
+      color: darken($primary, 10%);
+      border-color: $secondary;
+    }
+  }
+}
+
+// ============================================================
+// BOTTOM NAV (móvil)
+// ============================================================
+
+.bottom-nav {
+  background-color: rgba($background, 0.92);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba($text-main, 0.08);
+  border-radius: 1.5rem 1.5rem 0 0;
+
+  .bottom-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: #aaa;
+    text-decoration: none;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+
+    &.active {
+      background-color: $primary;
+      color: #fff;
+      border-radius: 1rem;
+      padding: 0.35rem 1.1rem;
+    }
+  }
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<aside th:fragment="sidebar(active)" class="admin-sidebar">
+  <div class="admin-sidebar-logo">
+    <span class="material-symbols-outlined">menu_book</span>
+    <span>BookSocial</span>
+  </div>
+
+  <nav class="admin-nav">
+
+    <p class="admin-nav-section">General</p>
+    <a href="/admin/dashboard" th:classappend="${active == 'dashboard'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">grid_view</span>Dashboard
+    </a>
+
+    <p class="admin-nav-section">Catálogo</p>
+    <a href="/admin/works" th:classappend="${active == 'works'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">menu_book</span>Obras
+    </a>
+    <a href="/admin/authors" th:classappend="${active == 'authors'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">person</span>Autores
+    </a>
+    <a href="/admin/editions" th:classappend="${active == 'editions'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">collections_bookmark</span>Ediciones
+    </a>
+
+    <p class="admin-nav-section">Comercio</p>
+    <a href="/admin/inventory" th:classappend="${active == 'inventory'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">inventory_2</span>Inventario
+    </a>
+    <a href="/admin/orders" th:classappend="${active == 'orders'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">receipt_long</span>Pedidos
+    </a>
+
+    <p class="admin-nav-section">Comunidad</p>
+    <a href="/admin/users" th:classappend="${active == 'users'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">group</span>Usuarios
+    </a>
+    <a href="/admin/comments" th:classappend="${active == 'comments'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">comment</span>Comentarios
+    </a>
+    <a href="/admin/events" th:classappend="${active == 'events'} ? ' active'" class="admin-nav-link">
+      <span class="material-symbols-outlined">event</span>Eventos
+    </a>
+
+  </nav>
+
+  <div class="admin-sidebar-bottom">
+    <a href="/catalog" class="admin-nav-link">
+      <span class="material-symbols-outlined">library_books</span>Ver catálogo
+    </a>
+    <a href="/auth/logout" class="admin-nav-link admin-nav-link-danger">
+      <span class="material-symbols-outlined">logout</span>Cerrar sesión
+    </a>
+    <div class="admin-user-chip">
+      <div class="admin-user-avatar"
+           th:text="${session.username != null} ? ${#strings.substring(session.username, 0, 1).toUpperCase()} : 'A'">A</div>
+      <div>
+        <div class="admin-user-name" th:text="${session.username}">Admin</div>
+        <div class="admin-user-role">Administrador</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+</body>
+</html>

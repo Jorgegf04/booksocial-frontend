@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eventos — Admin BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+  <div th:replace="~{admin/fragments/sidebar :: sidebar('events')}"></div>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div>
+        <h1 class="admin-page-title">Eventos</h1>
+        <p class="admin-page-subtitle">Gestión de eventos de la comunidad</p>
+      </div>
+    </div>
+
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <p class="admin-card-title">
+          Todos los eventos
+          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+                th:text="'(' + ${#lists.size(events)} + ' total)'"></span>
+        </p>
+      </div>
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Título</th>
+              <th>Descripción</th>
+              <th>Fecha</th>
+              <th>Inscritos</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="event : ${events}">
+              <td style="font-size:0.8rem; color:var(--color-outline);" th:text="${event.id}">—</td>
+              <td>
+                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
+                      th:text="${event.title}">—</span>
+              </td>
+              <td style="font-size:0.82rem; max-width:22rem;">
+                <span th:if="${event.description != null}"
+                      th:text="${#strings.length(event.description) > 80} ? ${#strings.substring(event.description, 0, 80)} + '…' : ${event.description}">—</span>
+              </td>
+              <td style="font-size:0.82rem; white-space:nowrap;"
+                  th:text="${event.date != null} ? ${#temporals.format(event.date, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
+              <td>
+                <span class="admin-badge"
+                      th:text="${event.totalParticipants != null} ? ${event.totalParticipants} + ' inscritos' : '0'">0</span>
+              </td>
+              <td>
+                <span th:if="${event.date != null and event.date.isAfter(#temporals.createNow())}"
+                      style="font-size:0.75rem; color:#2d7a4f; font-weight:600;">Próximo</span>
+                <span th:if="${event.date != null and !event.date.isAfter(#temporals.createNow())}"
+                      style="font-size:0.75rem; color:var(--color-outline); font-weight:600;">Finalizado</span>
+                <span th:unless="${event.date != null}"
+                      style="font-size:0.75rem; color:var(--color-outline);">—</span>
+              </td>
+            </tr>
+            <tr th:if="${events == null or events.isEmpty()}">
+              <td colspan="6" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+                No hay eventos registrados
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

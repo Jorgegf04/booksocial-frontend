@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<nav th:fragment="navbar"
+     class="navbar navbar-expand-lg fixed-top nav-glass py-3">
+  <div class="container">
+
+    <a class="navbar-brand" href="/">BookSocial</a>
+
+    <button class="navbar-toggler border-0" type="button"
+            data-bs-toggle="collapse" data-bs-target="#mainNav"
+            aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="mainNav">
+      <ul class="navbar-nav me-auto ms-4 gap-1">
+        <li class="nav-item">
+          <a class="nav-link" href="/catalog">
+            Catálogo
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/events">Eventos</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#">Comunidad</a>
+        </li>
+      </ul>
+
+      <!-- Search -->
+      <form class="d-flex me-3" action="/catalog/filter" method="get" style="position:relative;">
+        <input type="hidden" name="page" value="0">
+        <div class="input-group" style="width:240px;">
+          <input class="form-control form-control-sm"
+                 style="border-radius:2rem 0 0 2rem; padding-right:0.5rem;"
+                 type="search" name="title" placeholder="Buscar obras..."
+                 autocomplete="off">
+          <button class="btn btn-sm"
+                  type="submit"
+                  style="border-radius:0 2rem 2rem 0; background-color:var(--bs-primary); color:#fff; border:none; padding:0 0.75rem;"
+                  aria-label="Buscar">
+            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">search</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- Carrito -->
+      <a href="/cart" class="position-relative text-decoration-none"
+         style="color:var(--bs-primary);">
+        <span class="material-symbols-outlined">shopping_cart</span>
+        <span th:if="${session.cart != null and !session.cart.isEmpty()}"
+              class="cart-badge"
+              th:text="${#lists.size(session.cart)}"></span>
+      </a>
+
+      <!-- Auth actions -->
+      <div class="d-flex align-items-center gap-2">
+
+        <!-- Not logged in -->
+        <th:block th:if="${session.userId == null}">
+          <a href="/auth/login" class="btn btn-sm"
+             style="color:var(--color-muted); font-weight:600;">
+            Iniciar sesión
+          </a>
+          <a href="/auth/register" class="btn btn-sm rounded-pill px-3"
+             style="background-color:var(--bs-primary); color:#fff; font-weight:600;">
+            Registrarse
+          </a>
+        </th:block>
+
+        <!-- Logged in -->
+        <th:block th:if="${session.userId != null}">
+          <a th:href="@{/user/me}"
+             class="d-flex align-items-center gap-2 text-decoration-none"
+             style="color:var(--bs-primary); font-weight:600; font-size:0.875rem;">
+            <span class="material-symbols-outlined" style="font-size:1.2rem;">account_circle</span>
+            <span th:text="${session.username}">usuario</span>
+          </a>
+          <a href="/auth/logout" class="btn btn-sm rounded-pill px-3"
+             style="border:1.5px solid var(--bs-primary); color:var(--bs-primary); font-weight:600;">
+            Cerrar sesión
+          </a>
+        </th:block>
+
+      </div>
+    </div>
+
+  </div>
+</nav>
+
+</body>
+</html>
