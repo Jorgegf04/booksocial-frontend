@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  Fragmento recursivo para renderizar un comentario y todo su árbol de respuestas.
+
+  Parámetros:
+    - comment            : CommentResponseDTO
+    - work               : WorkResponseDTO
+    - loggedIn           : boolean
+    - sessionUserId      : Long
+    - sessionRole        : String
+    - reactionCounts     : Map<Long, Integer>
+    - userLikedCommentIds: Set<Long>
+-->
+<div th:fragment="comment(comment, work, loggedIn, sessionUserId, sessionRole, reactionCounts, userLikedCommentIds)"
+     class="comment-card">
+
+  <!-- Avatar -->
+  <div class="comment-avatar"
+       th:text="${comment.username != null ? #strings.substring(comment.username, 0, 1).toUpperCase() : '?'}">
+  </div>
+
+  <div class="flex-grow-1">
+
+    <!-- Cabecera -->
+    <div class="d-flex align-items-center gap-2 mb-1">
+      <span class="comment-username" th:text="${comment.username}">Usuario</span>
+      <span class="comment-date"
+            th:text="${comment.date != null ? #temporals.format(comment.date, 'dd MMM yyyy') : ''}"></span>
+      <span th:if="${comment.edited}" class="comment-date">(editado)</span>
+    </div>
+
+    <!-- Contenido -->
+    <p class="comment-body" th:text="${comment.content}"></p>
+
+    <!-- Acciones -->
+    <div class="d-flex gap-3 align-items-center flex-wrap">
+
+      <!-- Like: autenticado -->
+      <th:block th:if="${loggedIn}">
+        <form th:action="@{/work/{wid}/comment/{cid}/reaction(wid=${work.id},cid=${comment.id})}"
+              method="post" class="d-inline">
+          <button type="submit" class="comment-action"
+                  th:style="${userLikedCommentIds.contains(comment.id)} ? 'color:var(--bs-primary); font-weight:700;' : ''">
+            <span class="material-symbols-outlined"
+                  th:classappend="${userLikedCommentIds.contains(comment.id)} ? ' material-symbols-filled' : ''"
+                  style="font-size:0.9rem;">thumb_up</span>
+            <span th:text="${reactionCounts[comment.id] != null ? reactionCounts[comment.id] : 0}">0</span>
+          </button>
+        </form>
+      </th:block>
+
+      <!-- Like: invitado -->
+      <th:block th:unless="${loggedIn}">
+        <span class="comment-action" style="cursor:default; pointer-events:none;">
+          <span class="material-symbols-outlined" style="font-size:0.9rem;">thumb_up</span>
+          <span th:text="${reactionCounts[comment.id] != null ? reactionCounts[comment.id] : 0}">0</span>
+        </span>
+      </th:block>
+
+      <!-- Responder -->
+      <button th:if="${loggedIn}" type="button" class="comment-action"
+              th:attr="data-reply-target='reply-form-' + ${comment.id}">
+        <span class="material-symbols-outlined" style="font-size:0.9rem;">reply</span>
+        Responder
+      </button>
+
+      <!-- Eliminar (propio o admin) -->
+      <th:block th:if="${loggedIn and (comment.userId == sessionUserId or sessionRole == 'ADMIN')}">
+        <form th:action="@{/work/{wid}/comment/{cid}/delete(wid=${work.id},cid=${comment.id})}"
+              method="post" class="d-inline">
+          <button type="submit" class="comment-action"
+                  style="color:#dc3545;"
+                  onclick="return confirm('¿Eliminar este comentario?')">
+            <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+            Eliminar
+          </button>
+        </form>
+      </th:block>
+
+    </div>
+
+    <!-- Formulario de respuesta (oculto por defecto) -->
+    <div th:id="'reply-form-' + ${comment.id}" style="display:none; margin-top:0.75rem;">
+      <form th:action="@{/work/{wid}/comment/{pid}/reply(wid=${work.id},pid=${comment.id})}"
+            method="post">
+        <textarea name="content" rows="2"
+                  placeholder="Escribe tu respuesta..."
+                  required minlength="1" maxlength="1000"
+                  style="width:100%; resize:vertical;"></textarea>
+        <div class="d-flex gap-2 justify-content-end mt-2">
+          <button type="button" class="btn-ghost-pill"
+                  style="font-size:0.8rem;"
+                  th:attr="data-reply-target='reply-form-' + ${comment.id}">
+            Cancelar
+          </button>
+          <button type="submit" class="btn-primary-pill"
+                  style="padding:0.4rem 1.25rem; font-size:0.8rem;">
+            Responder
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Árbol de respuestas (recursivo) -->
+    <div class="reply-thread mt-3"
+         th:if="${comment.replies != null and !comment.replies.isEmpty()}">
+      <div th:each="reply : ${comment.replies}" class="mb-3">
+        <div th:replace="~{fragments/comment :: comment(${reply}, ${work}, ${loggedIn}, ${sessionUserId}, ${sessionRole}, ${reactionCounts}, ${userLikedCommentIds})}"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

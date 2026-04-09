@@ -200,7 +200,7 @@
     <!-- ================================================================
          COMENTARIOS
          ================================================================ -->
-    <section style="max-width: 52rem; margin: 0 auto;">
+    <section id="comments" style="max-width: 52rem; margin: 0 auto;">
 
       <!-- Cabecera -->
       <div class="d-flex align-items-center justify-content-between mb-4"
@@ -215,15 +215,42 @@
         </div>
       </div>
 
+      <!-- Flash error -->
+      <div th:if="${commentError}"
+           class="alert alert-danger py-2 px-3 mb-3"
+           style="border-radius:0.75rem; font-size:0.875rem;"
+           th:text="${commentError}"></div>
+
       <!-- Input nuevo comentario -->
-      <div class="comment-input-area">
+      <div class="comment-input-area mb-4">
         <p class="filter-section-title mb-3">Únete a la conversación</p>
-        <textarea rows="3" placeholder="Comparte tu opinión sobre esta obra..."></textarea>
-        <div class="d-flex justify-content-end mt-3">
-          <button class="btn-primary-pill" style="padding: 0.6rem 1.75rem; font-size:0.875rem;">
-            Publicar comentario
-          </button>
-        </div>
+
+        <!-- Usuario autenticado: formulario -->
+        <th:block th:if="${loggedIn}">
+          <form th:action="@{/work/{wid}/comment(wid=${work.id})}" method="post">
+            <textarea name="content" rows="3"
+                      placeholder="Comparte tu opinión sobre esta obra..."
+                      required minlength="1" maxlength="1000"
+                      style="width:100%; resize:vertical;"></textarea>
+            <div class="d-flex justify-content-end mt-3">
+              <button type="submit" class="btn-primary-pill"
+                      style="padding: 0.6rem 1.75rem; font-size:0.875rem;">
+                Publicar comentario
+              </button>
+            </div>
+          </form>
+        </th:block>
+
+        <!-- Invitado: invitar a iniciar sesión -->
+        <th:block th:unless="${loggedIn}">
+          <div class="text-center py-3" style="color:var(--color-muted); font-size:0.9rem;">
+            <span class="material-symbols-outlined d-block mb-2"
+                  style="font-size:2rem; color:var(--color-outline);">lock</span>
+            <a href="/auth/login"
+               style="color:var(--bs-primary); font-weight:600;">Inicia sesión</a>
+            para participar en la conversación.
+          </div>
+        </th:block>
       </div>
 
       <!-- Lista de comentarios -->
@@ -231,60 +258,12 @@
            th:if="${comments != null and !comments.isEmpty()}">
 
         <div th:each="comment : ${comments}">
-
-          <!-- Comentario raíz -->
-          <div class="comment-card">
-            <div class="comment-avatar"
-                 th:text="${comment.username != null ? #strings.substring(comment.username, 0, 1).toUpperCase() : '?'}">
-            </div>
-            <div class="flex-grow-1">
-              <div class="d-flex align-items-center gap-2 mb-1">
-                <span class="comment-username" th:text="${comment.username}">Usuario</span>
-                <span class="comment-date"
-                      th:text="${comment.date != null ? #temporals.format(comment.date, 'dd MMM yyyy') : ''}">
-                </span>
-                <span th:if="${comment.edited}" class="comment-date">(editado)</span>
-              </div>
-              <p class="comment-body" th:text="${comment.content}"></p>
-              <div class="d-flex gap-3">
-                <button class="comment-action">
-                  <span class="material-symbols-outlined" style="font-size:0.9rem;">thumb_up</span>
-                  Me gusta
-                </button>
-                <button class="comment-action">
-                  <span class="material-symbols-outlined" style="font-size:0.9rem;">reply</span>
-                  Responder
-                </button>
-              </div>
-
-              <!-- Respuestas -->
-              <div class="reply-thread mt-3"
-                   th:if="${comment.replies != null and !comment.replies.isEmpty()}">
-                <div class="comment-card mb-3"
-                     th:each="reply : ${comment.replies}">
-                  <div class="comment-avatar"
-                       th:text="${reply.username != null ? #strings.substring(reply.username, 0, 1).toUpperCase() : '?'}">
-                  </div>
-                  <div class="flex-grow-1">
-                    <div class="d-flex align-items-center gap-2 mb-1">
-                      <span class="comment-username" th:text="${reply.username}">Usuario</span>
-                      <span class="comment-date"
-                            th:text="${reply.date != null ? #temporals.format(reply.date, 'dd MMM yyyy') : ''}">
-                      </span>
-                    </div>
-                    <p class="comment-body" th:text="${reply.content}"></p>
-                  </div>
-                </div>
-              </div>
-
-            </div>
-          </div>
-
+          <div th:replace="~{fragments/comment :: comment(${comment}, ${work}, ${loggedIn}, ${sessionUserId}, ${sessionRole}, ${reactionCounts}, ${userLikedCommentIds})}"></div>
         </div>
 
       </div>
 
-      <!-- Estado vacío comentarios -->
+      <!-- Estado vacío -->
       <div th:if="${comments == null or comments.isEmpty()}"
            class="text-center py-5" style="color: var(--color-outline);">
         <span class="material-symbols-outlined d-block mb-2" style="font-size:3rem;">chat_bubble_outline</span>
@@ -306,6 +285,22 @@
       chip.addEventListener('click', () => {
         document.querySelectorAll('.edition-chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
+      });
+    });
+  </script>
+
+  <!-- Reply form toggle -->
+  <script>
+    document.querySelectorAll('[data-reply-target]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetId = btn.getAttribute('data-reply-target');
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.style.display = el.style.display === 'none' ? 'block' : 'none';
+          if (el.style.display === 'block') {
+            el.querySelector('textarea')?.focus();
+          }
+        }
       });
     });
   </script>
