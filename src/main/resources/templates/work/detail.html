@@ -97,7 +97,14 @@
           <div class="d-flex flex-wrap gap-3">
             <button th:each="edition, iter : ${editions}"
                     th:classappend="${iter.first} ? 'active'"
-                    class="edition-chip">
+                    class="edition-chip"
+                    th:attr="data-eid=${edition.id},
+                             data-editorial=${edition.editorialName},
+                             data-isbn=${edition.isbn != null ? edition.isbn : ''},
+                             data-tomes=${edition.totalTomes != null ? edition.totalTomes : ''},
+                             data-year=${edition.editionDate != null ? #temporals.format(edition.editionDate,'yyyy') : ''},
+                             data-product-id=${productsByEdition.get(edition.id) != null ? productsByEdition.get(edition.id).id : ''},
+                             data-price=${productsByEdition.get(edition.id) != null ? #numbers.formatDecimal(productsByEdition.get(edition.id).price,1,2) : ''}">
               <span class="edition-chip-label" th:text="${edition.editorialName}"></span>
               <span class="edition-chip-value"
                     th:text="${edition.title != null ? edition.title : 'Edición ' + edition.id}"></span>
@@ -108,28 +115,69 @@
         </div>
 
         <!-- CTAs -->
-        <div class="d-flex flex-wrap align-items-center gap-3 mt-4">
-          <button class="btn-primary-pill">
-            <span class="material-symbols-outlined" style="font-size:1.1rem; vertical-align:middle;">library_add</span>
-            Añadir a biblioteca
-          </button>
+        <div class="d-flex flex-wrap align-items-center gap-3 mt-4"
+             th:with="firstProduct=${editions != null and !editions.isEmpty() ? productsByEdition.get(editions.get(0).id) : null},
+                      inLibrary=${userTracking != null and userTracking.status != 'PENDING'},
+                      inWishlist=${userTracking != null and userTracking.status == 'PENDING'}">
 
-          <!-- Botón comprar (si hay producto disponible) -->
-          <th:block th:if="${buyProduct != null}">
-            <form th:action="@{/cart/add}" method="post" class="d-inline">
-              <input type="hidden" name="productId" th:value="${buyProduct.id}">
+          <!-- Añadir a biblioteca (form si logueado, link a login si invitado) -->
+          <th:block th:if="${loggedIn}">
+            <form th:action="@{/work/{wid}/library(wid=${work.id})}" method="post" class="d-inline">
               <button type="submit" class="btn-primary-pill d-inline-flex align-items-center gap-2"
-                      style="background-color:#163528;">
-                <span class="material-symbols-outlined" style="font-size:1.1rem;">shopping_cart</span>
-                Comprar · €<span th:text="${#numbers.formatDecimal(buyProduct.price, 1, 2)}"></span>
+                      th:style="${inLibrary} ? 'opacity:0.85;' : ''">
+                <span class="material-symbols-outlined"
+                      style="font-size:1.1rem; vertical-align:middle;"
+                      th:text="${inLibrary} ? 'library_books' : 'library_add'"></span>
+                <span th:text="${inLibrary} ? 'En biblioteca' : 'Añadir a biblioteca'"></span>
               </button>
             </form>
           </th:block>
+          <th:block th:unless="${loggedIn}">
+            <a href="/auth/login" class="btn-primary-pill d-inline-flex align-items-center gap-2"
+               style="text-decoration:none;">
+              <span class="material-symbols-outlined" style="font-size:1.1rem; vertical-align:middle;">library_add</span>
+              Añadir a biblioteca
+            </a>
+          </th:block>
 
-          <button class="btn-ghost-pill">
-            <span class="material-symbols-outlined">favorite_border</span>
-            Guardar en wishlist
-          </button>
+          <!-- Botón comprar dinámico -->
+          <th:block th:if="${!productsByEdition.isEmpty()}">
+            <form th:action="@{/cart/add}" method="post" class="d-inline" id="buy-form">
+              <input type="hidden" name="productId" id="buy-product-id"
+                     th:value="${firstProduct != null ? firstProduct.id : ''}">
+              <button type="submit" id="buy-btn"
+                      class="btn-primary-pill d-inline-flex align-items-center gap-2"
+                      style="background-color:#163528;"
+                      th:classappend="${firstProduct == null ? 'd-none' : ''}">
+                <span class="material-symbols-outlined" style="font-size:1.1rem;">shopping_cart</span>
+                Comprar · €<span id="buy-price"
+                    th:text="${firstProduct != null ? #numbers.formatDecimal(firstProduct.price,1,2) : ''}"></span>
+              </button>
+            </form>
+            <span id="no-stock-msg"
+                  th:classappend="${firstProduct != null ? 'd-none' : ''}"
+                  style="font-size:0.85rem; color:var(--color-outline);">Sin stock en esta edición</span>
+          </th:block>
+
+          <!-- Guardar en wishlist -->
+          <th:block th:if="${loggedIn}">
+            <form th:action="@{/work/{wid}/wishlist(wid=${work.id})}" method="post" class="d-inline">
+              <button type="submit" class="btn-ghost-pill d-inline-flex align-items-center gap-2">
+                <span class="material-symbols-outlined"
+                      th:classappend="${inWishlist} ? ' material-symbols-filled' : ''"
+                      th:text="${inWishlist} ? 'favorite' : 'favorite_border'"></span>
+                <span th:text="${inWishlist} ? 'En wishlist' : 'Guardar en wishlist'"></span>
+              </button>
+            </form>
+          </th:block>
+          <th:block th:unless="${loggedIn}">
+            <a href="/auth/login" class="btn-ghost-pill d-inline-flex align-items-center gap-2"
+               style="text-decoration:none;">
+              <span class="material-symbols-outlined">favorite_border</span>
+              Guardar en wishlist
+            </a>
+          </th:block>
+
         </div>
 
       </div>
@@ -164,25 +212,29 @@
         </div>
       </div>
 
-      <!-- Specs técnicos de la primera edición -->
+      <!-- Specs técnicos (se actualiza dinámicamente al cambiar de edición) -->
       <div class="col-md-4" th:with="ed=${editions[0]}">
-        <div class="specs-card h-100">
+        <div class="specs-card h-100" id="edition-specs">
           <p class="specs-title">Ficha técnica</p>
           <div class="spec-row">
             <span class="spec-label">Editorial</span>
-            <span class="spec-val" th:text="${ed.editorialName}">—</span>
+            <span class="spec-val" id="spec-editorial" th:text="${ed.editorialName}">—</span>
           </div>
-          <div class="spec-row" th:if="${ed.isbn != null}">
+          <div class="spec-row" id="spec-row-isbn"
+               th:classappend="${ed.isbn == null ? 'd-none' : ''}">
             <span class="spec-label">ISBN</span>
-            <span class="spec-val" th:text="${ed.isbn}">—</span>
+            <span class="spec-val" id="spec-isbn" th:text="${ed.isbn}">—</span>
           </div>
-          <div class="spec-row" th:if="${ed.totalTomes != null}">
+          <div class="spec-row" id="spec-row-tomes"
+               th:classappend="${ed.totalTomes == null ? 'd-none' : ''}">
             <span class="spec-label">Tomos</span>
-            <span class="spec-val" th:text="${ed.totalTomes}">—</span>
+            <span class="spec-val" id="spec-tomes" th:text="${ed.totalTomes}">—</span>
           </div>
-          <div class="spec-row" th:if="${ed.editionDate != null}">
+          <div class="spec-row" id="spec-row-year"
+               th:classappend="${ed.editionDate == null ? 'd-none' : ''}">
             <span class="spec-label">Año edición</span>
-            <span class="spec-val" th:text="${#temporals.format(ed.editionDate, 'yyyy')}">—</span>
+            <span class="spec-val" id="spec-year"
+                  th:text="${ed.editionDate != null ? #temporals.format(ed.editionDate,'yyyy') : '—'}">—</span>
           </div>
           <div class="spec-row">
             <span class="spec-label">Tipo</span>
@@ -215,11 +267,15 @@
         </div>
       </div>
 
-      <!-- Flash error -->
+      <!-- Flash errors -->
       <div th:if="${commentError}"
            class="alert alert-danger py-2 px-3 mb-3"
            style="border-radius:0.75rem; font-size:0.875rem;"
            th:text="${commentError}"></div>
+      <div th:if="${trackingError}"
+           class="alert alert-danger py-2 px-3 mb-3"
+           style="border-radius:0.75rem; font-size:0.875rem;"
+           th:text="${trackingError}"></div>
 
       <!-- Input nuevo comentario -->
       <div class="comment-input-area mb-4">
@@ -279,12 +335,63 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Edition chip selection -->
+  <!-- Edition chip selection + ficha técnica dinámica + botón comprar dinámico -->
   <script>
     document.querySelectorAll('.edition-chip').forEach(chip => {
       chip.addEventListener('click', () => {
+        // 1. Actualizar chip activo
         document.querySelectorAll('.edition-chip').forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
+
+        // 2. Actualizar Ficha técnica
+        const editorial = chip.dataset.editorial || '—';
+        const isbn      = chip.dataset.isbn;
+        const tomes     = chip.dataset.tomes;
+        const year      = chip.dataset.year;
+
+        const elEditorial  = document.getElementById('spec-editorial');
+        const elIsbn       = document.getElementById('spec-isbn');
+        const elTomes      = document.getElementById('spec-tomes');
+        const elYear       = document.getElementById('spec-year');
+        const rowIsbn      = document.getElementById('spec-row-isbn');
+        const rowTomes     = document.getElementById('spec-row-tomes');
+        const rowYear      = document.getElementById('spec-row-year');
+
+        if (elEditorial) elEditorial.textContent = editorial;
+
+        if (rowIsbn && elIsbn) {
+          if (isbn) { elIsbn.textContent = isbn;  rowIsbn.classList.remove('d-none'); }
+          else       { rowIsbn.classList.add('d-none'); }
+        }
+        if (rowTomes && elTomes) {
+          if (tomes) { elTomes.textContent = tomes; rowTomes.classList.remove('d-none'); }
+          else        { rowTomes.classList.add('d-none'); }
+        }
+        if (rowYear && elYear) {
+          if (year) { elYear.textContent = year; rowYear.classList.remove('d-none'); }
+          else       { rowYear.classList.add('d-none'); }
+        }
+
+        // 3. Actualizar botón de compra
+        const productId    = chip.dataset.productId;
+        const price        = chip.dataset.price;
+        const inputId      = document.getElementById('buy-product-id');
+        const priceSpan    = document.getElementById('buy-price');
+        const buyBtn       = document.getElementById('buy-btn');
+        const noStockMsg   = document.getElementById('no-stock-msg');
+
+        if (inputId)   inputId.value = productId || '';
+        if (priceSpan) priceSpan.textContent = price || '';
+
+        if (buyBtn && noStockMsg) {
+          if (productId) {
+            buyBtn.classList.remove('d-none');
+            noStockMsg.classList.add('d-none');
+          } else {
+            buyBtn.classList.add('d-none');
+            noStockMsg.classList.remove('d-none');
+          }
+        }
       });
     });
   </script>

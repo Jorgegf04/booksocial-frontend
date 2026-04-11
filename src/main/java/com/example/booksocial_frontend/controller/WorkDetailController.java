@@ -22,11 +22,14 @@ import com.example.booksocial_frontend.dto.CommentResponseDTO;
 import com.example.booksocial_frontend.dto.EditionResponseDTO;
 import com.example.booksocial_frontend.dto.ProductResponseDTO;
 import com.example.booksocial_frontend.dto.ReactionResponseDTO;
+import com.example.booksocial_frontend.dto.TrackingWorkRequestDTO;
+import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
 import com.example.booksocial_frontend.dto.WorkResponseDTO;
 import com.example.booksocial_frontend.service.CommentClientService;
 import com.example.booksocial_frontend.service.EditionClientService;
 import com.example.booksocial_frontend.service.ProductClientService;
 import com.example.booksocial_frontend.service.ReactionClientService;
+import com.example.booksocial_frontend.service.TrackingWorkClientService;
 import com.example.booksocial_frontend.service.WorkClientService;
 
 import jakarta.servlet.http.HttpSession;
@@ -42,6 +45,7 @@ public class WorkDetailController {
   private final CommentClientService commentService;
   private final ProductClientService productService;
   private final ReactionClientService reactionService;
+  private final TrackingWorkClientService trackingService;
 
   @GetMapping("/{id}")
   public String showWork(@PathVariable Long id, HttpSession session, Model model) {
@@ -58,14 +62,15 @@ public class WorkDetailController {
     String role = (String) session.getAttribute("role");
     boolean loggedIn = userId != null;
 
-    // Producto disponible para comprar
-    ProductResponseDTO buyProduct = null;
+    // Productos por edición (para botón de compra dinámico por edición seleccionada)
+    Map<Long, ProductResponseDTO> productsByEdition = new HashMap<>();
     try {
       List<ProductResponseDTO> products = productService.getProductsByWork(id);
-      buyProduct = products.stream()
-          .filter(p -> p.getStock() != null && p.getStock() > 0)
-          .findFirst()
-          .orElse(null);
+      for (ProductResponseDTO p : products) {
+        if (p.getEditionId() != null && p.getStock() != null && p.getStock() > 0) {
+          productsByEdition.putIfAbsent(p.getEditionId(), p);
+        }
+      }
     } catch (Exception ignored) {}
 
     // Contar total de comentarios (árbol completo)
@@ -95,18 +100,86 @@ public class WorkDetailController {
       }
     }
 
+    // Tracking del usuario para esta obra (biblioteca / wishlist)
+    TrackingWorkResponseDTO userTracking = null;
+    if (loggedIn) {
+      try {
+        userTracking = trackingService.getByUser(userId).stream()
+            .filter(t -> id.equals(t.getWorkId()))
+            .findFirst()
+            .orElse(null);
+      } catch (Exception ignored) {}
+    }
+
     model.addAttribute("work", work);
     model.addAttribute("editions", editions);
     model.addAttribute("comments", comments);
     model.addAttribute("commentCount", totalCommentCount);
-    model.addAttribute("buyProduct", buyProduct);
+    model.addAttribute("productsByEdition", productsByEdition);
     model.addAttribute("loggedIn", loggedIn);
     model.addAttribute("sessionUserId", userId);
     model.addAttribute("sessionRole", role);
     model.addAttribute("reactionCounts", reactionCounts);
     model.addAttribute("userLikedCommentIds", userLikedCommentIds);
+    model.addAttribute("userTracking", userTracking);
 
     return "work/detail";
+  }
+
+  // ── POST: Añadir / quitar de biblioteca ─────────────────────────────────────
+  @PostMapping("/{workId}/library")
+  public String toggleLibrary(@PathVariable Long workId, HttpSession session, RedirectAttributes ra) {
+    Long userId = (Long) session.getAttribute("userId");
+    if (userId == null) return "redirect:/auth/login";
+
+    try {
+      TrackingWorkResponseDTO existing = trackingService.getByUser(userId).stream()
+          .filter(t -> workId.equals(t.getWorkId()))
+          .findFirst().orElse(null);
+
+      if (existing != null && !"PENDING".equals(existing.getStatus())) {
+        // Ya está en biblioteca → eliminar
+        trackingService.delete(existing.getId());
+      } else if (existing != null) {
+        // Está en wishlist → mover a biblioteca
+        trackingService.update(existing.getId(),
+            new TrackingWorkRequestDTO(userId, workId, "READING"));
+      } else {
+        // No existe → crear en biblioteca
+        trackingService.create(new TrackingWorkRequestDTO(userId, workId, "READING"));
+      }
+    } catch (Exception e) {
+      ra.addFlashAttribute("trackingError", "No se pudo actualizar la biblioteca.");
+    }
+    return "redirect:/work/" + workId;
+  }
+
+  // ── POST: Añadir / quitar de wishlist ────────────────────────────────────────
+  @PostMapping("/{workId}/wishlist")
+  public String toggleWishlist(@PathVariable Long workId, HttpSession session, RedirectAttributes ra) {
+    Long userId = (Long) session.getAttribute("userId");
+    if (userId == null) return "redirect:/auth/login";
+
+    try {
+      TrackingWorkResponseDTO existing = trackingService.getByUser(userId).stream()
+          .filter(t -> workId.equals(t.getWorkId()))
+          .findFirst().orElse(null);
+
+      if (existing != null && "PENDING".equals(existing.getStatus())) {
+        // Ya está en wishlist → eliminar
+        trackingService.delete(existing.getId());
+      } else if (existing != null) {
+        // Está en biblioteca → mover a wishlist
+        trackingService.update(existing.getId(),
+            new TrackingWorkRequestDTO(userId, workId, "PENDING"));
+      } else {
+        // No existe → crear en wishlist
+        trackingService.create(new TrackingWorkRequestDTO(userId, workId, "PENDING"));
+      }
+    } catch (Exception e) {
+      ra.addFlashAttribute("trackingError", "No se pudo actualizar la wishlist.");
+    }
+    return "redirect:/work/" + workId;
   }
 
   // ── POST: Publicar comentario raíz ──────────────────────────────────────────
