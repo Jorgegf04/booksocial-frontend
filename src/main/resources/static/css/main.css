@@ -716,6 +716,32 @@ h1, h2, h3, h4, h5, h6, .font-serif {
 .tracking-status-pill.PENDING   { background-color: var(--color-surface-h); color: var(--color-outline); }
 .tracking-status-pill.DROPPED   { background-color: rgba(186,26,26,0.1); color: #ba1a1a; }
 
+/* Filter buttons (same pill style but interactive) */
+.filter-btn {
+  cursor: pointer;
+  border: 2px solid transparent;
+  background: none;
+  font: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.filter-btn:hover {
+  opacity: 0.8;
+}
+.filter-btn.filter-active {
+  border-color: currentColor;
+  box-shadow: 0 0 0 1px currentColor;
+}
+
+/* Clickable tracking card (own profile) */
+.tracking-card-interactive {
+  cursor: pointer;
+  user-select: none;
+}
+.tracking-card-interactive:active {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  transform: scale(0.995);
+}
+
 /* ============================================================
    HOME
    ============================================================ */
@@ -1171,6 +1197,26 @@ h1, h2, h3, h4, h5, h6, .font-serif {
   justify-content: center;
   flex-shrink: 0;
 }
+
+/* ============================================================
+   ORDER STATUS PILLS (perfil — pestaña Pedidos)
+   ============================================================ */
+
+.order-status-pill {
+  display: inline-block;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+.order-status-pill.PREPARING  { background-color: rgba(217,119,6,0.12);  color: #b45309; }
+.order-status-pill.SHIPPED    { background-color: rgba(37,99,235,0.12);   color: #1d4ed8; }
+.order-status-pill.IN_TRANSIT { background-color: rgba(124,58,237,0.12);  color: #6d28d9; }
+.order-status-pill.DELIVERED  { background-color: rgba(22,163,74,0.12);   color: #15803d; }
+.order-status-pill.CANCELED   { background-color: rgba(220,38,38,0.10);   color: #b91c1c; }
 
 /* ============================================================
    ORDERS HISTORY

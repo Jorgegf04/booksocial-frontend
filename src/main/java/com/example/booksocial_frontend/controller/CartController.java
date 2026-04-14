@@ -8,6 +8,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.Collections;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import com.example.booksocial_frontend.dto.CartItemDTO;
 import com.example.booksocial_frontend.dto.ProductResponseDTO;
 import com.example.booksocial_frontend.dto.WorkResponseDTO;
@@ -42,12 +46,22 @@ public class CartController {
     model.addAttribute("shipping", shipping);
     model.addAttribute("total", total);
 
-    // Sugerencias: productos disponibles (excluir los ya en carrito)
+    // Sugerencias: obras con imagen, excluyendo las que ya están en el carrito
     try {
       List<Long> inCart = items.stream().map(CartItemDTO::getProductId).toList();
-      List<ProductResponseDTO> suggestions = productService.getAvailableProducts()
-          .stream()
-          .filter(p -> !inCart.contains(p.getId()))
+
+      // Obtener los workIds de los productos que ya están en el carrito
+      Set<Long> workIdsInCart = productService.getAvailableProducts().stream()
+          .filter(p -> inCart.contains(p.getId()))
+          .map(ProductResponseDTO::getWorkId)
+          .collect(Collectors.toSet());
+
+      // Obtener todas las obras, mezclarlas y tomar 4 que no estén en el carrito
+      List<WorkResponseDTO> allWorks = workService.getAllWorks();
+      Collections.shuffle(allWorks);
+      List<WorkResponseDTO> suggestions = allWorks.stream()
+          .filter(w -> !workIdsInCart.contains(w.getId())
+              && w.getImg() != null && !w.getImg().isBlank())
           .limit(4)
           .toList();
       model.addAttribute("suggestions", suggestions);

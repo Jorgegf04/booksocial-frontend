@@ -192,25 +192,28 @@
       </div>
 
       <div class="row g-4 align-items-end">
-        <div th:each="p, stat : ${suggestions}"
+        <div th:each="w, stat : ${suggestions}"
              th:classappend="${stat.index == 1 or stat.index == 3} ? 'col-sm-6 col-lg-3 home-work-offset' : 'col-sm-6 col-lg-3'">
           <div class="home-work-card">
-            <div class="home-work-cover-wrap">
-              <span class="home-work-type-badge" th:text="${p.editorialName}"></span>
-              <div class="home-work-cover-placeholder">
-                <span class="material-symbols-outlined">menu_book</span>
+            <a th:href="@{'/work/' + ${w.id}}" class="text-decoration-none">
+              <div class="home-work-cover-wrap">
+                <span class="home-work-type-badge"
+                      th:text="${w.type != null ? w.type : ''}"></span>
+                <img th:src="${w.img}"
+                     th:alt="${w.title}"
+                     class="home-work-cover">
               </div>
-            </div>
+            </a>
             <div class="home-work-info">
-              <h3 class="home-work-title font-serif" th:text="${p.workTitle}">Título</h3>
-              <p class="home-work-authors mb-2" th:text="${p.editorialName}"></p>
+              <h3 class="home-work-title font-serif" th:text="${w.title}">Título</h3>
+              <p class="home-work-authors mb-2"
+                 th:text="${w.authors != null and !w.authors.isEmpty() ? w.authors.get(0) : ''}"></p>
               <div class="d-flex align-items-center justify-content-between">
-                <span class="fw-bold" style="color:var(--bs-primary); font-size:0.95rem;"
-                      th:text="'€' + ${#numbers.formatDecimal(p.price, 1, 2)}">€0.00</span>
-                <form th:action="@{/cart/add}" method="post">
-                  <input type="hidden" name="productId" th:value="${p.id}">
-                  <button type="submit" class="event-card-join-btn">Añadir</button>
-                </form>
+                <span style="font-size:0.75rem; color:var(--color-outline); text-transform:uppercase; letter-spacing:0.05em;"
+                      th:text="${w.demographic != null ? w.demographic : ''}"></span>
+                <a th:href="@{'/work/' + ${w.id}}"
+                   class="event-card-join-btn"
+                   style="text-decoration:none;">Ver obra</a>
               </div>
             </div>
           </div>
