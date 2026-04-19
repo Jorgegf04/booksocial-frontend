@@ -62,7 +62,8 @@ public class WorkDetailController {
     String role = (String) session.getAttribute("role");
     boolean loggedIn = userId != null;
 
-    // Productos por edición (para botón de compra dinámico por edición seleccionada)
+    // Productos por edición (para botón de compra dinámico por edición
+    // seleccionada)
     Map<Long, ProductResponseDTO> productsByEdition = new HashMap<>();
     try {
       List<ProductResponseDTO> products = productService.getProductsByWork(id);
@@ -71,7 +72,8 @@ public class WorkDetailController {
           productsByEdition.putIfAbsent(p.getEditionId(), p);
         }
       }
-    } catch (Exception ignored) {}
+    } catch (Exception ignored) {
+    }
 
     // Contar total de comentarios (árbol completo)
     int totalCommentCount = countComments(comments);
@@ -95,8 +97,10 @@ public class WorkDetailController {
           List<ReactionResponseDTO> reactions = reactionService.getReactionsByComment(comment.getId());
           boolean liked = reactions.stream()
               .anyMatch(r -> userId.equals(r.getUserId()) && Boolean.TRUE.equals(r.getLiked()));
-          if (liked) userLikedCommentIds.add(comment.getId());
-        } catch (Exception ignored) {}
+          if (liked)
+            userLikedCommentIds.add(comment.getId());
+        } catch (Exception ignored) {
+        }
       }
     }
 
@@ -108,7 +112,8 @@ public class WorkDetailController {
             .filter(t -> id.equals(t.getWorkId()))
             .findFirst()
             .orElse(null);
-      } catch (Exception ignored) {}
+      } catch (Exception ignored) {
+      }
     }
 
     model.addAttribute("work", work);
@@ -126,11 +131,12 @@ public class WorkDetailController {
     return "work/detail";
   }
 
-  // ── POST: Añadir / quitar de biblioteca ─────────────────────────────────────
+  // POST: Añadir / quitar de biblioteca
   @PostMapping("/{workId}/library")
   public String toggleLibrary(@PathVariable Long workId, HttpSession session, RedirectAttributes ra) {
     Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) return "redirect:/auth/login";
+    if (userId == null)
+      return "redirect:/auth/login";
 
     try {
       TrackingWorkResponseDTO existing = trackingService.getByUser(userId).stream()
@@ -154,11 +160,12 @@ public class WorkDetailController {
     return "redirect:/work/" + workId;
   }
 
-  // ── POST: Añadir / quitar de wishlist ────────────────────────────────────────
+  // ── POST: Añadir / quitar de wishlist
   @PostMapping("/{workId}/wishlist")
   public String toggleWishlist(@PathVariable Long workId, HttpSession session, RedirectAttributes ra) {
     Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) return "redirect:/auth/login";
+    if (userId == null)
+      return "redirect:/auth/login";
 
     try {
       TrackingWorkResponseDTO existing = trackingService.getByUser(userId).stream()
@@ -182,14 +189,15 @@ public class WorkDetailController {
     return "redirect:/work/" + workId;
   }
 
-  // ── POST: Publicar comentario raíz ──────────────────────────────────────────
+  // ── POST: Publicar comentario raíz
   @PostMapping("/{workId}/comment")
   public String addComment(@PathVariable Long workId,
-                           @RequestParam String content,
-                           HttpSession session,
-                           RedirectAttributes ra) {
+      @RequestParam String content,
+      HttpSession session,
+      RedirectAttributes ra) {
     Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) return "redirect:/auth/login";
+    if (userId == null)
+      return "redirect:/auth/login";
 
     try {
       commentService.createComment(new CommentRequestDTO(content, userId, workId, null));
@@ -199,15 +207,16 @@ public class WorkDetailController {
     return "redirect:/work/" + workId + "#comments";
   }
 
-  // ── POST: Responder a un comentario ─────────────────────────────────────────
+  // ── POST: Responder a un comentario
   @PostMapping("/{workId}/comment/{parentId}/reply")
   public String addReply(@PathVariable Long workId,
-                         @PathVariable Long parentId,
-                         @RequestParam String content,
-                         HttpSession session,
-                         RedirectAttributes ra) {
+      @PathVariable Long parentId,
+      @RequestParam String content,
+      HttpSession session,
+      RedirectAttributes ra) {
     Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) return "redirect:/auth/login";
+    if (userId == null)
+      return "redirect:/auth/login";
 
     try {
       commentService.replyToComment(parentId, new CommentRequestDTO(content, userId, workId, parentId));
@@ -217,24 +226,27 @@ public class WorkDetailController {
     return "redirect:/work/" + workId + "#comments";
   }
 
-  // ── POST: Eliminar comentario ────────────────────────────────────────────────
+  // POST: Eliminar comentario
   @PostMapping("/{workId}/comment/{commentId}/delete")
   public String deleteComment(@PathVariable Long workId,
-                              @PathVariable Long commentId,
-                              HttpSession session) {
+      @PathVariable Long commentId,
+      HttpSession session) {
     Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) return "redirect:/auth/login";
+    if (userId == null)
+      return "redirect:/auth/login";
 
     try {
       commentService.deleteComment(commentId);
-    } catch (Exception ignored) {}
+    } catch (Exception ignored) {
+    }
     return "redirect:/work/" + workId + "#comments";
   }
 
-  // ── Helpers recursivos ──────────────────────────────────────────────────────
+  // Contar comentarios
 
   private int countComments(List<CommentResponseDTO> comments) {
-    if (comments == null) return 0;
+    if (comments == null)
+      return 0;
     int count = 0;
     for (CommentResponseDTO c : comments) {
       count++;
@@ -243,16 +255,20 @@ public class WorkDetailController {
     return count;
   }
 
+  // comentarios de un padre
   private void collectComments(List<CommentResponseDTO> comments, List<CommentResponseDTO> result) {
-    if (comments == null) return;
+    if (comments == null)
+      return;
     for (CommentResponseDTO c : comments) {
       result.add(c);
       collectComments(c.getReplies(), result);
     }
   }
 
+  // Crear recursivad para los comentarios
   private void sortRecursive(List<CommentResponseDTO> comments) {
-    if (comments == null || comments.isEmpty()) return;
+    if (comments == null || comments.isEmpty())
+      return;
     comments.sort(Comparator.comparing(CommentResponseDTO::getDate,
         Comparator.nullsLast(Comparator.reverseOrder())));
     for (CommentResponseDTO c : comments) {
@@ -260,17 +276,19 @@ public class WorkDetailController {
     }
   }
 
-  // ── POST: Toggle reacción (like/unlike) ─────────────────────────────────────
+  // POST: Toggle reacción (like/unlike)
   @PostMapping("/{workId}/comment/{commentId}/reaction")
   public String toggleReaction(@PathVariable Long workId,
-                               @PathVariable Long commentId,
-                               HttpSession session) {
+      @PathVariable Long commentId,
+      HttpSession session) {
     Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) return "redirect:/auth/login";
+    if (userId == null)
+      return "redirect:/auth/login";
 
     try {
       reactionService.toggleReaction(userId, commentId);
-    } catch (Exception ignored) {}
+    } catch (Exception ignored) {
+    }
     return "redirect:/work/" + workId + "#comments";
   }
 }

@@ -3,9 +3,11 @@ package com.example.booksocial_frontend.service;
 import java.util.List;
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.example.booksocial_frontend.dto.EventRequestDTO;
 import com.example.booksocial_frontend.dto.EventResponseDTO;
 
 @Service
@@ -46,5 +48,30 @@ public class EventClientService {
         .uri("/{id}/leave?userId={userId}", eventId, userId)
         .retrieve()
         .body(EventResponseDTO.class);
+  }
+
+  public EventResponseDTO createEvent(EventRequestDTO request) {
+    return restClient.post()
+        .uri("")
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(request)
+        .retrieve()
+        .body(EventResponseDTO.class);
+  }
+
+  public EventResponseDTO updateEvent(Long id, EventRequestDTO request) {
+    return restClient.put()
+        .uri("/{id}", id)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(request)
+        .retrieve()
+        .body(EventResponseDTO.class);
+  }
+
+  public void deleteEvent(Long id) {
+    restClient.delete()
+        .uri("/{id}", id)
+        .retrieve()
+        .toBodilessEntity();
   }
 }

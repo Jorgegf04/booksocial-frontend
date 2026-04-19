@@ -19,6 +19,21 @@
         <h1 class="admin-page-title">Eventos</h1>
         <p class="admin-page-subtitle">Gestión de eventos de la comunidad</p>
       </div>
+      <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+              data-bs-toggle="modal" data-bs-target="#createEventModal">
+        <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+        Nuevo Evento
+      </button>
+    </div>
+
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${success}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
     <div class="admin-card">
@@ -39,6 +54,7 @@
               <th>Fecha</th>
               <th>Inscritos</th>
               <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -66,9 +82,31 @@
                 <span th:unless="${event.date != null}"
                       style="font-size:0.75rem; color:var(--color-outline);">—</span>
               </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                          title="Editar"
+                          data-bs-toggle="modal" data-bs-target="#editEventModal"
+                          th:data-id="${event.id}"
+                          th:data-title="${event.title}"
+                          th:data-description="${event.description}"
+                          th:data-date="${event.date != null} ? ${event.date} : ''"
+                          onclick="openEditEventModal(this)">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                          title="Eliminar"
+                          data-bs-toggle="modal" data-bs-target="#deleteEventModal"
+                          th:data-id="${event.id}"
+                          th:data-title="${event.title}"
+                          onclick="openDeleteEventModal(this)">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                  </button>
+                </div>
+              </td>
             </tr>
             <tr th:if="${events == null or events.isEmpty()}">
-              <td colspan="6" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <td colspan="7" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
                 No hay eventos registrados
               </td>
             </tr>
@@ -78,6 +116,114 @@
     </div>
   </main>
 </div>
+
+<!-- Modal: Crear Evento -->
+<div class="modal fade" id="createEventModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nuevo Evento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" th:action="@{/admin/events/create}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción</label>
+              <textarea name="description" class="form-control form-control-sm" rows="3"></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Fecha y hora <span class="text-danger">*</span></label>
+              <input type="datetime-local" name="date" class="form-control form-control-sm" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Crear Evento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Evento -->
+<div class="modal fade" id="editEventModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Evento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editEventForm" method="post">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-12">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" id="editEventTitle" name="title" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción</label>
+              <textarea id="editEventDescription" name="description" class="form-control form-control-sm" rows="3"></textarea>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Fecha y hora <span class="text-danger">*</span></label>
+              <input type="datetime-local" id="editEventDate" name="date" class="form-control form-control-sm" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Eliminar Evento -->
+<div class="modal fade" id="deleteEventModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar Evento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar el evento
+          <strong id="deleteEventName"></strong>?
+          Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="deleteEventForm" method="post" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openEditEventModal(btn) {
+    document.getElementById('editEventForm').action = '/admin/events/' + btn.dataset.id + '/update';
+    document.getElementById('editEventTitle').value = btn.dataset.title || '';
+    document.getElementById('editEventDescription').value = btn.dataset.description || '';
+    // LocalDateTime format "2026-04-17T10:30" — compatible with datetime-local input
+    const dateVal = btn.dataset.date || '';
+    document.getElementById('editEventDate').value = dateVal.length > 16 ? dateVal.substring(0, 16) : dateVal;
+  }
+
+  function openDeleteEventModal(btn) {
+    document.getElementById('deleteEventForm').action = '/admin/events/' + btn.dataset.id + '/delete';
+    document.getElementById('deleteEventName').textContent = '"' + btn.dataset.title + '"';
+  }
+</script>
 </body>
 </html>

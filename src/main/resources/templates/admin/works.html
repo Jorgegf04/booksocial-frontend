@@ -19,6 +19,21 @@
         <h1 class="admin-page-title">Obras</h1>
         <p class="admin-page-subtitle">Catálogo completo de libros, manga y cómics</p>
       </div>
+      <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+              data-bs-toggle="modal" data-bs-target="#createWorkModal">
+        <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+        Nueva Obra
+      </button>
+    </div>
+
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${success}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
     <div class="admin-card">
@@ -41,6 +56,7 @@
               <th>Publicación</th>
               <th>Rating</th>
               <th>Autores</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -74,9 +90,36 @@
               </td>
               <td style="font-size:0.82rem;"
                   th:text="${work.authors != null and !work.authors.isEmpty()} ? ${#strings.listJoin(work.authors, ', ')} : '—'">—</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                          title="Editar"
+                          data-bs-toggle="modal" data-bs-target="#editWorkModal"
+                          th:data-id="${work.id}"
+                          th:data-title="${work.title}"
+                          th:data-description="${work.description}"
+                          th:data-genre="${work.genre != null} ? ${work.genre.name()} : ''"
+                          th:data-type="${work.type != null} ? ${work.type.name()} : ''"
+                          th:data-demographic="${work.demographic != null} ? ${work.demographic.name()} : ''"
+                          th:data-publication="${work.publicationDate != null} ? ${work.publicationDate} : ''"
+                          th:data-img="${work.img}"
+                          th:data-authors="${work.authors != null} ? ${#strings.listJoin(work.authors, ', ')} : ''"
+                          onclick="openEditWorkModal(this)">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                          title="Eliminar"
+                          data-bs-toggle="modal" data-bs-target="#deleteWorkModal"
+                          th:data-id="${work.id}"
+                          th:data-title="${work.title}"
+                          onclick="openDeleteModal('deleteWorkForm', this.dataset.id, '/admin/works/', '/update', this.dataset.title, 'deleteWorkName')">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                  </button>
+                </div>
+              </td>
             </tr>
             <tr th:if="${works == null or works.isEmpty()}">
-              <td colspan="8" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <td colspan="9" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
                 No hay obras registradas
               </td>
             </tr>
@@ -86,6 +129,195 @@
     </div>
   </main>
 </div>
+
+<!-- Modal: Crear Obra -->
+<div class="modal fade" id="createWorkModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nueva Obra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" th:action="@{/admin/works/create}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" name="title" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Tipo</label>
+              <select name="type" class="form-select form-select-sm">
+                <option value="">— Sin tipo —</option>
+                <option th:each="t : ${types}" th:value="${t.name()}" th:text="${t.name()}"></option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción</label>
+              <textarea name="description" class="form-control form-control-sm" rows="3"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Género</label>
+              <select name="genre" class="form-select form-select-sm">
+                <option value="">— Sin género —</option>
+                <option th:each="g : ${genres}" th:value="${g.name()}"
+                        th:text="${#strings.replace(g.name(), '_', ' ')}"></option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Demografía</label>
+              <select name="demographic" class="form-select form-select-sm">
+                <option value="">— Sin demografía —</option>
+                <option th:each="d : ${demographics}" th:value="${d.name()}" th:text="${d.name()}"></option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Fecha publicación</label>
+              <input type="date" name="publicationDate" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">URL imagen</label>
+              <input type="text" name="img" class="form-control form-control-sm" placeholder="https://...">
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Rating</label>
+              <input type="number" name="averageRating" class="form-control form-control-sm"
+                     step="0.1" min="0" max="10">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Autores</label>
+              <input type="text" name="authors" class="form-control form-control-sm"
+                     placeholder="Nombre1, Nombre2, ...">
+              <div class="form-text">Separar múltiples autores con comas</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Crear Obra</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Obra -->
+<div class="modal fade" id="editWorkModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Obra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editWorkForm" method="post">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
+              <input type="text" id="editWorkTitle" name="title" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Tipo</label>
+              <select id="editWorkType" name="type" class="form-select form-select-sm">
+                <option value="">— Sin tipo —</option>
+                <option th:each="t : ${types}" th:value="${t.name()}" th:text="${t.name()}"></option>
+              </select>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Descripción</label>
+              <textarea id="editWorkDescription" name="description" class="form-control form-control-sm" rows="3"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Género</label>
+              <select id="editWorkGenre" name="genre" class="form-select form-select-sm">
+                <option value="">— Sin género —</option>
+                <option th:each="g : ${genres}" th:value="${g.name()}"
+                        th:text="${#strings.replace(g.name(), '_', ' ')}"></option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Demografía</label>
+              <select id="editWorkDemographic" name="demographic" class="form-select form-select-sm">
+                <option value="">— Sin demografía —</option>
+                <option th:each="d : ${demographics}" th:value="${d.name()}" th:text="${d.name()}"></option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Fecha publicación</label>
+              <input type="date" id="editWorkPublication" name="publicationDate" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">URL imagen</label>
+              <input type="text" id="editWorkImg" name="img" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Autores</label>
+              <input type="text" id="editWorkAuthors" name="authors" class="form-control form-control-sm"
+                     placeholder="Nombre1, Nombre2, ...">
+              <div class="form-text">Separar múltiples autores con comas</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Eliminar Obra -->
+<div class="modal fade" id="deleteWorkModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar Obra</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar
+          <strong id="deleteWorkName"></strong>?
+          Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="deleteWorkForm" method="post" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openEditWorkModal(btn) {
+    const id = btn.dataset.id;
+    document.getElementById('editWorkForm').action = '/admin/works/' + id + '/update';
+    document.getElementById('editWorkTitle').value = btn.dataset.title || '';
+    document.getElementById('editWorkDescription').value = btn.dataset.description || '';
+    setSelectValue('editWorkGenre', btn.dataset.genre || '');
+    setSelectValue('editWorkType', btn.dataset.type || '');
+    setSelectValue('editWorkDemographic', btn.dataset.demographic || '');
+    document.getElementById('editWorkPublication').value = btn.dataset.publication || '';
+    document.getElementById('editWorkImg').value = btn.dataset.img || '';
+    document.getElementById('editWorkAuthors').value = btn.dataset.authors || '';
+  }
+
+  function openDeleteModal(formId, id, basePath, suffix, name, nameSpanId) {
+    document.getElementById(formId).action = basePath + id + '/delete';
+    if (nameSpanId) document.getElementById(nameSpanId).textContent = '"' + name + '"';
+  }
+
+  function setSelectValue(selectId, value) {
+    const sel = document.getElementById(selectId);
+    if (!sel) return;
+    for (let opt of sel.options) {
+      opt.selected = (opt.value === value);
+    }
+  }
+</script>
 </body>
 </html>

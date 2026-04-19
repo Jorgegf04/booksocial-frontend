@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.example.booksocial_frontend.dto.JwtResponseDTO;
 import com.example.booksocial_frontend.dto.LoginRequestDTO;
+import com.example.booksocial_frontend.dto.RegisterRequestDTO;
 import com.example.booksocial_frontend.service.AuthClientService;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -53,5 +55,28 @@ public class AuthController {
   public String logout(HttpSession session) {
     session.invalidate();
     return "redirect:/auth/login";
+  }
+
+  @GetMapping("/register")
+  public String registerPage(Model model) {
+    model.addAttribute("registerRequest", new RegisterRequestDTO());
+    return "auth/register";
+  }
+
+  @PostMapping("/register")
+  public String register(
+      @ModelAttribute RegisterRequestDTO request,
+      RedirectAttributes ra,
+      Model model) {
+
+    try {
+      authClientService.register(request);
+      ra.addFlashAttribute("success", "¡Cuenta creada! Ya puedes iniciar sesión.");
+      return "redirect:/auth/login";
+    } catch (Exception e) {
+      model.addAttribute("registerRequest", request);
+      model.addAttribute("error", "Error al registrarse: " + e.getMessage());
+      return "auth/register";
+    }
   }
 }

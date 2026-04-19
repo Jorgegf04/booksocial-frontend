@@ -21,6 +21,16 @@
       </div>
     </div>
 
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${success}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">
@@ -40,6 +50,7 @@
               <th>Fecha</th>
               <th>Editado</th>
               <th>Respuestas</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -64,9 +75,19 @@
                 <span class="admin-badge"
                       th:text="${comment.replies != null} ? ${#lists.size(comment.replies)} + ' resp.' : '0'">0</span>
               </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                        title="Eliminar comentario"
+                        data-bs-toggle="modal" data-bs-target="#deleteCommentModal"
+                        th:data-id="${comment.id}"
+                        th:data-username="${comment.username}"
+                        onclick="openDeleteCommentModal(this)">
+                  <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                </button>
+              </td>
             </tr>
             <tr th:if="${comments == null or comments.isEmpty()}">
-              <td colspan="7" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <td colspan="8" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
                 No hay comentarios registrados
               </td>
             </tr>
@@ -76,6 +97,37 @@
     </div>
   </main>
 </div>
+
+<!-- Modal: Eliminar Comentario -->
+<div class="modal fade" id="deleteCommentModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar Comentario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar el comentario de
+          <strong id="deleteCommentUser"></strong>?
+          Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="deleteCommentForm" method="post" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openDeleteCommentModal(btn) {
+    document.getElementById('deleteCommentForm').action = '/admin/comments/' + btn.dataset.id + '/delete';
+    document.getElementById('deleteCommentUser').textContent = '"' + (btn.dataset.username || 'este usuario') + '"';
+  }
+</script>
 </body>
 </html>

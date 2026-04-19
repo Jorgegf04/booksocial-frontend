@@ -21,6 +21,16 @@
       </div>
     </div>
 
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${success}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">Todos los usuarios
@@ -38,6 +48,7 @@
               <th>Rol</th>
               <th>Registro</th>
               <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -64,9 +75,33 @@
                 <span th:if="${user.active}" style="font-size:0.75rem; color:#2d7a4f; font-weight:600;">Activo</span>
                 <span th:unless="${user.active}" style="font-size:0.75rem; color:#a94442; font-weight:600;">Inactivo</span>
               </td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                          title="Editar"
+                          data-bs-toggle="modal" data-bs-target="#editUserModal"
+                          th:data-id="${user.id}"
+                          th:data-username="${user.username}"
+                          th:data-email="${user.email}"
+                          th:data-name="${user.name}"
+                          th:data-secondname="${user.secondName}"
+                          th:data-img="${user.img}"
+                          onclick="openEditUserModal(this)">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                          title="Eliminar"
+                          data-bs-toggle="modal" data-bs-target="#deleteUserModal"
+                          th:data-id="${user.id}"
+                          th:data-username="${user.username}"
+                          onclick="openDeleteUserModal(this)">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                  </button>
+                </div>
+              </td>
             </tr>
             <tr th:if="${users == null or users.isEmpty()}">
-              <td colspan="6" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <td colspan="7" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
                 No hay usuarios registrados
               </td>
             </tr>
@@ -76,6 +111,89 @@
     </div>
   </main>
 </div>
+
+<!-- Modal: Editar Usuario -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editUserForm" method="post">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Nombre de usuario</label>
+              <input type="text" id="editUserUsername" name="username" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" id="editUserEmail" name="email" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Nombre</label>
+              <input type="text" id="editUserName" name="name" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Apellido</label>
+              <input type="text" id="editUserSecondName" name="secondName" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">URL avatar</label>
+              <input type="text" id="editUserImg" name="img" class="form-control form-control-sm"
+                     placeholder="https://...">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Eliminar Usuario -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar Usuario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar al usuario
+          <strong id="deleteUserName"></strong>?
+          Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="deleteUserForm" method="post" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openEditUserModal(btn) {
+    document.getElementById('editUserForm').action = '/admin/users/' + btn.dataset.id + '/update';
+    document.getElementById('editUserUsername').value = btn.dataset.username || '';
+    document.getElementById('editUserEmail').value = btn.dataset.email || '';
+    document.getElementById('editUserName').value = btn.dataset.name || '';
+    document.getElementById('editUserSecondName').value = btn.dataset.secondname || '';
+    document.getElementById('editUserImg').value = btn.dataset.img || '';
+  }
+
+  function openDeleteUserModal(btn) {
+    document.getElementById('deleteUserForm').action = '/admin/users/' + btn.dataset.id + '/delete';
+    document.getElementById('deleteUserName').textContent = '"' + btn.dataset.username + '"';
+  }
+</script>
 </body>
 </html>

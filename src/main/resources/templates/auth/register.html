@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Crear cuenta — BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Manrope:wght@300;400;500;600;700;800&display=swap">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <style>
+    html, body { height: 100%; margin: 0; }
+
+    .auth-wrapper {
+      min-height: 100vh;
+      display: flex;
+    }
+
+    .auth-panel {
+      width: 42%;
+      background: linear-gradient(160deg, #1a3328 0%, #2D4C3E 50%, #3a6050 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem 3.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .auth-panel::before {
+      content: '';
+      position: absolute;
+      top: -120px; right: -120px;
+      width: 360px; height: 360px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.04);
+    }
+
+    .auth-panel::after {
+      content: '';
+      position: absolute;
+      bottom: -80px; left: -80px;
+      width: 280px; height: 280px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+    }
+
+    .auth-brand {
+      font-family: 'Noto Serif', serif;
+      font-style: italic;
+      font-size: 1.7rem;
+      color: #c0ecda;
+      font-weight: 400;
+      letter-spacing: -0.02em;
+    }
+
+    .auth-brand span { color: #fff; }
+
+    .auth-panel-middle { position: relative; z-index: 1; }
+
+    .auth-panel-quote {
+      font-family: 'Noto Serif', serif;
+      font-style: italic;
+      font-size: 1.55rem;
+      color: rgba(255,255,255,0.92);
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    .auth-panel-sub {
+      font-size: 0.82rem;
+      color: rgba(192, 236, 218, 0.75);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .auth-panel-perks {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .auth-perk {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.82rem;
+      color: rgba(192,236,218,0.8);
+    }
+
+    .auth-perk-icon {
+      width: 28px; height: 28px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .auth-panel-footer {
+      font-size: 0.78rem;
+      color: rgba(192,236,218,0.5);
+    }
+
+    .auth-form-side {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 2rem;
+      background-color: var(--color-bg);
+      overflow-y: auto;
+    }
+
+    .auth-card {
+      width: 100%;
+      max-width: 460px;
+      padding: 0.5rem 0;
+    }
+
+    .auth-card-title {
+      font-family: 'Noto Serif', serif;
+      font-size: 1.75rem;
+      color: var(--color-text);
+      margin-bottom: 0.25rem;
+    }
+
+    .auth-card-sub {
+      font-size: 0.85rem;
+      color: var(--color-outline);
+      margin-bottom: 1.75rem;
+    }
+
+    .auth-section-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--color-outline);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.75rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--color-outline-l);
+    }
+
+    .auth-label {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--color-muted);
+      margin-bottom: 0.35rem;
+    }
+
+    .auth-input {
+      background: var(--color-surface);
+      border: 1.5px solid var(--color-outline-l);
+      border-radius: 8px;
+      padding: 0.65rem 0.9rem;
+      font-size: 0.9rem;
+      color: var(--color-text);
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    .auth-input:focus {
+      border-color: var(--bs-primary);
+      box-shadow: 0 0 0 3px rgba(45,76,62,0.12);
+      background: #fff;
+      outline: none;
+    }
+
+    .auth-input.optional {
+      background: var(--color-surface-l);
+    }
+
+    .auth-optional-tag {
+      font-size: 0.72rem;
+      color: var(--color-outline);
+      margin-left: 0.3rem;
+      font-weight: 400;
+    }
+
+    .auth-btn {
+      background: var(--bs-primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      width: 100%;
+      transition: background .15s, transform .1s;
+    }
+
+    .auth-btn:hover {
+      background: #1a3328;
+      transform: translateY(-1px);
+    }
+
+    .auth-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--color-outline-l);
+      font-size: 0.78rem;
+      margin: 1.25rem 0;
+    }
+
+    .auth-divider::before, .auth-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--color-outline-l);
+    }
+
+    .auth-link {
+      font-size: 0.85rem;
+      color: var(--bs-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .auth-link:hover { text-decoration: underline; }
+
+    .auth-input-group { position: relative; }
+
+    .auth-pw-toggle {
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--color-outline);
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .pw-strength {
+      height: 3px;
+      border-radius: 2px;
+      margin-top: 6px;
+      transition: all .3s;
+      background: var(--color-outline-l);
+    }
+
+    .pw-strength.weak   { background: #e05252; width: 30%; }
+    .pw-strength.medium { background: #d4a017; width: 65%; }
+    .pw-strength.strong { background: #2d7a4f; width: 100%; }
+
+    @media (max-width: 768px) {
+      .auth-panel { display: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="auth-wrapper">
+
+  <!-- Panel decorativo -->
+  <div class="auth-panel">
+    <div class="auth-brand"><span>Book</span>Social</div>
+
+    <div class="auth-panel-middle">
+      <p class="auth-panel-quote">
+        "Hay tantos libros aún sin leer. Únete y nunca leas solo."
+      </p>
+      <p class="auth-panel-sub">BookSocial Community</p>
+
+      <div class="auth-panel-perks">
+        <div class="auth-perk">
+          <div class="auth-perk-icon">📚</div>
+          <span>Acceso al catálogo completo de obras</span>
+        </div>
+        <div class="auth-perk">
+          <div class="auth-perk-icon">🔖</div>
+          <span>Crea tu lista de lectura personalizada</span>
+        </div>
+        <div class="auth-perk">
+          <div class="auth-perk-icon">💬</div>
+          <span>Participa en debates y eventos exclusivos</span>
+        </div>
+        <div class="auth-perk">
+          <div class="auth-perk-icon">⭐</div>
+          <span>Puntúa y descubre nuevas obras</span>
+        </div>
+      </div>
+    </div>
+
+    <p class="auth-panel-footer">© 2026 BookSocial — El Curador Digital</p>
+  </div>
+
+  <!-- Formulario -->
+  <div class="auth-form-side">
+    <div class="auth-card">
+
+      <h1 class="auth-card-title">Crear cuenta</h1>
+      <p class="auth-card-sub">Únete a la comunidad lectora más exigente</p>
+
+      <div th:if="${error}" class="alert alert-danger py-2 mb-3" style="font-size:0.85rem;" th:text="${error}"></div>
+
+      <form th:action="@{/auth/register}" th:object="${registerRequest}" method="post" novalidate>
+
+        <!-- Datos de cuenta -->
+        <p class="auth-section-label">Datos de cuenta</p>
+
+        <div class="row g-3 mb-3">
+          <div class="col-12">
+            <label class="auth-label">Nombre de usuario <span class="text-danger">*</span></label>
+            <input type="text"
+                   th:field="*{username}"
+                   class="form-control auth-input"
+                   placeholder="mi_usuario"
+                   autocomplete="username"
+                   required
+                   minlength="3">
+            <div class="form-text" style="font-size:0.75rem;">Mínimo 3 caracteres. Sin espacios.</div>
+          </div>
+
+          <div class="col-12">
+            <label class="auth-label">Correo electrónico <span class="text-danger">*</span></label>
+            <input type="email"
+                   th:field="*{email}"
+                   class="form-control auth-input"
+                   placeholder="correo@ejemplo.com"
+                   autocomplete="email"
+                   required>
+          </div>
+
+          <div class="col-12">
+            <label class="auth-label">Contraseña <span class="text-danger">*</span></label>
+            <div class="auth-input-group">
+              <input type="password"
+                     id="regPassword"
+                     th:field="*{password}"
+                     class="form-control auth-input"
+                     placeholder="••••••••"
+                     autocomplete="new-password"
+                     required
+                     minlength="6"
+                     oninput="checkStrength(this.value)">
+              <button type="button" class="auth-pw-toggle" onclick="togglePw('regPassword', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div id="pwStrength" class="pw-strength"></div>
+            <div class="form-text" style="font-size:0.75rem;">Mínimo 6 caracteres.</div>
+          </div>
+
+          <div class="col-12">
+            <label class="auth-label">Confirmar contraseña <span class="text-danger">*</span></label>
+            <div class="auth-input-group">
+              <input type="password"
+                     id="confirmPassword"
+                     class="form-control auth-input"
+                     placeholder="••••••••"
+                     autocomplete="new-password"
+                     required
+                     oninput="checkMatch()">
+              <button type="button" class="auth-pw-toggle" onclick="togglePw('confirmPassword', this)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                  <circle cx="12" cy="12" r="3"/>
+                </svg>
+              </button>
+            </div>
+            <div id="matchMsg" class="form-text" style="font-size:0.75rem;"></div>
+          </div>
+        </div>
+
+        <!-- Datos personales -->
+        <p class="auth-section-label">Datos personales <span class="auth-optional-tag">(opcional)</span></p>
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label class="auth-label">Nombre <span class="auth-optional-tag">opcional</span></label>
+            <input type="text"
+                   th:field="*{name}"
+                   class="form-control auth-input optional"
+                   placeholder="María">
+          </div>
+
+          <div class="col-md-6">
+            <label class="auth-label">Apellido <span class="auth-optional-tag">opcional</span></label>
+            <input type="text"
+                   th:field="*{secondName}"
+                   class="form-control auth-input optional"
+                   placeholder="García">
+          </div>
+
+          <div class="col-12">
+            <label class="auth-label">URL de avatar <span class="auth-optional-tag">opcional</span></label>
+            <input type="url"
+                   th:field="*{img}"
+                   class="form-control auth-input optional"
+                   placeholder="https://ejemplo.com/mi-foto.jpg">
+            <div class="form-text" style="font-size:0.75rem;">Puedes añadirlo después desde tu perfil.</div>
+          </div>
+        </div>
+
+        <button type="submit" class="auth-btn" id="submitBtn">Crear cuenta</button>
+      </form>
+
+      <div class="auth-divider">o</div>
+
+      <p class="text-center mb-0" style="font-size:0.85rem; color:var(--color-muted);">
+        ¿Ya tienes cuenta?
+        <a href="/auth/login" class="auth-link ms-1">Iniciar sesión</a>
+      </p>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function togglePw(inputId, btn) {
+    const input = document.getElementById(inputId);
+    input.type = input.type === 'password' ? 'text' : 'password';
+  }
+
+  function checkStrength(val) {
+    const bar = document.getElementById('pwStrength');
+    if (!val) { bar.className = 'pw-strength'; return; }
+    if (val.length < 6) bar.className = 'pw-strength weak';
+    else if (val.length < 10) bar.className = 'pw-strength medium';
+    else bar.className = 'pw-strength strong';
+  }
+
+  function checkMatch() {
+    const pw = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    const msg = document.getElementById('matchMsg');
+    if (!confirm) { msg.textContent = ''; return; }
+    if (pw === confirm) {
+      msg.textContent = '✓ Las contraseñas coinciden';
+      msg.style.color = '#2d7a4f';
+    } else {
+      msg.textContent = '✗ Las contraseñas no coinciden';
+      msg.style.color = '#e05252';
+    }
+  }
+
+  // Validar que las contraseñas coincidan antes de enviar
+  document.querySelector('form').addEventListener('submit', function(e) {
+    const pw = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    if (pw !== confirm) {
+      e.preventDefault();
+      document.getElementById('matchMsg').textContent = '✗ Las contraseñas no coinciden';
+      document.getElementById('matchMsg').style.color = '#e05252';
+      document.getElementById('confirmPassword').focus();
+    }
+  });
+</script>
+</body>
+</html>

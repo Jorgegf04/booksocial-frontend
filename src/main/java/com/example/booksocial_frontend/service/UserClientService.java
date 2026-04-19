@@ -45,4 +45,11 @@ public class UserClientService {
         .retrieve()
         .body(UserResponseDTO.class);
   }
+
+  public void deleteUser(Long id) {
+    restClient.delete()
+        .uri("/{id}", id)
+        .retrieve()
+        .toBodilessEntity();
+  }
 }
