@@ -44,6 +44,12 @@ public class ProfileController {
     Long sessionUserId = (Long) session.getAttribute("userId");
     boolean isOwnProfile = sessionUserId != null && sessionUserId.equals(id);
 
+    // Seguidores / siguiendo
+    List<UserResponseDTO> followers = userService.getFollowers(id);
+    List<UserResponseDTO> following = userService.getFollowing(id);
+    boolean isFollowing = sessionUserId != null && followers.stream()
+        .anyMatch(f -> f.getId().equals(sessionUserId));
+
     // Pedidos: solo para el propio perfil
     List<OrderResponseDTO> orders = null;
     Map<Long, TrackingOrderResponseDTO> orderTrackings = new HashMap<>();
@@ -65,6 +71,12 @@ public class ProfileController {
     model.addAttribute("user", user);
     model.addAttribute("tracking", tracking);
     model.addAttribute("isOwnProfile", isOwnProfile);
+    model.addAttribute("sessionUserId", sessionUserId);
+    model.addAttribute("followers", followers);
+    model.addAttribute("following", following);
+    model.addAttribute("followersCount", followers.size());
+    model.addAttribute("followingCount", following.size());
+    model.addAttribute("isFollowing", isFollowing);
     model.addAttribute("orders", orders);
     model.addAttribute("orderTrackings", orderTrackings);
     model.addAttribute("updateForm", new UpdateUserRequestDTO(
@@ -72,6 +84,22 @@ public class ProfileController {
         user.getName(), user.getSecondName(), user.getImg()));
 
     return "user/profile";
+  }
+
+  @PostMapping("/{id}/follow")
+  public String follow(@PathVariable Long id, HttpSession session) {
+    Long sessionUserId = (Long) session.getAttribute("userId");
+    if (sessionUserId == null) return "redirect:/auth/login";
+    userService.followUser(sessionUserId, id);
+    return "redirect:/user/" + id;
+  }
+
+  @PostMapping("/{id}/unfollow")
+  public String unfollow(@PathVariable Long id, HttpSession session) {
+    Long sessionUserId = (Long) session.getAttribute("userId");
+    if (sessionUserId == null) return "redirect:/auth/login";
+    userService.unfollowUser(sessionUserId, id);
+    return "redirect:/user/" + id;
   }
 
   /** Redirige al perfil del usuario logueado */

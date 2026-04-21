@@ -52,4 +52,32 @@ public class UserClientService {
         .retrieve()
         .toBodilessEntity();
   }
+
+  public List<UserResponseDTO> getFollowers(Long userId) {
+    return restClient.get()
+        .uri("/{id}/followers", userId)
+        .retrieve()
+        .body(new ParameterizedTypeReference<List<UserResponseDTO>>() {});
+  }
+
+  public List<UserResponseDTO> getFollowing(Long userId) {
+    return restClient.get()
+        .uri("/{id}/following", userId)
+        .retrieve()
+        .body(new ParameterizedTypeReference<List<UserResponseDTO>>() {});
+  }
+
+  public void followUser(Long followerId, Long targetId) {
+    restClient.post()
+        .uri("/{id}/follow/{targetId}", followerId, targetId)
+        .retrieve()
+        .toBodilessEntity();
+  }
+
+  public void unfollowUser(Long followerId, Long targetId) {
+    restClient.delete()
+        .uri("/{id}/follow/{targetId}", followerId, targetId)
+        .retrieve()
+        .toBodilessEntity();
+  }
 }

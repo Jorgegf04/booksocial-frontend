@@ -58,16 +58,37 @@
               <span class="stat-num" th:text="${tracking != null ? tracking.size() : 0}">0</span>
               <span class="stat-label">Obras</span>
             </div>
-            <div class="profile-stat">
-              <span class="stat-num"
-                    th:text="${tracking != null ? #lists.size(tracking.?[status == 'COMPLETED']) : 0}">0</span>
-              <span class="stat-label">Completadas</span>
+            <div class="profile-stat" style="cursor:pointer;"
+                 data-bs-toggle="modal" data-bs-target="#followersModal">
+              <span class="stat-num" th:text="${followersCount}">0</span>
+              <span class="stat-label">Seguidores</span>
             </div>
-            <div class="profile-stat">
-              <span class="stat-num"
-                    th:text="${tracking != null ? #lists.size(tracking.?[status == 'READING']) : 0}">0</span>
-              <span class="stat-label">Leyendo</span>
+            <div class="profile-stat" style="cursor:pointer;"
+                 data-bs-toggle="modal" data-bs-target="#followingModal">
+              <span class="stat-num" th:text="${followingCount}">0</span>
+              <span class="stat-label">Siguiendo</span>
             </div>
+          </div>
+
+          <!-- Botón seguir / dejar de seguir (solo si no es perfil propio y hay sesión) -->
+          <div th:if="${!isOwnProfile and sessionUserId != null}" class="mt-3">
+            <form th:if="${!isFollowing}"
+                  th:action="@{'/user/' + ${user.id} + '/follow'}" method="post">
+              <button type="submit" class="btn-primary-pill w-100"
+                      style="padding:0.55rem 1.5rem; font-size:0.875rem;">
+                Seguir
+              </button>
+            </form>
+            <form th:if="${isFollowing}"
+                  th:action="@{'/user/' + ${user.id} + '/unfollow'}" method="post">
+              <button type="submit"
+                      style="width:100%; padding:0.55rem 1.5rem; font-size:0.875rem;
+                             border:1.5px solid var(--bs-primary); border-radius:2rem;
+                             background:transparent; color:var(--bs-primary);
+                             font-weight:600; cursor:pointer;">
+                Siguiendo ✓
+              </button>
+            </form>
           </div>
 
           <!-- Fecha registro -->
@@ -76,6 +97,68 @@
             <span th:text="${user.registrationDate != null ? #temporals.format(user.registrationDate, 'MMMM yyyy') : '—'}"></span>
           </p>
 
+        </div>
+
+        <!-- Modal Seguidores -->
+        <div class="modal fade" id="followersModal" tabindex="-1">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius:1rem;">
+              <div class="modal-header" style="border-bottom:1px solid var(--color-outline-l);">
+                <h5 class="modal-title font-serif" style="color:var(--bs-primary);">Seguidores</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body p-0">
+                <div th:if="${followers == null or followers.isEmpty()}"
+                     class="text-center py-4" style="color:var(--color-muted); font-size:0.9rem;">
+                  Sin seguidores aún.
+                </div>
+                <ul th:if="${followers != null and !followers.isEmpty()}"
+                    class="list-unstyled mb-0">
+                  <li th:each="u : ${followers}"
+                      class="d-flex align-items-center gap-3 px-4 py-3"
+                      style="border-bottom:1px solid var(--color-outline-l);">
+                    <div class="profile-avatar-placeholder"
+                         style="width:2.2rem; height:2.2rem; font-size:0.9rem; flex-shrink:0;"
+                         th:text="${u.username != null ? #strings.substring(u.username,0,1).toUpperCase() : '?'}"></div>
+                    <a th:href="@{'/user/' + ${u.id}}"
+                       style="font-weight:600; color:var(--bs-primary); text-decoration:none;"
+                       th:text="${u.username}">username</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Siguiendo -->
+        <div class="modal fade" id="followingModal" tabindex="-1">
+          <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content" style="border-radius:1rem;">
+              <div class="modal-header" style="border-bottom:1px solid var(--color-outline-l);">
+                <h5 class="modal-title font-serif" style="color:var(--bs-primary);">Siguiendo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body p-0">
+                <div th:if="${following == null or following.isEmpty()}"
+                     class="text-center py-4" style="color:var(--color-muted); font-size:0.9rem;">
+                  No sigue a nadie aún.
+                </div>
+                <ul th:if="${following != null and !following.isEmpty()}"
+                    class="list-unstyled mb-0">
+                  <li th:each="u : ${following}"
+                      class="d-flex align-items-center gap-3 px-4 py-3"
+                      style="border-bottom:1px solid var(--color-outline-l);">
+                    <div class="profile-avatar-placeholder"
+                         style="width:2.2rem; height:2.2rem; font-size:0.9rem; flex-shrink:0;"
+                         th:text="${u.username != null ? #strings.substring(u.username,0,1).toUpperCase() : '?'}"></div>
+                    <a th:href="@{'/user/' + ${u.id}}"
+                       style="font-weight:600; color:var(--bs-primary); text-decoration:none;"
+                       th:text="${u.username}">username</a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Formulario edición (solo perfil propio) -->

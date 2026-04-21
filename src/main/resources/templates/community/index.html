@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comunidad — BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body>
+
+  <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+  <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
+
+    <!-- Cabecera -->
+    <div class="d-flex align-items-end justify-content-between mb-4 flex-wrap gap-3">
+      <div>
+        <p class="filter-section-title mb-1">Lectores</p>
+        <h1 class="font-serif mb-0" style="font-size:2rem; color:var(--bs-primary);">Comunidad</h1>
+      </div>
+      <!-- Buscador local -->
+      <div class="input-group" style="max-width:280px;">
+        <input id="searchInput" type="text" class="form-control form-control-sm"
+               style="border-radius:2rem 0 0 2rem;"
+               placeholder="Buscar usuario...">
+        <span class="input-group-text"
+              style="border-radius:0 2rem 2rem 0; background:var(--bs-primary); border:none;">
+          <span class="material-symbols-outlined" style="font-size:1rem; color:#fff;">search</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Sin usuarios -->
+    <div th:if="${users == null or users.isEmpty()}"
+         class="text-center py-5"
+         style="background:var(--color-surface-l); border-radius:1rem;">
+      <span class="material-symbols-outlined d-block mb-2"
+            style="font-size:3.5rem; color:var(--color-outline-l);">group</span>
+      <p class="font-serif mb-1" style="color:var(--bs-primary); font-size:1.1rem;">
+        Aún no hay otros lectores
+      </p>
+    </div>
+
+    <!-- Grid de usuarios -->
+    <div id="userGrid" class="row g-3" th:if="${users != null and !users.isEmpty()}">
+
+      <div th:each="u : ${users}"
+           class="col-sm-6 col-md-4 col-lg-3 user-card-col"
+           th:attr="data-username=${u.username}">
+
+        <div class="card h-100 text-center"
+             style="border-radius:1rem; border:1px solid var(--color-outline-l);
+                    background:var(--color-surface-l); transition:box-shadow .2s;">
+
+          <div class="card-body d-flex flex-column align-items-center pt-4 pb-3 gap-2">
+
+            <!-- Avatar -->
+            <a th:href="@{'/user/' + ${u.id}}" class="text-decoration-none">
+              <img th:if="${u.img != null and !u.img.isEmpty()}"
+                   th:src="${u.img}" th:alt="${u.username}"
+                   style="width:4rem; height:4rem; border-radius:50%; object-fit:cover;">
+              <div th:unless="${u.img != null and !u.img.isEmpty()}"
+                   class="profile-avatar-placeholder"
+                   style="width:4rem; height:4rem; font-size:1.4rem;"
+                   th:text="${u.username != null ? #strings.substring(u.username,0,1).toUpperCase() : '?'}">
+              </div>
+            </a>
+
+            <!-- Nombre -->
+            <a th:href="@{'/user/' + ${u.id}}"
+               class="text-decoration-none"
+               style="color:var(--bs-primary); font-weight:700; font-size:0.95rem;"
+               th:text="${u.username}">username</a>
+
+            <p class="mb-0" style="font-size:0.78rem; color:var(--color-muted);"
+               th:text="${(u.name != null ? u.name : '') + (u.secondName != null ? ' ' + u.secondName : '')}"></p>
+
+            <!-- Badge rol -->
+            <span class="profile-badge"
+                  th:classappend="${u.role == 'ADMIN'} ? 'admin' : (${u.role == 'SUBSCRIBED'} ? 'subscribed' : '')"
+                  th:text="${u.role != null ? u.role : 'USER'}">USER</span>
+
+            <!-- Botón seguir / dejar de seguir -->
+            <div class="mt-auto pt-2 w-100" th:if="${sessionUserId != null}">
+
+              <form th:if="${!followingIds.contains(u.id)}"
+                    th:action="@{'/community/' + ${u.id} + '/follow'}" method="post">
+                <button type="submit" class="btn-primary-pill w-100"
+                        style="padding:0.45rem; font-size:0.8rem;">
+                  Seguir
+                </button>
+              </form>
+
+              <form th:if="${followingIds.contains(u.id)}"
+                    th:action="@{'/community/' + ${u.id} + '/unfollow'}" method="post">
+                <button type="submit" class="w-100"
+                        style="padding:0.45rem; font-size:0.8rem; font-weight:600;
+                               border:1.5px solid var(--bs-primary); border-radius:2rem;
+                               background:transparent; color:var(--bs-primary); cursor:pointer;">
+                  Siguiendo ✓
+                </button>
+              </form>
+
+            </div>
+
+            <!-- Sin sesión: solo ir al perfil -->
+            <div class="mt-auto pt-2 w-100" th:if="${sessionUserId == null}">
+              <a th:href="@{'/user/' + ${u.id}}"
+                 class="btn-primary-pill d-block text-center text-decoration-none"
+                 style="padding:0.45rem; font-size:0.8rem;">
+                Ver perfil
+              </a>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sin resultados tras búsqueda -->
+    <div id="emptySearch" class="text-center py-5" style="display:none;">
+      <span class="material-symbols-outlined d-block mb-2"
+            style="font-size:3rem; color:var(--color-outline-l);">search_off</span>
+      <p style="color:var(--color-muted);">Ningún usuario coincide con la búsqueda.</p>
+    </div>
+
+  </main>
+
+  <div th:replace="~{fragments/footer :: footer}"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    (function () {
+      const input = document.getElementById('searchInput');
+      const cols  = document.querySelectorAll('.user-card-col');
+      const empty = document.getElementById('emptySearch');
+
+      if (!input) return;
+
+      input.addEventListener('input', function () {
+        const q = this.value.trim().toLowerCase();
+        let visible = 0;
+        cols.forEach(col => {
+          const name = (col.dataset.username || '').toLowerCase();
+          const show = !q || name.includes(q);
+          col.style.display = show ? '' : 'none';
+          if (show) visible++;
+        });
+        if (empty) empty.style.display = (q && visible === 0) ? '' : 'none';
+      });
+    })();
+  </script>
+</body>
+</html>
