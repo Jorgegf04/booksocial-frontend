@@ -35,6 +35,32 @@ import com.example.booksocial_frontend.service.WorkClientService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador MVC del detalle de obra en BookSocial.
+ *
+ * <p>Es el controlador más complejo del frontend. Orquesta la carga de datos de
+ * múltiples servicios para construir la vista completa de una obra:</p>
+ * <ul>
+ *   <li>Datos de la obra y sus ediciones.</li>
+ *   <li>Árbol de comentarios jerárquico (comentarios raíz + respuestas recursivas),
+ *       ordenado de más reciente a más antiguo en todos los niveles.</li>
+ *   <li>Conteo de reacciones (likes) por comentario y set de IDs de comentarios
+ *       que el usuario actual ya ha dado like.</li>
+ *   <li>Productos disponibles por edición (para el botón de compra dinámico).</li>
+ *   <li>Estado de seguimiento de la obra por el usuario en sesión (biblioteca/wishlist).</li>
+ * </ul>
+ *
+ * <h3>Comentarios jerárquicos</h3>
+ * <p>Los comentarios se obtienen del backend ya estructurados en árbol
+ * (campo {@code replies} en {@code CommentResponseDTO}). El método
+ * {@code sortRecursive} ordena cada nivel por fecha descendente de forma recursiva.
+ * El método {@code collectComments} aplana el árbol para cargar las reacciones
+ * de todos los nodos en una sola pasada.</p>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/work")

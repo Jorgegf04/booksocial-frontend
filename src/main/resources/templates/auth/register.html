@@ -1,3 +1,27 @@
+<!--
+  Vista: Registro de usuario — /auth/register
+  Controlador: AuthController (GET/POST /auth/register)
+
+  Variables del modelo:
+  - registerRequest : CreateUserRequestDTO objeto de binding (username, email, password,
+                      name, secondName, img)
+  - error           : String (opcional) mensaje de error si el registro falla
+                      (usuario/email ya existente, contraseña corta, etc.)
+
+  Flujo de registro:
+  1. El formulario envía POST /auth/register.
+  2. AuthController llama a AuthClientService.register() → POST backend /api/auth/register.
+  3. Si el backend crea el usuario correctamente, se redirige a /auth/login con
+     flash success="Cuenta creada correctamente. Ya puedes iniciar sesión."
+  4. Si hay error, se vuelve a mostrar este formulario con ${error}.
+
+  Validaciones del lado cliente (JS inline):
+  - checkStrength(): colorea la barra #pwStrength según longitud (weak/medium/strong).
+  - checkMatch()   : compara contraseña y confirmación en tiempo real.
+  - submit handler : bloquea el envío si las contraseñas no coinciden.
+
+  Layout de dos paneles igual que login.html: panel decorativo izquierdo oculto en móvil.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

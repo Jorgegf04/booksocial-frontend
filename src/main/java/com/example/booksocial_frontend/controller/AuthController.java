@@ -16,6 +16,18 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador MVC que gestiona el flujo de autenticación del frontend.
+ *
+ * <p>Delega las operaciones de login y registro en {@link com.example.booksocial_frontend.service.AuthClientService},
+ * que realiza las llamadas REST al backend. Tras un login exitoso almacena en la
+ * sesión HTTP los atributos {@code JWT}, {@code userId}, {@code username} y {@code role}
+ * que el resto de controladores utilizan para personalizar la vista.</p>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/auth")

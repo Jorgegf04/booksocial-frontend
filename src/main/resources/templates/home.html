@@ -1,3 +1,23 @@
+<!--
+  Vista: Página principal — /home (y /)
+  Controlador: HomeController (GET /)
+
+  Variables del modelo:
+  - featuredWorks : List<WorkResponseDTO> hasta 4 obras para la sección de destacados.
+                    Obtenidas via WorkClientService.getAllWorks() tomando los primeros 4.
+                    Si la llamada al backend falla, se usa lista vacía (fallback graceful).
+
+  Secciones de la página:
+  1. Hero: imagen de fondo, título y CTAs hacia /catalog y /auth/register.
+  2. Obras destacadas: grid de hasta 4 cards con efecto escalonado (home-work-offset
+     en posiciones 1 y 3 del índice de iteración th:each stat.index).
+  3. Comunidad CTA: sección con texto y mini-cards de características (decorativas).
+  4. Catálogo por tipo: bento de estadísticas + enlaces a /catalog filtrados por tipo.
+  5. Suscripción: sección oscura con descripción del plan "Caja del Curador".
+
+  Las secciones de comunidad, tipo y suscripción son decorativas y no requieren
+  datos del modelo; sólo featuredWorks viene del backend.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

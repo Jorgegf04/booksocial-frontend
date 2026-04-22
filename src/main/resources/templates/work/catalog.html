@@ -1,3 +1,33 @@
+<!--
+  Vista: Catálogo de Obras — /catalog y /catalog/filter
+  Controlador: WorkDetailController (GET /catalog, POST /catalog/filter)
+
+  Variables del modelo:
+  - works          : List<WorkResponseDTO> obras de la página actual (paginación del lado servidor)
+  - filter         : WorkFilterDTO filtro activo (type, title, genre, demographic, minRating,
+                     publishedAfter, publishedBefore); campos opcionales, null si sin filtro
+  - currentPage    : int índice de página actual (base 0)
+  - totalPages     : int número total de páginas
+  - total          : long total de obras que cumplen el filtro
+  - pageNumbers    : List<Integer> números de página para el paginador; -1 = elipsis "···"
+  - apiError       : String (opcional) mensaje de error si la llamada al backend falló
+
+  Comportamiento del sidebar de filtros:
+  - Los botones de tipo (BOOK/MANGA/COMIC) envían el formulario al instante con el valor
+    seleccionado como parámetro "type" y resetean la página a 0 (resetPage()).
+  - Los radio de género y demografía hacen auto-submit al cambiar (event listener JS).
+  - El slider de rating actualiza en tiempo real el span #ratingVal.
+  - El botón "Limpiar" navega a /catalog sin parámetros, descartando todos los filtros.
+
+  Comportamiento del grid de obras:
+  - Cada card hace window.location hacia /work/{id} al hacer clic.
+  - Si la obra no tiene img se muestra un placeholder con ícono material.
+  - averageRating = null → mensaje "Sin valoraciones" en lugar de estrellas.
+
+  Paginación:
+  - La función goToPage(n) escribe el número en #pageInput y envía el formulario.
+  - El elemento -1 en pageNumbers se renderiza como "···" (elipsis).
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

@@ -23,6 +23,27 @@ import com.example.booksocial_frontend.service.WorkClientService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador MVC del carrito de compra.
+ *
+ * <p>El carrito se gestiona íntegramente en la sesión HTTP mediante
+ * {@link com.example.booksocial_frontend.service.CartService}; no se persiste
+ * en base de datos hasta que el usuario confirma la compra ({@code /cart/checkout}).
+ * En ese momento se llama a {@link com.example.booksocial_frontend.service.OrderClientService}
+ * para crear el pedido en el backend y se vacía el carrito de sesión.</p>
+ *
+ * <p>Flujo principal:</p>
+ * <ol>
+ *   <li>Usuario añade un producto desde el detalle de obra → {@code POST /cart/add}.</li>
+ *   <li>Revisa el carrito → {@code GET /cart}.</li>
+ *   <li>Ajusta cantidades o elimina ítems.</li>
+ *   <li>Confirma la compra → {@code POST /cart/checkout} → redirige a {@code /orders}.</li>
+ * </ol>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/cart")

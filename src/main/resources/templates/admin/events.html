@@ -1,3 +1,15 @@
+<!--
+  Vista: Gestión de eventos — /admin/events
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - events : List<EventResponseDTO> todos los eventos del sistema.
+
+  Permite crear, editar y eliminar eventos. Cada evento tiene título, descripción,
+  fecha y una lista de participantes (userIds). Los usuarios se unen/abandonan
+  desde la vista pública /events mediante los botones join/leave.
+  El sidebar se incluye con sidebar('events') para marcar el item activo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

@@ -1,3 +1,17 @@
+<!--
+  Vista: Moderación de comentarios — /admin/comments
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - comments : List<CommentResponseDTO> todos los comentarios del sistema.
+
+  Cada CommentResponseDTO expone: id, content, userId, username, workId, workTitle,
+  parentId (null si es comentario raíz), date, reactionCount.
+
+  Permite al administrador ver y eliminar cualquier comentario del sistema,
+  incluidos comentarios jerárquicos (respuestas a otros comentarios indicadas por parentId != null).
+  El sidebar se incluye con sidebar('comments') para marcar el item activo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

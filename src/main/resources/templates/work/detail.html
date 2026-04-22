@@ -12,6 +12,42 @@
   <!-- NAVBAR -->
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
+  <!--
+    ============================================================
+    Vista: work/detail.html
+    ============================================================
+    Página de detalle de una obra del catálogo.
+
+    Modelo recibido del WorkDetailController:
+      - work                 : WorkResponseDTO               — datos de la obra.
+      - editions             : List<EditionResponseDTO>      — ediciones disponibles.
+      - comments             : List<CommentResponseDTO>      — árbol de comentarios raíz,
+                                                               ordenado por fecha descendente.
+      - commentCount         : int                           — total de comentarios (árbol completo).
+      - productsByEdition    : Map<Long, ProductResponseDTO> — producto con stock por edición.
+      - loggedIn             : boolean                       — true si hay sesión activa.
+      - sessionUserId        : Long                          — ID del usuario en sesión.
+      - sessionRole          : String                        — rol del usuario en sesión.
+      - reactionCounts       : Map<Long, Integer>            — likes por comentario (árbol completo).
+      - userLikedCommentIds  : Set<Long>                     — IDs de comentarios likeados por sesión.
+      - userTracking         : TrackingWorkResponseDTO       — seguimiento de la obra por el usuario (null si no sigue).
+
+    Estructura de la página:
+      · Hero: portada + info principal (título, autores, género, valoración, tipo).
+      · Ediciones: selector de edición con precio, stock y botón de añadir al carrito.
+        - th:each sobre editions → muestra datos de cada edición.
+        - th:if sobre productsByEdition[edition.id] → solo muestra botón si hay stock.
+      · Acciones de biblioteca/wishlist (toggle): botones POST al controlador.
+        - userTracking == null → mostrar ambos botones (añadir a biblioteca o wishlist).
+        - userTracking.status == PENDING → en wishlist (botón para quitar de wishlist).
+        - userTracking.status != PENDING → en biblioteca (botón para quitar de biblioteca).
+      · Sección de comentarios:
+        - Formulario POST para publicar comentario raíz (requiere loggedIn).
+        - Árbol de comentarios renderizado con el fragmento recursivo fragments/comment.
+        - Cada comentario puede tener respuestas anidadas sin límite de profundidad visual.
+    ============================================================
+  -->
+
   <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
 
     <!-- ================================================================

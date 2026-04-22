@@ -1,3 +1,27 @@
+<!--
+  Vista: Carrito de compra — /cart
+  Controlador: CartController (GET /cart)
+
+  Variables del modelo:
+  - cartItems  : List<CartItemDTO> ítems almacenados en sesión HTTP bajo la clave "cart"
+                 Cada ítem expone: productId, workTitle, workImg, editionTitle,
+                 editorialName, price, quantity
+  - subtotal   : double suma de (price × quantity) de todos los ítems
+  - shipping   : double coste de envío fijo (5.50 €)
+  - total      : double subtotal + shipping
+  - suggestions: List<WorkResponseDTO> hasta 4 obras del catálogo sugeridas al usuario
+  - cartSuccess: String (opcional) mensaje de confirmación tras añadir/actualizar
+  - cartError  : String (opcional) mensaje de error
+
+  Flujo del carrito (sesión — no persistido en BD):
+  - POST /cart/update  : cambia la cantidad de un producto; quantity=0 lo elimina
+  - POST /cart/remove/{productId} : elimina el ítem directamente
+  - POST /cart/checkout : crea el Order en el backend via OrderClientService
+                          y redirige a /orders con flag orderSuccess=true
+
+  El panel derecho de resumen sólo se muestra si cartItems no está vacío.
+  La sección de sugerencias sólo se muestra si suggestions no está vacío.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

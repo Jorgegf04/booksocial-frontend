@@ -17,6 +17,20 @@ import com.example.booksocial_frontend.service.UserClientService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador MVC de la página de Comunidad de BookSocial.
+ *
+ * <p>Muestra un grid con todos los usuarios registrados (excluyendo al usuario
+ * actual) y permite seguirlos o dejar de seguirlos directamente desde la vista.</p>
+ *
+ * <p>Para cada usuario de la lista el controlador carga el conjunto de IDs a los
+ * que el usuario en sesión ya sigue ({@code followingIds}), de forma que la
+ * plantilla puede renderizar el botón correcto sin lógica extra en el cliente.</p>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/community")

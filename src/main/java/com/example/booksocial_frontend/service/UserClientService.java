@@ -11,6 +11,21 @@ import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
 import com.example.booksocial_frontend.dto.UpdateUserRequestDTO;
 import com.example.booksocial_frontend.dto.UserResponseDTO;
 
+/**
+ * Servicio cliente que comunica el frontend con los endpoints de usuario del backend.
+ *
+ * <p>Cubre operaciones CRUD sobre usuarios y el sistema de seguimiento social:</p>
+ * <ul>
+ *   <li>{@link #followUser(Long, Long)} — crea la relación follower → following.</li>
+ *   <li>{@link #unfollowUser(Long, Long)} — elimina la relación.</li>
+ *   <li>{@link #getFollowers(Long)} — lista de usuarios que siguen al userId indicado.</li>
+ *   <li>{@link #getFollowing(Long)} — lista de usuarios a los que sigue el userId indicado.</li>
+ * </ul>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Service
 public class UserClientService {
 

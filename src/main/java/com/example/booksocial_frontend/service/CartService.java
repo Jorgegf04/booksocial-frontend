@@ -9,6 +9,20 @@ import com.example.booksocial_frontend.dto.CartItemDTO;
 
 import jakarta.servlet.http.HttpSession;
 
+/**
+ * Servicio que gestiona el carrito de compra en sesión HTTP.
+ *
+ * <p>El carrito se almacena como una lista de {@link com.example.booksocial_frontend.dto.CartItemDTO}
+ * bajo la clave {@code "cart"} en la {@link jakarta.servlet.http.HttpSession}.
+ * No se persiste en base de datos; al cerrar sesión o expirar la misma, el carrito se pierde.</p>
+ *
+ * <p>Cuando el usuario añade un producto que ya está en el carrito,
+ * la cantidad se acumula en lugar de crear una línea duplicada.</p>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Service
 public class CartService {
 

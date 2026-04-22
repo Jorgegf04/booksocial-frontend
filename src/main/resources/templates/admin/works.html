@@ -1,3 +1,16 @@
+<!--
+  Vista: Gestión de obras — /admin/works
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - works   : List<WorkResponseDTO> todas las obras del catálogo.
+  - authors : List<AuthorResponseDTO> para el selector del formulario de creación.
+  - genres  : valores de Genre[] para el selector de género.
+  - types   : valores de WorkType[] para el selector de tipo.
+
+  Permite crear, editar y eliminar obras del catálogo.
+  El sidebar se incluye con sidebar('works') para marcar el item activo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

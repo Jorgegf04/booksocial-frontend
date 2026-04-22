@@ -8,6 +8,17 @@ import com.example.booksocial_frontend.dto.JwtResponseDTO;
 import com.example.booksocial_frontend.dto.LoginRequestDTO;
 import com.example.booksocial_frontend.dto.RegisterRequestDTO;
 
+/**
+ * Servicio cliente que comunica el frontend con los endpoints de autenticación del backend.
+ *
+ * <p>Realiza llamadas REST a {@code /api/auth/login} y {@code /api/auth/register}
+ * utilizando {@link org.springframework.web.client.RestClient}. El token JWT
+ * devuelto por el login es almacenado en sesión por {@link com.example.booksocial_frontend.controller.AuthController}.</p>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Service
 public class AuthClientService {
 

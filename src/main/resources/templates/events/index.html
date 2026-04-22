@@ -1,3 +1,28 @@
+<!--
+  Vista: Eventos — /events
+  Controlador: EventsController (GET /events, POST /events/{id}/join, POST /events/{id}/leave)
+
+  Variables del modelo:
+  - featured    : EventResponseDTO evento más próximo; mostrado en la tarjeta grande (col-lg-8)
+  - secondary   : EventResponseDTO segundo evento; mostrado en la tarjeta lateral (col-lg-4)
+  - upcoming    : List<EventResponseDTO> resto de eventos ordenados por fecha
+  - sessionUserId : Long id del usuario en sesión (null si no autenticado)
+  - successMsg  : String (opcional) mensaje de confirmación tras join/leave
+  - errorMsg    : String (opcional) mensaje de error
+
+  Lógica join/leave:
+  - Cada EventResponseDTO incluye userIds: List<Long> con los ids de participantes inscritos.
+  - Si sessionUserId está en userIds → se muestra el botón "Abandonar" (POST .../leave).
+  - Si sessionUserId NO está en userIds → se muestra el botón "Unirse" (POST .../join).
+  - Si sessionUserId == null (no autenticado) → enlace a /auth/login en lugar de botones.
+  - Los controladores POST llaman a EventClientService que delega al backend REST.
+  - totalParticipants es calculado en el backend como userIds.size().
+
+  Estructura de la página:
+  1. Hero header con título y descripción de la plataforma.
+  2. Bento grid: tarjeta destacada grande + tarjeta secundaria (si existen).
+  3. Lista de próximos eventos en grid de cards con badge "Inscrito" si el usuario ya participa.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

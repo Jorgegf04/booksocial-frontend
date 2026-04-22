@@ -13,6 +13,24 @@ import com.example.booksocial_frontend.service.EventClientService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador MVC del módulo de eventos de BookSocial.
+ *
+ * <p>Los eventos son actividades exclusivas para usuarios suscritos.
+ * Este controlador lista los próximos eventos obtenidos del backend
+ * y permite a los usuarios suscritos unirse o abandonar un evento.</p>
+ *
+ * <p>Estructura visual de la página:</p>
+ * <ul>
+ *   <li>Primer evento → tarjeta destacada (featured).</li>
+ *   <li>Segundo evento → tarjeta secundaria.</li>
+ *   <li>Resto → listado de próximos eventos.</li>
+ * </ul>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/events")

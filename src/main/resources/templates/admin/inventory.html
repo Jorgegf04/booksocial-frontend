@@ -1,3 +1,15 @@
+<!--
+  Vista: Gestión de inventario — /admin/inventory
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - products : List<ProductResponseDTO> todos los productos con precio y stock actuales.
+  - editions : List<EditionResponseDTO> para el selector al crear/editar productos.
+
+  Permite al administrador ver el stock disponible, actualizar precio y cantidad,
+  y crear nuevos productos vinculados a ediciones existentes.
+  El sidebar se incluye con sidebar('inventory') para marcar el item activo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

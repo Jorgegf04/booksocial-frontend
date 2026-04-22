@@ -11,6 +11,43 @@
 
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
+  <!--
+    ============================================================
+    Vista: user/profile.html
+    ============================================================
+    Muestra el perfil de un usuario (propio o ajeno).
+    Modelo recibido del ProfileController:
+      - user            : UserResponseDTO  — datos del usuario del perfil.
+      - tracking        : List<TrackingWorkResponseDTO> — obras seguidas.
+      - isOwnProfile    : boolean          — true si el visitante es el propietario.
+      - sessionUserId   : Long             — ID del usuario en sesión (null si no hay sesión).
+      - followers       : List<UserResponseDTO> — usuarios que siguen a este perfil.
+      - following       : List<UserResponseDTO> — usuarios a los que sigue este perfil.
+      - followersCount  : int              — total de seguidores (para mostrar en stats).
+      - followingCount  : int              — total de seguidos.
+      - isFollowing     : boolean          — true si el usuario en sesión sigue a este perfil.
+      - orders          : List<OrderResponseDTO> — pedidos (solo perfil propio).
+      - orderTrackings  : Map<Long, TrackingOrderResponseDTO> — último estado de cada pedido.
+      - updateForm      : UpdateUserRequestDTO — datos pre-cargados en el formulario de edición.
+
+    Estructura de la página:
+      · Columna izquierda (col-lg-4):
+          - Hero card: avatar, username, rol, stats (Obras / Seguidores / Siguiendo),
+            botón seguir/dejar de seguir (si perfil ajeno y hay sesión),
+            fecha de registro.
+          - Modales Bootstrap: lista de seguidores y seguidos (clickables → perfil).
+          - Formulario de edición de perfil (solo si isOwnProfile).
+      · Columna derecha (col-lg-8):
+          - Pestaña "Biblioteca": lista de obras seguidas con filtros por estado.
+          - Pestaña "Mis Pedidos": historial de pedidos con tracking (solo perfil propio).
+
+    Seguimiento de obras (biblioteca):
+      - Cada tarjeta muestra el estado (READING, COMPLETED, PENDING, DROPPED).
+      - En perfil propio, hacer clic en la tarjeta avanza el estado (ciclo PENDING→READING→COMPLETED→PENDING).
+      - Los filtros de la barra superior filtran las tarjetas visibles sin recarga (JS).
+    ============================================================
+  -->
+
   <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
 
     <!-- Alert éxito actualización -->

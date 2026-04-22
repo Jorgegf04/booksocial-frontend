@@ -1,3 +1,14 @@
+<!--
+  Vista: Gestión de pedidos — /admin/orders
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - orders : List<OrderResponseDTO> todos los pedidos del sistema obtenidos via OrderClientService.
+
+  Permite al administrador ver todos los pedidos, sus líneas y añadir estados de tracking
+  (PREPARING → SHIPPED → IN_TRANSIT → DELIVERED).
+  El sidebar se incluye con sidebar('orders') para marcar el item activo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

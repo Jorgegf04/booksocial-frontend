@@ -11,6 +11,27 @@
 
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
+  <!--
+    ============================================================
+    Vista: community/index.html
+    ============================================================
+    Página de Comunidad: muestra todos los usuarios registrados
+    (excepto el usuario en sesión) en un grid de tarjetas.
+
+    Modelo recibido del CommunityController:
+      - users        : List<UserResponseDTO> — usuarios a mostrar (sin el propio).
+      - followingIds : Set<Long>             — IDs de usuarios que ya sigue la sesión activa.
+      - sessionUserId: Long                  — ID del usuario en sesión (null si no hay sesión).
+
+    Funcionalidades:
+      · Botón "Seguir" → POST /community/{id}/follow  (solo si sessionUserId != null y no sigue).
+      · Botón "Siguiendo ✓" → POST /community/{id}/unfollow (si ya sigue).
+      · Sin sesión → botón "Ver perfil" en su lugar.
+      · Buscador client-side: filtra tarjetas por username en tiempo real (JS, sin recarga).
+      · Clic en avatar o nombre → navega al perfil público del usuario (/user/{id}).
+    ============================================================
+  -->
+
   <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
 
     <!-- Cabecera -->

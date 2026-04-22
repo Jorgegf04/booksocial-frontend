@@ -1,3 +1,16 @@
+<!--
+  Vista: Gestión de ediciones — /admin/editions
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - editions   : List<EditionResponseDTO> todas las ediciones del catálogo.
+  - works      : List<WorkResponseDTO> para el selector de obra al crear/editar.
+  - editorials : List<EditorialResponseDTO> para el selector de editorial.
+
+  Una edición vincula una obra con una editorial y tiene ISBN único.
+  Contiene tomos (manga), volúmenes (cómic) o el libro directamente.
+  El sidebar se incluye con sidebar('editions') para marcar el item activo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

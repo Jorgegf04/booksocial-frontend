@@ -1,3 +1,17 @@
+<!--
+  Fragmento: Pie de página global
+  Uso: th:replace="~{fragments/footer :: footer}" en todas las páginas.
+
+  Estructura del footer:
+  - Columna brand: logo, descripción breve y enlaces a redes sociales (decorativos).
+  - Columna Explorar: enlace activo a /catalog; el resto son placeholder (#).
+  - Columna Géneros: enlaces placeholder para filtrar por género en el catálogo.
+  - Columna Comunidad: enlaces placeholder para futuras funcionalidades.
+  - Columna Soporte: enlaces placeholder para páginas de ayuda y legales.
+
+  Los enlaces marcados con href="#" son decorativos y no tienen controlador asociado.
+  El copyright muestra el año actual (2026) de forma estática.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>

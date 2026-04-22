@@ -1,3 +1,26 @@
+<!--
+  Vista: Historial de pedidos — /orders
+  Controlador: OrdersController (GET /orders)
+  Requiere sesión activa; si no hay userId en sesión se redirige a /auth/login.
+
+  Variables del modelo:
+  - orders       : List<OrderResponseDTO> pedidos del usuario autenticado, ordenados
+                   por fecha descendente. Obtenidos via OrderClientService.getOrdersByUser(userId).
+  - orderSuccess : Boolean (opcional) true si se acaba de completar un checkout desde /cart
+
+  Estructura de OrderResponseDTO:
+  - id         : Long identificador del pedido
+  - date       : LocalDateTime fecha de creación
+  - total      : double importe total del pedido
+  - totalItems : int número total de artículos
+  - orderLines : List<OrderLineResponseDTO> con title (edición), price, quantity, subtotal
+
+  Cada pedido se renderiza como una .order-card con:
+  - Cabecera: número de pedido, fecha formateada y total en badge verde.
+  - Cuerpo  : lista de líneas (título de edición, cantidad, precio unitario, subtotal).
+
+  Si orders está vacío se muestra un estado vacío con enlace al catálogo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

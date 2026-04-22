@@ -1,3 +1,15 @@
+<!--
+  Vista: Panel de administración — /admin/dashboard
+  Acceso restringido: AdminInterceptor redirige a /auth/login si session.role != "ADMIN".
+
+  Estructura del layout admin:
+  - Sidebar izquierdo: th:replace="~{admin/fragments/sidebar :: sidebar('dashboard')}"
+    El argumento indica qué item del menú debe aparecer activo (active).
+  - Contenido principal (.admin-main): métricas y tablas de resumen.
+
+  El dashboard muestra estadísticas generales obtenidas del backend y accesos rápidos
+  a las secciones de gestión: usuarios, obras, pedidos, inventario y comentarios.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

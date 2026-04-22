@@ -1,3 +1,25 @@
+<!--
+  Fragmento: Barra de navegación global
+  Uso: th:replace="~{fragments/navbar :: navbar}" en todas las páginas.
+
+  Comportamiento según estado de sesión (leído directamente de la sesión HTTP):
+  - session.userId == null  → se muestran los botones "Iniciar sesión" y "Registrarse".
+  - session.userId != null  → se muestra el nombre de usuario (session.username) con
+                              enlace a /user/me y el botón "Cerrar sesión" (/auth/logout).
+
+  Badge del carrito:
+  - session.cart es la List<CartItemDTO> almacenada en sesión por CartService.
+  - Si no está vacío se muestra un badge rojo con el número de ítems distintos.
+
+  Búsqueda integrada:
+  - El campo "title" envía GET /catalog/filter con page=0 y title como parámetro,
+    reutilizando el mismo controlador de filtrado del catálogo.
+
+  Navegación:
+  - /catalog   → Catálogo de obras con filtros
+  - /events    → Página de eventos con join/leave
+  - /community → Página de comunidad con todos los usuarios y follow/unfollow
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>

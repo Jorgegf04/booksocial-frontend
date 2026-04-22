@@ -23,6 +23,28 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Controlador MVC del perfil de usuario de BookSocial.
+ *
+ * <p>Gestiona tanto el perfil propio como el perfil público de cualquier usuario.
+ * Las funcionalidades varían según si el visitante es el propietario del perfil:</p>
+ * <ul>
+ *   <li><b>Perfil propio:</b> formulario de edición, lista de pedidos y
+ *       estadísticas personales.</li>
+ *   <li><b>Perfil ajeno:</b> botón de seguir/dejar de seguir y biblioteca pública.</li>
+ * </ul>
+ *
+ * <h3>Sistema de seguimiento</h3>
+ * <p>Al cargar cualquier perfil se recuperan las listas de seguidores y seguidos
+ * del usuario visitado. Si hay sesión activa, se comprueba si el usuario en sesión
+ * está entre los seguidores para renderizar el botón correcto.
+ * Los endpoints {@code POST /{id}/follow} y {@code POST /{id}/unfollow} delegan
+ * en {@link com.example.booksocial_frontend.service.UserClientService}.</p>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Slf4j
 @Controller
 @RequiredArgsConstructor

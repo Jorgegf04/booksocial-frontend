@@ -13,6 +13,16 @@ import com.example.booksocial_frontend.service.OrderClientService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 
+/**
+ * Controlador MVC del historial de pedidos del usuario autenticado.
+ *
+ * <p>Requiere sesión activa; si no hay usuario logueado redirige al login.
+ * Delega la carga de pedidos en {@link com.example.booksocial_frontend.service.OrderClientService}.</p>
+ *
+ * @author Jorge
+ * @version 1.4
+ * @since 2026-04-22
+ */
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/orders")

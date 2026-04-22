@@ -1,3 +1,13 @@
+<!--
+  Vista: Gestión de usuarios — /admin/users
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - users : List<UserResponseDTO> todos los usuarios del sistema obtenidos via UserClientService.
+
+  Permite al administrador ver, activar/desactivar y eliminar usuarios.
+  El sidebar se incluye con sidebar('users') para marcar el item activo.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

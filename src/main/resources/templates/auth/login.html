@@ -1,3 +1,26 @@
+<!--
+  Vista: Inicio de sesión — /auth/login
+  Controlador: AuthController (GET/POST /auth/login)
+
+  Variables del modelo:
+  - loginRequest : LoginRequestDTO objeto de binding del formulario (username, password)
+  - error        : String (opcional) mensaje de error si las credenciales son incorrectas
+  - success      : String (opcional) mensaje de éxito mostrado tras un registro exitoso
+
+  Flujo de autenticación:
+  1. El formulario envía POST /auth/login con username y password.
+  2. AuthController llama a AuthClientService.login() que hace POST al backend /api/auth/login.
+  3. Si el backend responde con JWT, se guardan en sesión HTTP:
+       session["JWT"]      = token Bearer
+       session["userId"]   = id del usuario autenticado
+       session["username"] = nombre de usuario
+       session["role"]     = rol (REGISTERED / ADMIN)
+  4. Se redirige a /home; si role=ADMIN se puede acceder a /admin/**.
+
+  La página usa un layout de dos paneles:
+  - Panel izquierdo (.auth-panel): decorativo con cita literaria, oculto en móvil (<768px).
+  - Panel derecho (.auth-form-side): formulario de login con toggle de contraseña.
+-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>

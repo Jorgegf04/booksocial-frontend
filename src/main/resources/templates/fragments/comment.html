@@ -3,16 +3,35 @@
 <body>
 
 <!--
-  Fragmento recursivo para renderizar un comentario y todo su árbol de respuestas.
+  ============================================================
+  Fragmento Thymeleaf: comment
+  ============================================================
+  Renderiza un comentario y todo su árbol de respuestas de forma
+  recursiva. Cada nodo del árbol invoca de nuevo a este mismo
+  fragmento con el comentario hijo (th:replace recursivo al final).
 
-  Parámetros:
-    - comment            : CommentResponseDTO
-    - work               : WorkResponseDTO
-    - loggedIn           : boolean
-    - sessionUserId      : Long
-    - sessionRole        : String
-    - reactionCounts     : Map<Long, Integer>
-    - userLikedCommentIds: Set<Long>
+  Parámetros recibidos:
+    - comment             : CommentResponseDTO — comentario actual a renderizar.
+    - work                : WorkResponseDTO    — obra a la que pertenece el comentario.
+    - loggedIn            : boolean            — true si hay usuario en sesión.
+    - sessionUserId       : Long               — ID del usuario autenticado (null si no hay sesión).
+    - sessionRole         : String             — rol del usuario ("ADMIN", "REGISTERED", etc.).
+    - reactionCounts      : Map<Long, Integer> — mapa comentarioId → número total de likes.
+    - userLikedCommentIds : Set<Long>          — IDs de comentarios que el usuario ya ha likeado.
+
+  Comportamiento de las reacciones (toggle):
+    - Si el usuario NO ha likeado el comentario → botón estilo normal.
+    - Si el usuario YA ha likeado → botón resaltado (color primario + icono filled).
+    - El formulario POST envía al endpoint /work/{wid}/comment/{cid}/reaction.
+
+  Permisos de eliminación:
+    - Visible únicamente si loggedIn Y (comment.userId == sessionUserId OR sessionRole == "ADMIN").
+
+  Árbol jerárquico:
+    - Las respuestas se iteran con th:each sobre comment.replies.
+    - Cada respuesta invoca de nuevo este mismo fragmento (recursividad Thymeleaf).
+    - La profundidad real del árbol está limitada en el backend por el mapper de CommentServiceImpl.
+  ============================================================
 -->
 <div th:fragment="comment(comment, work, loggedIn, sessionUserId, sessionRole, reactionCounts, userLikedCommentIds)"
      class="comment-card">
