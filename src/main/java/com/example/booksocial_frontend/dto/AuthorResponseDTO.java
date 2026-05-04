@@ -12,5 +12,7 @@ public class AuthorResponseDTO {
   private String name;
   private String nationality;
   private LocalDate birthDate;
+  private String img;
+  private Long followerCount;
   private List<WorkResponseDTO> works;
 }

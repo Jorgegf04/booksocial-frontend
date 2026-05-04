@@ -76,9 +76,26 @@ public class WorkDetailController {
   @GetMapping("/{id}")
   public String showWork(@PathVariable Long id, HttpSession session, Model model) {
 
-    WorkResponseDTO work = workService.getWorkById(id);
-    List<EditionResponseDTO> editions = editionService.getEditionsByWork(id);
-    List<CommentResponseDTO> comments = commentService.getRootCommentsByWork(id);
+    WorkResponseDTO work;
+    try {
+      work = workService.getWorkById(id);
+    } catch (Exception e) {
+      return "redirect:/catalog";
+    }
+
+    List<EditionResponseDTO> editions;
+    try {
+      editions = editionService.getEditionsByWork(id);
+    } catch (Exception e) {
+      editions = List.of();
+    }
+
+    List<CommentResponseDTO> comments;
+    try {
+      comments = commentService.getRootCommentsByWork(id);
+    } catch (Exception e) {
+      comments = List.of();
+    }
 
     // Ordenar todo el árbol de más reciente a más antiguo
     sortRecursive(comments);

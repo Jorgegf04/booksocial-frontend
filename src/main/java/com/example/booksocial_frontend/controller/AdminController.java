@@ -55,24 +55,39 @@ public class AdminController {
   private final EditionClientService editionClientService;
   private final CommentClientService commentClientService;
 
-  // ─── DASHBOARD ───────────────────────────────────────────────────────────────
+  // DASHBOARD
 
   @GetMapping({ "", "/", "/dashboard" })
   public String dashboard(Model model) {
     List<UserResponseDTO> users = List.of();
-    try { users = userClientService.getAllUsers(); } catch (Exception ignored) {}
+    try {
+      users = userClientService.getAllUsers();
+    } catch (Exception ignored) {
+    }
 
     List<OrderResponseDTO> orders = List.of();
-    try { orders = orderClientService.getAllOrders(); } catch (Exception ignored) {}
+    try {
+      orders = orderClientService.getAllOrders();
+    } catch (Exception ignored) {
+    }
 
     List<ProductResponseDTO> products = List.of();
-    try { products = productClientService.getAvailableProducts(); } catch (Exception ignored) {}
+    try {
+      products = productClientService.getAvailableProducts();
+    } catch (Exception ignored) {
+    }
 
     List<EventResponseDTO> events = List.of();
-    try { events = eventClientService.getUpcomingEvents(); } catch (Exception ignored) {}
+    try {
+      events = eventClientService.getUpcomingEvents();
+    } catch (Exception ignored) {
+    }
 
     List<WorkResponseDTO> works = List.of();
-    try { works = workClientService.getAllWorks(); } catch (Exception ignored) {}
+    try {
+      works = workClientService.getAllWorks();
+    } catch (Exception ignored) {
+    }
 
     long totalUsers = users.size();
     double totalRevenue = orders.stream().mapToDouble(o -> o.getTotal() != null ? o.getTotal() : 0).sum();
@@ -103,12 +118,15 @@ public class AdminController {
     return "admin/dashboard";
   }
 
-  // ─── WORKS ───────────────────────────────────────────────────────────────────
+  // WORKS
 
   @GetMapping("/works")
   public String works(Model model) {
     List<WorkResponseDTO> works = List.of();
-    try { works = workClientService.getAllWorks(); } catch (Exception ignored) {}
+    try {
+      works = workClientService.getAllWorks();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("works", works);
     model.addAttribute("genres", Genre.values());
     model.addAttribute("types", WorkType.values());
@@ -132,10 +150,14 @@ public class AdminController {
       WorkRequestDTO dto = new WorkRequestDTO();
       dto.setTitle(title);
       dto.setDescription(description);
-      if (genre != null && !genre.isBlank()) dto.setGenre(Genre.valueOf(genre));
-      if (type != null && !type.isBlank()) dto.setType(WorkType.valueOf(type));
-      if (demographic != null && !demographic.isBlank()) dto.setDemographic(Demographic.valueOf(demographic));
-      if (publicationDate != null && !publicationDate.isBlank()) dto.setPublicationDate(LocalDate.parse(publicationDate));
+      if (genre != null && !genre.isBlank())
+        dto.setGenre(Genre.valueOf(genre));
+      if (type != null && !type.isBlank())
+        dto.setType(WorkType.valueOf(type));
+      if (demographic != null && !demographic.isBlank())
+        dto.setDemographic(Demographic.valueOf(demographic));
+      if (publicationDate != null && !publicationDate.isBlank())
+        dto.setPublicationDate(LocalDate.parse(publicationDate));
       dto.setImg(img);
       if (authors != null && !authors.isBlank()) {
         dto.setAuthors(Arrays.stream(authors.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
@@ -165,10 +187,14 @@ public class AdminController {
       WorkRequestDTO dto = new WorkRequestDTO();
       dto.setTitle(title);
       dto.setDescription(description);
-      if (genre != null && !genre.isBlank()) dto.setGenre(Genre.valueOf(genre));
-      if (type != null && !type.isBlank()) dto.setType(WorkType.valueOf(type));
-      if (demographic != null && !demographic.isBlank()) dto.setDemographic(Demographic.valueOf(demographic));
-      if (publicationDate != null && !publicationDate.isBlank()) dto.setPublicationDate(LocalDate.parse(publicationDate));
+      if (genre != null && !genre.isBlank())
+        dto.setGenre(Genre.valueOf(genre));
+      if (type != null && !type.isBlank())
+        dto.setType(WorkType.valueOf(type));
+      if (demographic != null && !demographic.isBlank())
+        dto.setDemographic(Demographic.valueOf(demographic));
+      if (publicationDate != null && !publicationDate.isBlank())
+        dto.setPublicationDate(LocalDate.parse(publicationDate));
       dto.setImg(img);
       if (authors != null && !authors.isBlank()) {
         dto.setAuthors(Arrays.stream(authors.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
@@ -192,12 +218,15 @@ public class AdminController {
     return "redirect:/admin/works";
   }
 
-  // ─── AUTHORS ─────────────────────────────────────────────────────────────────
+  // AUTHORS
 
   @GetMapping("/authors")
   public String authors(Model model) {
     List<AuthorResponseDTO> authors = List.of();
-    try { authors = authorClientService.getAllAuthors(); } catch (Exception ignored) {}
+    try {
+      authors = authorClientService.getAllAuthors();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("authors", authors);
     return "admin/authors";
   }
@@ -213,7 +242,8 @@ public class AdminController {
       AuthorRequestDTO dto = new AuthorRequestDTO();
       dto.setName(name);
       dto.setNationality(nationality);
-      if (birthDate != null && !birthDate.isBlank()) dto.setBirthDate(LocalDate.parse(birthDate));
+      if (birthDate != null && !birthDate.isBlank())
+        dto.setBirthDate(LocalDate.parse(birthDate));
       authorClientService.createAuthor(dto);
       ra.addFlashAttribute("success", "Autor creado correctamente");
     } catch (Exception e) {
@@ -234,7 +264,8 @@ public class AdminController {
       AuthorRequestDTO dto = new AuthorRequestDTO();
       dto.setName(name);
       dto.setNationality(nationality);
-      if (birthDate != null && !birthDate.isBlank()) dto.setBirthDate(LocalDate.parse(birthDate));
+      if (birthDate != null && !birthDate.isBlank())
+        dto.setBirthDate(LocalDate.parse(birthDate));
       authorClientService.updateAuthor(id, dto);
       ra.addFlashAttribute("success", "Autor actualizado correctamente");
     } catch (Exception e) {
@@ -254,14 +285,20 @@ public class AdminController {
     return "redirect:/admin/authors";
   }
 
-  // ─── EDITIONS ────────────────────────────────────────────────────────────────
+  // EDITIONS
 
   @GetMapping("/editions")
   public String editions(Model model) {
     List<EditionResponseDTO> editions = List.of();
-    try { editions = editionClientService.getAllEditions(); } catch (Exception ignored) {}
+    try {
+      editions = editionClientService.getAllEditions();
+    } catch (Exception ignored) {
+    }
     List<WorkResponseDTO> works = List.of();
-    try { works = workClientService.getAllWorks(); } catch (Exception ignored) {}
+    try {
+      works = workClientService.getAllWorks();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("editions", editions);
     model.addAttribute("works", works);
     return "admin/editions";
@@ -280,7 +317,8 @@ public class AdminController {
     try {
       EditionRequestDTO dto = new EditionRequestDTO();
       dto.setIsbn(isbn);
-      if (editionDate != null && !editionDate.isBlank()) dto.setEditionDate(LocalDate.parse(editionDate));
+      if (editionDate != null && !editionDate.isBlank())
+        dto.setEditionDate(LocalDate.parse(editionDate));
       dto.setWorkId(workId);
       dto.setEditorialId(editorialId);
       dto.setTitle(title);
@@ -307,7 +345,8 @@ public class AdminController {
     try {
       EditionRequestDTO dto = new EditionRequestDTO();
       dto.setIsbn(isbn);
-      if (editionDate != null && !editionDate.isBlank()) dto.setEditionDate(LocalDate.parse(editionDate));
+      if (editionDate != null && !editionDate.isBlank())
+        dto.setEditionDate(LocalDate.parse(editionDate));
       dto.setWorkId(workId);
       dto.setEditorialId(editorialId);
       dto.setTitle(title);
@@ -331,12 +370,15 @@ public class AdminController {
     return "redirect:/admin/editions";
   }
 
-  // ─── EVENTS ──────────────────────────────────────────────────────────────────
+  // EVENTS
 
   @GetMapping("/events")
   public String events(Model model) {
     List<EventResponseDTO> events = List.of();
-    try { events = eventClientService.getAllEvents(); } catch (Exception ignored) {}
+    try {
+      events = eventClientService.getAllEvents();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("events", events);
     return "admin/events";
   }
@@ -393,12 +435,15 @@ public class AdminController {
     return "redirect:/admin/events";
   }
 
-  // ─── USERS ───────────────────────────────────────────────────────────────────
+  // USERS
 
   @GetMapping("/users")
   public String users(Model model) {
     List<UserResponseDTO> users = List.of();
-    try { users = userClientService.getAllUsers(); } catch (Exception ignored) {}
+    try {
+      users = userClientService.getAllUsers();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("users", users);
     return "admin/users";
   }
@@ -434,12 +479,15 @@ public class AdminController {
     return "redirect:/admin/users";
   }
 
-  // ─── COMMENTS ────────────────────────────────────────────────────────────────
+  // COMMENTS
 
   @GetMapping("/comments")
   public String comments(Model model) {
     List<CommentResponseDTO> comments = List.of();
-    try { comments = commentClientService.getAllComments(); } catch (Exception ignored) {}
+    try {
+      comments = commentClientService.getAllComments();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("comments", comments);
     return "admin/comments";
   }
@@ -455,12 +503,15 @@ public class AdminController {
     return "redirect:/admin/comments";
   }
 
-  // ─── COMMERCE (sin CRUD) ─────────────────────────────────────────────────────
+  // COMMERCE (sin CRUD)
 
   @GetMapping("/orders")
   public String orders(Model model) {
     List<OrderResponseDTO> orders = List.of();
-    try { orders = orderClientService.getAllOrders(); } catch (Exception ignored) {}
+    try {
+      orders = orderClientService.getAllOrders();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("orders", orders);
     return "admin/orders";
   }
@@ -468,7 +519,10 @@ public class AdminController {
   @GetMapping("/inventory")
   public String inventory(Model model) {
     List<ProductResponseDTO> products = List.of();
-    try { products = productClientService.getAvailableProducts(); } catch (Exception ignored) {}
+    try {
+      products = productClientService.getAvailableProducts();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("products", products);
     return "admin/inventory";
   }

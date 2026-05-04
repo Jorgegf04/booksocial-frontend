@@ -2,16 +2,27 @@ package com.example.booksocial_frontend.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import com.example.booksocial_frontend.dto.ProductResponseDTO;
 
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class ProductClientService {
 
-  private final RestClient restClient = RestClient.create("http://localhost:9999/api/products");
+  @Value("${api.base-url:http://localhost:9999/api}")
+  private String apiBaseUrl;
+
+  private RestClient restClient;
+
+  @PostConstruct
+  public void init() {
+    this.restClient = RestClient.create(apiBaseUrl + "/products");
+  }
 
   public List<ProductResponseDTO> getAvailableProducts() {
     return restClient.get()

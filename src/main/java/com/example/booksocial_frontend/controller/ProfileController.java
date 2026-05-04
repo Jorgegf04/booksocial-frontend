@@ -60,15 +60,36 @@ public class ProfileController {
   @GetMapping("/{id}")
   public String showProfile(@PathVariable Long id, HttpSession session, Model model) {
 
-    UserResponseDTO user = userService.getUserById(id);
-    List<TrackingWorkResponseDTO> tracking = userService.getTrackingByUser(id);
+    UserResponseDTO user;
+    try {
+      user = userService.getUserById(id);
+    } catch (Exception e) {
+      return "redirect:/community";
+    }
+
+    List<TrackingWorkResponseDTO> tracking;
+    try {
+      tracking = userService.getTrackingByUser(id);
+    } catch (Exception e) {
+      tracking = List.of();
+    }
 
     Long sessionUserId = (Long) session.getAttribute("userId");
     boolean isOwnProfile = sessionUserId != null && sessionUserId.equals(id);
 
     // Seguidores / siguiendo
-    List<UserResponseDTO> followers = userService.getFollowers(id);
-    List<UserResponseDTO> following = userService.getFollowing(id);
+    List<UserResponseDTO> followers;
+    List<UserResponseDTO> following;
+    try {
+      followers = userService.getFollowers(id);
+    } catch (Exception e) {
+      followers = List.of();
+    }
+    try {
+      following = userService.getFollowing(id);
+    } catch (Exception e) {
+      following = List.of();
+    }
     boolean isFollowing = sessionUserId != null && followers.stream()
         .anyMatch(f -> f.getId().equals(sessionUserId));
 

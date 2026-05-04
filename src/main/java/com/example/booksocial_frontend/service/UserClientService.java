@@ -2,6 +2,7 @@ package com.example.booksocial_frontend.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -11,25 +12,20 @@ import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
 import com.example.booksocial_frontend.dto.UpdateUserRequestDTO;
 import com.example.booksocial_frontend.dto.UserResponseDTO;
 
-/**
- * Servicio cliente que comunica el frontend con los endpoints de usuario del backend.
- *
- * <p>Cubre operaciones CRUD sobre usuarios y el sistema de seguimiento social:</p>
- * <ul>
- *   <li>{@link #followUser(Long, Long)} — crea la relación follower → following.</li>
- *   <li>{@link #unfollowUser(Long, Long)} — elimina la relación.</li>
- *   <li>{@link #getFollowers(Long)} — lista de usuarios que siguen al userId indicado.</li>
- *   <li>{@link #getFollowing(Long)} — lista de usuarios a los que sigue el userId indicado.</li>
- * </ul>
- *
- * @author Jorge
- * @version 1.4
- * @since 2026-04-22
- */
+import jakarta.annotation.PostConstruct;
+
 @Service
 public class UserClientService {
 
-  private final RestClient restClient = RestClient.create("http://localhost:9999/api/users");
+  @Value("${api.base-url:http://localhost:9999/api}")
+  private String apiBaseUrl;
+
+  private RestClient restClient;
+
+  @PostConstruct
+  public void init() {
+    this.restClient = RestClient.create(apiBaseUrl + "/users");
+  }
 
   public List<UserResponseDTO> getAllUsers() {
     return restClient.get()

@@ -49,6 +49,9 @@
         <li class="nav-item">
           <a class="nav-link" href="/community">Comunidad</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/authors">Autores</a>
+        </li>
       </ul>
 
       <!-- Search -->
@@ -111,6 +114,66 @@
 
   </div>
 </nav>
+
+<!--
+  PERSISTENCIA DEL CARRITO EN localStorage
+  ─────────────────────────────────────────
+  Lógica en 3 casos según el estado de session.cart (inlinado por Thymeleaf):
+
+  1. session.cart == null   → sesión expirada o nueva.
+     Si localStorage tiene ítems guardados Y no se ha intentado ya en esta pestaña
+     (flag sessionStorage 'bs_cart_synced'), llama a POST /cart/sync y recarga.
+
+  2. session.cart no vacío  → guardar snapshot mínimo {productId, quantity} en localStorage.
+
+  3. session.cart vacío []  → carrito vaciado intencionalmente (checkout o eliminar todos).
+     Limpia localStorage para evitar que se vuelva a restaurar.
+-->
+<script th:inline="javascript">
+  /*<![CDATA[*/
+  (function () {
+    var sessionCart = /*[[${session.cart}]]*/ null;
+
+    if (sessionCart === null) {
+      // Caso 1: sesión sin carrito — intentar restaurar desde localStorage
+      if (!sessionStorage.getItem('bs_cart_synced')) {
+        var saved = localStorage.getItem('bs_cart');
+        if (saved) {
+          try {
+            var items = JSON.parse(saved);
+            if (items && items.length > 0) {
+              sessionStorage.setItem('bs_cart_synced', '1');
+              fetch('/cart/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: saved
+              }).then(function (r) {
+                if (r.ok) window.location.reload();
+                else localStorage.removeItem('bs_cart');
+              }).catch(function () {});
+            }
+          } catch (e) {
+            localStorage.removeItem('bs_cart');
+          }
+        }
+      }
+
+    } else if (sessionCart.length > 0) {
+      // Caso 2: carrito activo — guardar snapshot en localStorage
+      var snapshot = sessionCart.map(function (item) {
+        return { productId: item.productId, quantity: item.quantity };
+      });
+      localStorage.setItem('bs_cart', JSON.stringify(snapshot));
+      sessionStorage.removeItem('bs_cart_synced');
+
+    } else {
+      // Caso 3: carrito vaciado explícitamente — limpiar localStorage
+      localStorage.removeItem('bs_cart');
+      sessionStorage.removeItem('bs_cart_synced');
+    }
+  })();
+  /*]]>*/
+</script>
 
 </body>
 </html>

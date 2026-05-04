@@ -3,6 +3,7 @@ package com.example.booksocial_frontend.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -146,6 +147,56 @@ public class CartController {
                                HttpSession session) {
     cartService.updateQuantity(session, productId, quantity);
     return "redirect:/cart";
+  }
+
+  /**
+   * Restaura el carrito de sesión desde los datos enviados por localStorage.
+   *
+   * <p>El cliente JS envía una lista de {@code [{productId, quantity}]} al detectar
+   * que la sesión está vacía pero localStorage tiene ítems guardados (sesión expirada).
+   * El servidor re-fetches el producto para obtener precio y nombre actualizados,
+   * garantizando que los datos del carrito sean siempre frescos.</p>
+   *
+   * <p>Si el carrito de sesión ya tiene ítems (p.ej. el usuario tiene la sesión activa
+   * en otra pestaña) no se hace nada para evitar duplicados.</p>
+   */
+  @PostMapping("/sync")
+  @ResponseBody
+  public ResponseEntity<Void> syncCart(
+      @RequestBody List<Map<String, Object>> items,
+      HttpSession session) {
+
+    if (!cartService.getCart(session).isEmpty()) {
+      return ResponseEntity.ok().build();
+    }
+
+    for (Map<String, Object> item : items) {
+      try {
+        Long productId = Long.valueOf(item.get("productId").toString());
+        int quantity   = Integer.parseInt(item.get("quantity").toString());
+
+        ProductResponseDTO product = productService.getProductById(productId);
+
+        String img = null;
+        try {
+          img = workService.getWorkById(product.getWorkId()).getImg();
+        } catch (Exception ignored) {}
+
+        cartService.addItem(session, new CartItemDTO(
+            product.getId(),
+            product.getWorkTitle(),
+            product.getEditionTitle() != null ? product.getEditionTitle() : "Edición",
+            product.getEditorialName(),
+            img,
+            product.getPrice(),
+            quantity
+        ));
+      } catch (Exception ignored) {
+        // Producto eliminado o sin stock → se omite silenciosamente
+      }
+    }
+
+    return ResponseEntity.ok().build();
   }
 
   /** Confirmar compra → crea el pedido */
