@@ -203,15 +203,16 @@
           <p class="filter-section-title mb-4">Editar perfil</p>
 
           <form th:action="@{'/user/' + ${user.id} + '/update'}"
-                th:object="${updateForm}" method="post">
+                th:object="${updateForm}" method="post" enctype="multipart/form-data">
 
-            <!-- Avatar URL -->
+            <!-- Avatar -->
             <div class="mb-3">
-              <label class="form-label">URL imagen de perfil</label>
-              <input type="text" class="form-control" th:field="*{img}"
-                     placeholder="/images/avatars/mi-avatar.jpg">
-              <div style="font-size:0.72rem; color:var(--color-outline); margin-top:0.3rem;">
-                Sube tu imagen a <code>static/images/avatars/</code> y pon la ruta aquí.
+              <label class="form-label">Foto de perfil</label>
+              <input type="hidden" th:field="*{img}">
+              <input type="file" name="avatarFile" accept="image/*" class="form-control">
+              <div th:if="${user.img != null and !user.img.isEmpty()}"
+                   style="font-size:0.72rem; color:var(--color-outline); margin-top:0.3rem;">
+                Imagen actual guardada. Selecciona un archivo para cambiarla.
               </div>
             </div>
 
@@ -258,22 +259,21 @@
             <h2 class="font-serif mb-0" style="font-size:1.5rem; color:var(--bs-primary);"
                 th:text="${user.username}">username</h2>
           </div>
-          <ul class="nav nav-pills gap-1" role="tablist">
+          <ul class="nav gap-1 profile-tabs" role="tablist">
             <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="tab-biblioteca"
+              <button class="profile-tab-btn active" id="tab-biblioteca"
                       data-bs-toggle="pill" data-bs-target="#pane-biblioteca"
                       type="button" role="tab">
                 Biblioteca
               </button>
             </li>
             <li class="nav-item" th:if="${isOwnProfile}" role="presentation">
-              <button class="nav-link" id="tab-pedidos"
+              <button class="profile-tab-btn" id="tab-pedidos"
                       data-bs-toggle="pill" data-bs-target="#pane-pedidos"
                       type="button" role="tab">
                 Mis Pedidos
                 <span th:if="${orders != null and !orders.isEmpty()}"
-                      class="ms-1 badge rounded-pill"
-                      style="background-color:rgba(45,76,62,0.15); color:var(--bs-primary); font-size:0.65rem;"
+                      class="ms-1 profile-tab-badge"
                       th:text="${orders.size()}">0</span>
               </button>
             </li>

@@ -151,7 +151,7 @@
         <h5 class="modal-title">Nueva Obra</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form method="post" th:action="@{/admin/works/create}">
+      <form method="post" th:action="@{/admin/works/create}" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-md-8">
@@ -189,8 +189,8 @@
               <input type="date" name="publicationDate" class="form-control form-control-sm">
             </div>
             <div class="col-md-8">
-              <label class="form-label fw-semibold">URL imagen</label>
-              <input type="text" name="img" class="form-control form-control-sm" placeholder="https://...">
+              <label class="form-label fw-semibold">Imagen de portada</label>
+              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Rating</label>
@@ -199,9 +199,10 @@
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Autores</label>
-              <input type="text" name="authors" class="form-control form-control-sm"
-                     placeholder="Nombre1, Nombre2, ...">
-              <div class="form-text">Separar múltiples autores con comas</div>
+              <select name="authors" class="form-select form-select-sm" multiple size="4">
+                <option th:each="a : ${authors}" th:value="${a.name}" th:text="${a.name}"></option>
+              </select>
+              <div class="form-text">Mantén Ctrl/⌘ para seleccionar varios autores</div>
             </div>
           </div>
         </div>
@@ -222,7 +223,7 @@
         <h5 class="modal-title">Editar Obra</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form id="editWorkForm" method="post">
+      <form id="editWorkForm" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-md-8">
@@ -260,14 +261,17 @@
               <input type="date" id="editWorkPublication" name="publicationDate" class="form-control form-control-sm">
             </div>
             <div class="col-md-8">
-              <label class="form-label fw-semibold">URL imagen</label>
-              <input type="text" id="editWorkImg" name="img" class="form-control form-control-sm">
+              <label class="form-label fw-semibold">Imagen de portada</label>
+              <input type="hidden" id="editWorkImg" name="img">
+              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
+              <div id="editWorkImgPreview" class="mt-1" style="font-size:0.75rem; color:var(--color-muted);"></div>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Autores</label>
-              <input type="text" id="editWorkAuthors" name="authors" class="form-control form-control-sm"
-                     placeholder="Nombre1, Nombre2, ...">
-              <div class="form-text">Separar múltiples autores con comas</div>
+              <select id="editWorkAuthors" name="authors" class="form-select form-select-sm" multiple size="4">
+                <option th:each="a : ${authors}" th:value="${a.name}" th:text="${a.name}"></option>
+              </select>
+              <div class="form-text">Mantén Ctrl/⌘ para seleccionar varios autores</div>
             </div>
           </div>
         </div>
@@ -316,7 +320,13 @@
     setSelectValue('editWorkDemographic', btn.dataset.demographic || '');
     document.getElementById('editWorkPublication').value = btn.dataset.publication || '';
     document.getElementById('editWorkImg').value = btn.dataset.img || '';
-    document.getElementById('editWorkAuthors').value = btn.dataset.authors || '';
+    document.getElementById('editWorkImgPreview').textContent =
+        btn.dataset.img ? 'Actual: ' + btn.dataset.img : '';
+    const currentAuthors = (btn.dataset.authors || '').split(',').map(s => s.trim()).filter(s => s);
+    const authorSelect = document.getElementById('editWorkAuthors');
+    for (let opt of authorSelect.options) {
+      opt.selected = currentAuthors.includes(opt.value);
+    }
   }
 
   function openDeleteModal(formId, id, basePath, suffix, name, nameSpanId) {

@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.booksocial_frontend.dto.OrderResponseDTO;
 import com.example.booksocial_frontend.dto.TrackingOrderResponseDTO;
@@ -14,6 +15,7 @@ import com.example.booksocial_frontend.dto.TrackingWorkRequestDTO;
 import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
 import com.example.booksocial_frontend.dto.UpdateUserRequestDTO;
 import com.example.booksocial_frontend.dto.UserResponseDTO;
+import com.example.booksocial_frontend.service.FileUploadClientService;
 import com.example.booksocial_frontend.service.OrderClientService;
 import com.example.booksocial_frontend.service.TrackingOrderClientService;
 import com.example.booksocial_frontend.service.TrackingWorkClientService;
@@ -55,6 +57,7 @@ public class ProfileController {
   private final TrackingWorkClientService trackingService;
   private final OrderClientService orderService;
   private final TrackingOrderClientService trackingOrderService;
+  private final FileUploadClientService fileUploadClientService;
 
   /** Perfil público de cualquier usuario */
   @GetMapping("/{id}")
@@ -191,11 +194,16 @@ public class ProfileController {
   @PostMapping("/{id}/update")
   public String updateProfile(@PathVariable Long id,
                                @ModelAttribute UpdateUserRequestDTO form,
+                               @RequestParam(required = false) MultipartFile avatarFile,
                                HttpSession session) {
 
     Long sessionUserId = (Long) session.getAttribute("userId");
     if (sessionUserId == null || !sessionUserId.equals(id)) {
       return "redirect:/auth/login";
+    }
+
+    if (avatarFile != null && !avatarFile.isEmpty()) {
+      form.setImg(fileUploadClientService.uploadImage(avatarFile));
     }
 
     userService.updateUser(id, form);

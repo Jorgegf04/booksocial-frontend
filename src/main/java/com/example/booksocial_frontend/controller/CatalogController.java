@@ -116,8 +116,9 @@ public class CatalogController {
     return works.stream()
         .filter(w -> titleLower == null
             || (w.getTitle() != null && w.getTitle().toLowerCase().contains(titleLower)))
-        .filter(w -> filter.getGenre() == null
-            || (w.getGenre() != null && w.getGenre().name().equals(filter.getGenre().name())))
+        .filter(w -> filter.getGenres() == null || filter.getGenres().isEmpty()
+            || (w.getGenre() != null && filter.getGenres().stream()
+                .anyMatch(g -> g.name().equals(w.getGenre().name()))))
         .filter(w -> filter.getType() == null
             || (w.getType() != null && w.getType().name().equals(filter.getType().name())))
         .filter(w -> filter.getDemographic() == null

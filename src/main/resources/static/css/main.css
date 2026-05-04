@@ -732,6 +732,45 @@ h1, h2, h3, h4, h5, h6, .font-serif {
   box-shadow: 0 0 0 1px currentColor;
 }
 
+/* Profile tab buttons */
+.profile-tab-btn {
+  padding: 0.4rem 1.1rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border-radius: 2rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--color-surface-h);
+  color: var(--color-muted);
+  letter-spacing: 0.01em;
+}
+.profile-tab-btn:hover {
+  background: var(--color-surface-hh);
+  color: var(--bs-primary);
+}
+.profile-tab-btn.active {
+  background: var(--bs-primary);
+  color: #fff;
+  border-color: var(--bs-primary);
+}
+.profile-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.25);
+  color: inherit;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.1rem 0.45rem;
+  border-radius: 9999px;
+  line-height: 1.4;
+}
+.profile-tab-btn:not(.active) .profile-tab-badge {
+  background: rgba(45,76,62,0.12);
+  color: var(--bs-primary);
+}
+
 /* Clickable tracking card (own profile) */
 .tracking-card-interactive {
   cursor: pointer;
@@ -1504,6 +1543,21 @@ h1, h2, h3, h4, h5, h6, .font-serif {
 /* ============================================================
    ADMIN PANEL
    ============================================================ */
+
+/* Override Bootstrap btn-primary to site dark green */
+.admin-body .btn-primary {
+  --bs-btn-bg: #2D4C3E;
+  --bs-btn-border-color: #2D4C3E;
+  --bs-btn-hover-bg: #1e3a2f;
+  --bs-btn-hover-border-color: #1e3a2f;
+  --bs-btn-active-bg: #163528;
+  --bs-btn-active-border-color: #163528;
+  --bs-btn-disabled-bg: #2D4C3E;
+  --bs-btn-disabled-border-color: #2D4C3E;
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-color: #fff;
+}
 
 .admin-body {
   background-color: #f0ede7;

@@ -90,6 +90,8 @@
                           th:data-name="${author.name}"
                           th:data-nationality="${author.nationality}"
                           th:data-birthdate="${author.birthDate}"
+                          th:data-img="${author.img}"
+                          th:data-workids="${author.works != null and !author.works.isEmpty()} ? ${#strings.listJoin(author.works.![id], ',')} : ''"
                           onclick="openEditAuthorModal(this)">
                     <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
                   </button>
@@ -118,13 +120,13 @@
 
 <!-- Modal: Crear Autor -->
 <div class="modal fade" id="createAuthorModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Nuevo Autor</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form method="post" th:action="@{/admin/authors/create}">
+      <form method="post" th:action="@{/admin/authors/create}" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-12">
@@ -140,6 +142,17 @@
               <label class="form-label fw-semibold">Fecha de nacimiento</label>
               <input type="date" name="birthDate" class="form-control form-control-sm">
             </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Foto del autor</label>
+              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Obras</label>
+              <select name="workIds" class="form-select form-select-sm" multiple size="4">
+                <option th:each="w : ${works}" th:value="${w.id}" th:text="${w.title}"></option>
+              </select>
+              <div class="form-text">Mantén Ctrl/⌘ para seleccionar varias obras</div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -153,13 +166,13 @@
 
 <!-- Modal: Editar Autor -->
 <div class="modal fade" id="editAuthorModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Editar Autor</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form id="editAuthorForm" method="post">
+      <form id="editAuthorForm" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-12">
@@ -173,6 +186,19 @@
             <div class="col-md-6">
               <label class="form-label fw-semibold">Fecha de nacimiento</label>
               <input type="date" id="editAuthorBirthDate" name="birthDate" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Foto del autor</label>
+              <input type="hidden" id="editAuthorImg" name="img">
+              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
+              <div id="editAuthorImgPreview" class="mt-1" style="font-size:0.75rem; color:var(--color-muted);"></div>
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Obras</label>
+              <select id="editAuthorWorks" name="workIds" class="form-select form-select-sm" multiple size="4">
+                <option th:each="w : ${works}" th:value="${w.id}" th:text="${w.title}"></option>
+              </select>
+              <div class="form-text">Mantén Ctrl/⌘ para seleccionar varias obras</div>
             </div>
           </div>
         </div>
@@ -216,6 +242,14 @@
     document.getElementById('editAuthorName').value = btn.dataset.name || '';
     document.getElementById('editAuthorNationality').value = btn.dataset.nationality || '';
     document.getElementById('editAuthorBirthDate').value = btn.dataset.birthdate || '';
+    document.getElementById('editAuthorImg').value = btn.dataset.img || '';
+    document.getElementById('editAuthorImgPreview').textContent =
+        btn.dataset.img ? 'Actual: ' + btn.dataset.img : '';
+    const currentWorkIds = (btn.dataset.workids || '').split(',').map(s => s.trim()).filter(s => s);
+    const worksSelect = document.getElementById('editAuthorWorks');
+    for (let opt of worksSelect.options) {
+      opt.selected = currentWorkIds.includes(opt.value);
+    }
   }
 
   function openDeleteAuthorModal(btn) {

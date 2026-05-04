@@ -97,16 +97,16 @@
                    autocomplete="off">
           </div>
 
-          <!-- Géneros -->
+          <!-- Géneros (selección múltiple) -->
           <div class="mb-4">
             <p class="filter-section-title">Géneros</p>
             <div class="genre-list">
               <div class="form-check mb-1"
                    th:each="g : ${T(com.example.booksocial_frontend.domain.Genre).values()}">
-                <input class="form-check-input genre-radio" type="radio" name="genre"
+                <input class="form-check-input" type="checkbox" name="genres"
                        th:value="${g.name()}"
                        th:id="'genre-' + ${g.name()}"
-                       th:checked="${filter.genre != null and filter.genre.name() == g.name()}">
+                       th:checked="${filter.genres != null and filter.genres.contains(g)}">
                 <label class="form-check-label" style="font-size:0.82rem; color:var(--color-muted);"
                        th:for="'genre-' + ${g.name()}"
                        th:text="${#strings.replace(g.name(), '_', ' ')}">
@@ -347,8 +347,8 @@
       document.getElementById('filterForm').submit();
     }
 
-    // Auto-submit al cambiar género o demografía (y resetea página)
-    document.querySelectorAll('.genre-radio, .demographic-radio').forEach(radio => {
+    // Auto-submit al cambiar demografía (y resetea página)
+    document.querySelectorAll('.demographic-radio').forEach(radio => {
       radio.addEventListener('change', () => {
         resetPage();
         document.getElementById('filterForm').submit();

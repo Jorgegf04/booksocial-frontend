@@ -2,7 +2,6 @@ package com.example.booksocial_frontend.controller;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Controller;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.booksocial_frontend.dto.AuthorRequestDTO;
@@ -32,6 +32,7 @@ import com.example.booksocial_frontend.domain.Genre;
 import com.example.booksocial_frontend.domain.WorkType;
 import com.example.booksocial_frontend.service.AuthorClientService;
 import com.example.booksocial_frontend.service.CommentClientService;
+import com.example.booksocial_frontend.service.FileUploadClientService;
 import com.example.booksocial_frontend.service.EditionClientService;
 import com.example.booksocial_frontend.service.EventClientService;
 import com.example.booksocial_frontend.service.OrderClientService;
@@ -54,6 +55,7 @@ public class AdminController {
   private final AuthorClientService authorClientService;
   private final EditionClientService editionClientService;
   private final CommentClientService commentClientService;
+  private final FileUploadClientService fileUploadClientService;
 
   // DASHBOARD
 
@@ -127,7 +129,13 @@ public class AdminController {
       works = workClientService.getAllWorks();
     } catch (Exception ignored) {
     }
+    List<AuthorResponseDTO> authors = List.of();
+    try {
+      authors = authorClientService.getAllAuthors();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("works", works);
+    model.addAttribute("authors", authors);
     model.addAttribute("genres", Genre.values());
     model.addAttribute("types", WorkType.values());
     model.addAttribute("demographics", Demographic.values());
@@ -143,7 +151,8 @@ public class AdminController {
       @RequestParam(required = false) String demographic,
       @RequestParam(required = false) String publicationDate,
       @RequestParam(required = false) String img,
-      @RequestParam(required = false) String authors,
+      @RequestParam(required = false) MultipartFile imgFile,
+      @RequestParam(required = false) List<String> authors,
       RedirectAttributes ra) {
 
     try {
@@ -158,10 +167,10 @@ public class AdminController {
         dto.setDemographic(Demographic.valueOf(demographic));
       if (publicationDate != null && !publicationDate.isBlank())
         dto.setPublicationDate(LocalDate.parse(publicationDate));
-      dto.setImg(img);
-      if (authors != null && !authors.isBlank()) {
-        dto.setAuthors(Arrays.stream(authors.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
-      }
+      dto.setImg(imgFile != null && !imgFile.isEmpty()
+          ? fileUploadClientService.uploadImage(imgFile) : img);
+      if (authors != null && !authors.isEmpty())
+        dto.setAuthors(authors);
       workClientService.createWork(dto);
       ra.addFlashAttribute("success", "Obra creada correctamente");
     } catch (Exception e) {
@@ -180,7 +189,8 @@ public class AdminController {
       @RequestParam(required = false) String demographic,
       @RequestParam(required = false) String publicationDate,
       @RequestParam(required = false) String img,
-      @RequestParam(required = false) String authors,
+      @RequestParam(required = false) MultipartFile imgFile,
+      @RequestParam(required = false) List<String> authors,
       RedirectAttributes ra) {
 
     try {
@@ -195,10 +205,10 @@ public class AdminController {
         dto.setDemographic(Demographic.valueOf(demographic));
       if (publicationDate != null && !publicationDate.isBlank())
         dto.setPublicationDate(LocalDate.parse(publicationDate));
-      dto.setImg(img);
-      if (authors != null && !authors.isBlank()) {
-        dto.setAuthors(Arrays.stream(authors.split(",")).map(String::trim).filter(s -> !s.isEmpty()).toList());
-      }
+      dto.setImg(imgFile != null && !imgFile.isEmpty()
+          ? fileUploadClientService.uploadImage(imgFile) : img);
+      if (authors != null && !authors.isEmpty())
+        dto.setAuthors(authors);
       workClientService.updateWork(id, dto);
       ra.addFlashAttribute("success", "Obra actualizada correctamente");
     } catch (Exception e) {
@@ -227,7 +237,13 @@ public class AdminController {
       authors = authorClientService.getAllAuthors();
     } catch (Exception ignored) {
     }
+    List<WorkResponseDTO> works = List.of();
+    try {
+      works = workClientService.getAllWorks();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("authors", authors);
+    model.addAttribute("works", works);
     return "admin/authors";
   }
 
@@ -236,6 +252,8 @@ public class AdminController {
       @RequestParam String name,
       @RequestParam(required = false) String nationality,
       @RequestParam(required = false) String birthDate,
+      @RequestParam(required = false) MultipartFile imgFile,
+      @RequestParam(required = false) List<Long> workIds,
       RedirectAttributes ra) {
 
     try {
@@ -244,6 +262,10 @@ public class AdminController {
       dto.setNationality(nationality);
       if (birthDate != null && !birthDate.isBlank())
         dto.setBirthDate(LocalDate.parse(birthDate));
+      if (imgFile != null && !imgFile.isEmpty())
+        dto.setImg(fileUploadClientService.uploadImage(imgFile));
+      if (workIds != null && !workIds.isEmpty())
+        dto.setWorkIds(workIds);
       authorClientService.createAuthor(dto);
       ra.addFlashAttribute("success", "Autor creado correctamente");
     } catch (Exception e) {
@@ -258,6 +280,9 @@ public class AdminController {
       @RequestParam String name,
       @RequestParam(required = false) String nationality,
       @RequestParam(required = false) String birthDate,
+      @RequestParam(required = false) String img,
+      @RequestParam(required = false) MultipartFile imgFile,
+      @RequestParam(required = false) List<Long> workIds,
       RedirectAttributes ra) {
 
     try {
@@ -266,6 +291,9 @@ public class AdminController {
       dto.setNationality(nationality);
       if (birthDate != null && !birthDate.isBlank())
         dto.setBirthDate(LocalDate.parse(birthDate));
+      dto.setImg(imgFile != null && !imgFile.isEmpty()
+          ? fileUploadClientService.uploadImage(imgFile) : img);
+      dto.setWorkIds(workIds != null ? workIds : List.of());
       authorClientService.updateAuthor(id, dto);
       ra.addFlashAttribute("success", "Autor actualizado correctamente");
     } catch (Exception e) {
