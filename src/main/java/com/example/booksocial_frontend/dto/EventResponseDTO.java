@@ -12,6 +12,7 @@ public class EventResponseDTO {
   private Long id;
   private String title;
   private String description;
+  private String img;
   private LocalDateTime date;
   private List<Long> userIds;
   private List<String> usernames;

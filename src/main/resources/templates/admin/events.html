@@ -6,7 +6,7 @@
   - events : List<EventResponseDTO> todos los eventos del sistema.
 
   Permite crear, editar y eliminar eventos. Cada evento tiene título, descripción,
-  fecha y una lista de participantes (userIds). Los usuarios se unen/abandonan
+  imagen, fecha y una lista de participantes (userIds). Los usuarios se unen/abandonan
   desde la vista pública /events mediante los botones join/leave.
   El sidebar se incluye con sidebar('events') para marcar el item activo.
 -->
@@ -61,6 +61,7 @@
           <thead>
             <tr>
               <th>#</th>
+              <th>Imagen</th>
               <th>Título</th>
               <th>Descripción</th>
               <th>Fecha</th>
@@ -73,12 +74,20 @@
             <tr th:each="event : ${events}">
               <td style="font-size:0.8rem; color:var(--color-outline);" th:text="${event.id}">—</td>
               <td>
+                <img th:if="${event.img != null and !#strings.isEmpty(event.img)}"
+                     th:src="${event.img}"
+                     alt="Imagen evento"
+                     style="width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--color-outline-variant);">
+                <span th:unless="${event.img != null and !#strings.isEmpty(event.img)}"
+                      style="font-size:0.75rem; color:var(--color-outline);">—</span>
+              </td>
+              <td>
                 <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
                       th:text="${event.title}">—</span>
               </td>
-              <td style="font-size:0.82rem; max-width:22rem;">
+              <td style="font-size:0.82rem; max-width:20rem;">
                 <span th:if="${event.description != null}"
-                      th:text="${#strings.length(event.description) > 80} ? ${#strings.substring(event.description, 0, 80)} + '…' : ${event.description}">—</span>
+                      th:text="${#strings.length(event.description) > 70} ? ${#strings.substring(event.description, 0, 70)} + '…' : ${event.description}">—</span>
               </td>
               <td style="font-size:0.82rem; white-space:nowrap;"
                   th:text="${event.date != null} ? ${#temporals.format(event.date, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
@@ -103,6 +112,7 @@
                           th:data-title="${event.title}"
                           th:data-description="${event.description}"
                           th:data-date="${event.date != null} ? ${event.date} : ''"
+                          th:data-img="${event.img != null} ? ${event.img} : ''"
                           onclick="openEditEventModal(this)">
                     <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
                   </button>
@@ -118,7 +128,7 @@
               </td>
             </tr>
             <tr th:if="${events == null or events.isEmpty()}">
-              <td colspan="7" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <td colspan="8" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
                 No hay eventos registrados
               </td>
             </tr>
@@ -131,13 +141,13 @@
 
 <!-- Modal: Crear Evento -->
 <div class="modal fade" id="createEventModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Nuevo Evento</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form method="post" th:action="@{/admin/events/create}">
+      <form method="post" th:action="@{/admin/events/create}" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-12">
@@ -148,9 +158,17 @@
               <label class="form-label fw-semibold">Descripción</label>
               <textarea name="description" class="form-control form-control-sm" rows="3"></textarea>
             </div>
-            <div class="col-12">
+            <div class="col-md-6">
               <label class="form-label fw-semibold">Fecha y hora <span class="text-danger">*</span></label>
               <input type="datetime-local" name="date" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Imagen</label>
+              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm"
+                     onchange="previewImage(this, 'createEventImgPreview')">
+              <small id="createEventImgPreview" class="text-muted d-block mt-1"></small>
+              <input type="text" name="img" class="form-control form-control-sm mt-1"
+                     placeholder="O pega una URL de imagen">
             </div>
           </div>
         </div>
@@ -165,13 +183,13 @@
 
 <!-- Modal: Editar Evento -->
 <div class="modal fade" id="editEventModal" tabindex="-1">
-  <div class="modal-dialog">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Editar Evento</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form id="editEventForm" method="post">
+      <form id="editEventForm" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-12">
@@ -182,9 +200,17 @@
               <label class="form-label fw-semibold">Descripción</label>
               <textarea id="editEventDescription" name="description" class="form-control form-control-sm" rows="3"></textarea>
             </div>
-            <div class="col-12">
+            <div class="col-md-6">
               <label class="form-label fw-semibold">Fecha y hora <span class="text-danger">*</span></label>
               <input type="datetime-local" id="editEventDate" name="date" class="form-control form-control-sm" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Imagen</label>
+              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm"
+                     onchange="previewImage(this, 'editEventImgPreview')">
+              <small id="editEventImgPreview" class="text-muted d-block mt-1"></small>
+              <input type="text" id="editEventImg" name="img" class="form-control form-control-sm mt-1"
+                     placeholder="O pega una URL de imagen">
             </div>
           </div>
         </div>
@@ -227,14 +253,26 @@
     document.getElementById('editEventForm').action = '/admin/events/' + btn.dataset.id + '/update';
     document.getElementById('editEventTitle').value = btn.dataset.title || '';
     document.getElementById('editEventDescription').value = btn.dataset.description || '';
-    // LocalDateTime format "2026-04-17T10:30" — compatible with datetime-local input
     const dateVal = btn.dataset.date || '';
     document.getElementById('editEventDate').value = dateVal.length > 16 ? dateVal.substring(0, 16) : dateVal;
+    const img = btn.dataset.img || '';
+    document.getElementById('editEventImg').value = img;
+    const preview = document.getElementById('editEventImgPreview');
+    preview.textContent = img ? 'Actual: ' + img : '';
   }
 
   function openDeleteEventModal(btn) {
     document.getElementById('deleteEventForm').action = '/admin/events/' + btn.dataset.id + '/delete';
     document.getElementById('deleteEventName').textContent = '"' + btn.dataset.title + '"';
+  }
+
+  function previewImage(input, previewId) {
+    const preview = document.getElementById(previewId);
+    if (input.files && input.files[0]) {
+      preview.textContent = 'Seleccionado: ' + input.files[0].name;
+    } else {
+      preview.textContent = '';
+    }
   }
 </script>
 </body>

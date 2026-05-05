@@ -3,6 +3,7 @@ package com.example.booksocial_frontend.controller;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -55,7 +56,9 @@ import com.example.booksocial_frontend.service.VolumeClientService;
 import com.example.booksocial_frontend.service.WorkClientService;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Controller
 @RequestMapping("/admin")
 @RequiredArgsConstructor
@@ -173,6 +176,7 @@ public class AdminController {
       @RequestParam(required = false) String img,
       @RequestParam(required = false) MultipartFile imgFile,
       @RequestParam(required = false) List<String> authors,
+      @RequestParam(required = false) Double averageRating,
       RedirectAttributes ra) {
 
     try {
@@ -191,6 +195,7 @@ public class AdminController {
           ? fileUploadClientService.uploadImage(imgFile) : img);
       if (authors != null && !authors.isEmpty())
         dto.setAuthors(authors);
+      dto.setAverageRating(averageRating);
       WorkResponseDTO created = workClientService.createWork(dto);
       ra.addFlashAttribute("success", "Obra creada correctamente");
 
@@ -198,22 +203,16 @@ public class AdminController {
         try {
           List<AuthorResponseDTO> allAuthors = authorClientService.getAllAuthors();
           for (String authorName : created.getAuthors()) {
-            try {
-              AuthorResponseDTO author = allAuthors.stream()
-                  .filter(a -> a.getName() != null && a.getName().equalsIgnoreCase(authorName))
-                  .findFirst().orElse(null);
-              if (author == null) continue;
-              List<com.example.booksocial_frontend.dto.UserResponseDTO> followers =
-                  authorClientService.getFollowers(author.getId());
-              for (com.example.booksocial_frontend.dto.UserResponseDTO follower : followers) {
-                mailService.sendNewWorkNotification(
-                    follower.getEmail(),
-                    follower.getUsername() != null ? follower.getUsername() : follower.getName(),
-                    created.getTitle(), author.getName());
-              }
-            } catch (Exception ignored) {}
+            AuthorResponseDTO author = allAuthors.stream()
+                .filter(a -> a.getName() != null && a.getName().equalsIgnoreCase(authorName))
+                .findFirst().orElse(null);
+            if (author != null) {
+              notifyAuthorFollowers(author.getId(), author.getName(), created.getTitle());
+            }
           }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+          log.warn("Error al notificar seguidores tras crear obra '{}': {}", created.getTitle(), e.getMessage());
+        }
       }
     } catch (Exception e) {
       ra.addFlashAttribute("error", "Error al crear la obra: " + e.getMessage());
@@ -270,6 +269,23 @@ public class AdminController {
       ra.addFlashAttribute("error", "Error al eliminar la obra: " + e.getMessage());
     }
     return "redirect:/admin/works";
+  }
+
+  // ── Notificación a seguidores de un autor ─────────────────────────────────
+
+  private void notifyAuthorFollowers(Long authorId, String authorName, String workTitle) {
+    try {
+      List<UserResponseDTO> followers = authorClientService.getFollowers(authorId);
+      if (followers == null || followers.isEmpty()) return;
+      for (UserResponseDTO follower : followers) {
+        if (follower.getEmail() == null || follower.getEmail().isBlank()) continue;
+        String displayName = follower.getUsername() != null ? follower.getUsername() : follower.getName();
+        mailService.sendNewWorkNotification(follower.getEmail(), displayName, workTitle, authorName);
+        log.info("Notificación enviada a {} sobre nueva obra '{}' de {}", follower.getEmail(), workTitle, authorName);
+      }
+    } catch (Exception e) {
+      log.warn("Error al notificar seguidores del autor '{}': {}", authorName, e.getMessage());
+    }
   }
 
   // AUTHORS
@@ -330,6 +346,17 @@ public class AdminController {
       RedirectAttributes ra) {
 
     try {
+      // Capturar obras actuales ANTES de actualizar para detectar nuevas
+      Set<Long> workIdsBefore = java.util.Collections.emptySet();
+      try {
+        AuthorResponseDTO before = authorClientService.getAuthorById(id);
+        if (before.getWorks() != null) {
+          workIdsBefore = before.getWorks().stream()
+              .map(WorkResponseDTO::getId)
+              .collect(java.util.stream.Collectors.toSet());
+        }
+      } catch (Exception ignored) {}
+
       AuthorRequestDTO dto = new AuthorRequestDTO();
       dto.setName(name);
       dto.setNationality(nationality);
@@ -340,6 +367,23 @@ public class AdminController {
       dto.setWorkIds(workIds != null ? workIds : List.of());
       authorClientService.updateAuthor(id, dto);
       ra.addFlashAttribute("success", "Autor actualizado correctamente");
+
+      // Notificar a seguidores por cada obra nueva añadida
+      if (workIds != null && !workIds.isEmpty()) {
+        final Set<Long> previousIds = workIdsBefore;
+        try {
+          AuthorResponseDTO updated = authorClientService.getAuthorById(id);
+          if (updated.getWorks() != null) {
+            for (WorkResponseDTO newWork : updated.getWorks()) {
+              if (!previousIds.contains(newWork.getId())) {
+                notifyAuthorFollowers(id, updated.getName(), newWork.getTitle());
+              }
+            }
+          }
+        } catch (Exception e) {
+          log.warn("Error al notificar seguidores tras actualizar autor {}: {}", id, e.getMessage());
+        }
+      }
     } catch (Exception e) {
       ra.addFlashAttribute("error", "Error al actualizar el autor: " + e.getMessage());
     }
@@ -484,6 +528,8 @@ public class AdminController {
       @RequestParam String title,
       @RequestParam(required = false) String description,
       @RequestParam String date,
+      @RequestParam(required = false) String img,
+      @RequestParam(required = false) MultipartFile imgFile,
       RedirectAttributes ra) {
 
     try {
@@ -491,6 +537,8 @@ public class AdminController {
       dto.setTitle(title);
       dto.setDescription(description);
       dto.setDate(LocalDateTime.parse(date));
+      dto.setImg(imgFile != null && !imgFile.isEmpty()
+          ? fileUploadClientService.uploadImage(imgFile) : img);
       eventClientService.createEvent(dto);
       ra.addFlashAttribute("success", "Evento creado correctamente");
     } catch (Exception e) {
@@ -505,6 +553,8 @@ public class AdminController {
       @RequestParam String title,
       @RequestParam(required = false) String description,
       @RequestParam String date,
+      @RequestParam(required = false) String img,
+      @RequestParam(required = false) MultipartFile imgFile,
       RedirectAttributes ra) {
 
     try {
@@ -512,6 +562,8 @@ public class AdminController {
       dto.setTitle(title);
       dto.setDescription(description);
       dto.setDate(LocalDateTime.parse(date));
+      dto.setImg(imgFile != null && !imgFile.isEmpty()
+          ? fileUploadClientService.uploadImage(imgFile) : img);
       eventClientService.updateEvent(id, dto);
       ra.addFlashAttribute("success", "Evento actualizado correctamente");
     } catch (Exception e) {

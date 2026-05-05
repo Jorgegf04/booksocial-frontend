@@ -12,6 +12,7 @@ import lombok.NoArgsConstructor;
 public class EventRequestDTO {
     private String title;
     private String description;
+    private String img;
     private LocalDateTime date;
     private List<Long> userIds;
 }
