@@ -45,9 +45,11 @@ import com.example.booksocial_frontend.service.FileUploadClientService;
 import com.example.booksocial_frontend.service.EditionClientService;
 import com.example.booksocial_frontend.service.EditorialClientService;
 import com.example.booksocial_frontend.service.EventClientService;
+import com.example.booksocial_frontend.service.MailService;
 import com.example.booksocial_frontend.service.OrderClientService;
 import com.example.booksocial_frontend.service.ProductClientService;
 import com.example.booksocial_frontend.service.TomeClientService;
+import com.example.booksocial_frontend.service.TrackingOrderClientService;
 import com.example.booksocial_frontend.service.UserClientService;
 import com.example.booksocial_frontend.service.VolumeClientService;
 import com.example.booksocial_frontend.service.WorkClientService;
@@ -72,6 +74,8 @@ public class AdminController {
   private final VolumeClientService volumeClientService;
   private final CommentClientService commentClientService;
   private final FileUploadClientService fileUploadClientService;
+  private final MailService mailService;
+  private final TrackingOrderClientService trackingOrderClientService;
 
   // DASHBOARD
 
@@ -187,8 +191,24 @@ public class AdminController {
           ? fileUploadClientService.uploadImage(imgFile) : img);
       if (authors != null && !authors.isEmpty())
         dto.setAuthors(authors);
-      workClientService.createWork(dto);
+      WorkResponseDTO created = workClientService.createWork(dto);
       ra.addFlashAttribute("success", "Obra creada correctamente");
+
+      if (authors != null && !authors.isEmpty()) {
+        for (String authorIdStr : authors) {
+          try {
+            Long authorId = Long.parseLong(authorIdStr);
+            AuthorResponseDTO author = authorClientService.getAuthorById(authorId);
+            List<com.example.booksocial_frontend.dto.UserResponseDTO> followers =
+                authorClientService.getFollowers(authorId);
+            for (com.example.booksocial_frontend.dto.UserResponseDTO follower : followers) {
+              mailService.sendNewWorkNotification(
+                  follower.getEmail(), follower.getUsername() != null ? follower.getUsername() : follower.getName(),
+                  created.getTitle(), author.getName());
+            }
+          } catch (Exception ignored) {}
+        }
+      }
     } catch (Exception e) {
       ra.addFlashAttribute("error", "Error al crear la obra: " + e.getMessage());
     }
@@ -828,6 +848,38 @@ public class AdminController {
       ra.addFlashAttribute("error", "Error al eliminar el volumen: " + e.getMessage());
     }
     return "redirect:/admin/volumes";
+  }
+
+  // ORDERS — tracking de estado con notificación por email
+
+  @PostMapping("/orders/{orderId}/tracking")
+  public String updateOrderTracking(
+      @PathVariable Long orderId,
+      @RequestParam String status,
+      RedirectAttributes ra) {
+
+    try {
+      var tracking = trackingOrderClientService.createTracking(orderId, status);
+
+      String statusLabel = tracking != null && tracking.getStatusLabel() != null
+          ? tracking.getStatusLabel() : status;
+
+      try {
+        var order = orderClientService.getAllOrders().stream()
+            .filter(o -> orderId.equals(o.getId()))
+            .findFirst().orElse(null);
+        if (order != null && order.getUserId() != null) {
+          var user = userClientService.getUserById(order.getUserId());
+          String username = order.getUsername() != null ? order.getUsername() : user.getName();
+          mailService.sendOrderStatusUpdate(user.getEmail(), username, orderId, statusLabel);
+        }
+      } catch (Exception ignored) {}
+
+      ra.addFlashAttribute("success", "Estado del pedido #" + orderId + " actualizado a: " + statusLabel);
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al actualizar el estado: " + e.getMessage());
+    }
+    return "redirect:/admin/orders";
   }
 
   // COMMERCE (sin CRUD)

@@ -1,10 +1,12 @@
 package com.example.booksocial_frontend.service;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import com.example.booksocial_frontend.dto.TrackingOrderRequestDTO;
 import com.example.booksocial_frontend.dto.TrackingOrderResponseDTO;
 
 import jakarta.annotation.PostConstruct;
@@ -31,5 +33,15 @@ public class TrackingOrderClientService {
     } catch (RestClientResponseException e) {
       return null;
     }
+  }
+
+  public TrackingOrderResponseDTO createTracking(Long orderId, String status) {
+    TrackingOrderRequestDTO dto = new TrackingOrderRequestDTO(orderId, status);
+    return restClient.post()
+        .uri("")
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(dto)
+        .retrieve()
+        .body(TrackingOrderResponseDTO.class);
   }
 }

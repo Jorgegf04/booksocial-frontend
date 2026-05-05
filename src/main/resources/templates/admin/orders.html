@@ -3,10 +3,11 @@
   Acceso restringido: AdminInterceptor (role=ADMIN).
 
   Variables del modelo:
-  - orders : List<OrderResponseDTO> todos los pedidos del sistema obtenidos via OrderClientService.
+  - orders : List<OrderResponseDTO> todos los pedidos del sistema.
 
-  Permite al administrador ver todos los pedidos, sus líneas y añadir estados de tracking
+  Permite ver todos los pedidos y actualizar su estado de tracking
   (PREPARING → SHIPPED → IN_TRANSIT → DELIVERED).
+  Al cambiar el estado se envía un email de notificación al usuario.
   El sidebar se incluye con sidebar('orders') para marcar el item activo.
 -->
 <!DOCTYPE html>
@@ -32,6 +33,16 @@
       </div>
     </div>
 
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${success}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">Todos los pedidos
@@ -49,6 +60,7 @@
               <th>Artículos</th>
               <th>Total</th>
               <th>Líneas</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -65,7 +77,7 @@
                      style="font-size:0.75rem; color:var(--color-muted);">
                   <span th:each="line, lineStat : ${order.orderLines}"
                         th:if="${lineStat.index < 2}">
-                    <span th:text="${line.workTitle}">—</span>
+                    <span th:text="${line.workTitle != null} ? ${line.workTitle} : ${line.title}">—</span>
                     <span th:if="!${lineStat.last} and ${lineStat.index < 1}">, </span>
                   </span>
                   <span th:if="${#lists.size(order.orderLines) > 2}"
@@ -73,9 +85,19 @@
                   </span>
                 </div>
               </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                        title="Actualizar estado"
+                        data-bs-toggle="modal" data-bs-target="#trackingModal"
+                        th:data-orderid="${order.id}"
+                        th:data-username="${order.username}"
+                        onclick="openTrackingModal(this)">
+                  <span class="material-symbols-outlined" style="font-size:0.9rem;">local_shipping</span>
+                </button>
+              </td>
             </tr>
             <tr th:if="${orders == null or orders.isEmpty()}">
-              <td colspan="6" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <td colspan="7" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
                 No hay pedidos registrados
               </td>
             </tr>
@@ -85,6 +107,50 @@
     </div>
   </main>
 </div>
+
+<!-- Modal: Actualizar estado del pedido -->
+<div class="modal fade" id="trackingModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Actualizar estado del pedido</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="trackingForm" method="post">
+        <div class="modal-body">
+          <p style="font-size:0.9rem; margin-bottom:16px;">
+            Pedido <strong id="trackingOrderId"></strong>
+            — Usuario: <span id="trackingUsername" style="color:var(--bs-primary);"></span>
+          </p>
+          <p style="font-size:0.82rem; color:var(--color-muted); margin-bottom:16px;">
+            Al guardar se enviará un email de notificación al usuario.
+          </p>
+          <label class="form-label fw-semibold">Nuevo estado <span class="text-danger">*</span></label>
+          <select name="status" class="form-select form-select-sm" required>
+            <option value="">— Seleccionar estado —</option>
+            <option value="PREPARING">📦 En preparación</option>
+            <option value="SHIPPED">🚚 Enviado</option>
+            <option value="IN_TRANSIT">✈️ En tránsito</option>
+            <option value="DELIVERED">✅ Entregado</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Guardar y notificar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openTrackingModal(btn) {
+    const orderId = btn.dataset.orderid;
+    document.getElementById('trackingForm').action = '/admin/orders/' + orderId + '/tracking';
+    document.getElementById('trackingOrderId').textContent = '#' + orderId;
+    document.getElementById('trackingUsername').textContent = btn.dataset.username || '—';
+  }
+</script>
 </body>
 </html>

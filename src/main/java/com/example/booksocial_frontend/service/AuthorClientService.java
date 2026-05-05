@@ -10,6 +10,7 @@ import org.springframework.web.client.RestClient;
 
 import com.example.booksocial_frontend.dto.AuthorRequestDTO;
 import com.example.booksocial_frontend.dto.AuthorResponseDTO;
+import com.example.booksocial_frontend.dto.UserResponseDTO;
 
 import jakarta.annotation.PostConstruct;
 
@@ -77,6 +78,17 @@ public class AuthorClientService {
         .uri("/{id}/follow?userId={userId}", authorId, userId)
         .retrieve()
         .toBodilessEntity();
+  }
+
+  public List<UserResponseDTO> getFollowers(Long authorId) {
+    try {
+      return restClient.get()
+          .uri("/{id}/followers", authorId)
+          .retrieve()
+          .body(new ParameterizedTypeReference<List<UserResponseDTO>>() {});
+    } catch (Exception e) {
+      return List.of();
+    }
   }
 
   public boolean isFollowing(Long authorId, Long userId) {

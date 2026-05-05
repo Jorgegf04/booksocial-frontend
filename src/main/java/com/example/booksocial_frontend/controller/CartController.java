@@ -14,11 +14,15 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.example.booksocial_frontend.dto.CartItemDTO;
+import com.example.booksocial_frontend.dto.OrderResponseDTO;
 import com.example.booksocial_frontend.dto.ProductResponseDTO;
+import com.example.booksocial_frontend.dto.UserResponseDTO;
 import com.example.booksocial_frontend.dto.WorkResponseDTO;
 import com.example.booksocial_frontend.service.CartService;
+import com.example.booksocial_frontend.service.MailService;
 import com.example.booksocial_frontend.service.OrderClientService;
 import com.example.booksocial_frontend.service.ProductClientService;
+import com.example.booksocial_frontend.service.UserClientService;
 import com.example.booksocial_frontend.service.WorkClientService;
 
 import jakarta.servlet.http.HttpSession;
@@ -54,6 +58,8 @@ public class CartController {
   private final ProductClientService productService;
   private final WorkClientService workService;
   private final OrderClientService orderService;
+  private final UserClientService userService;
+  private final MailService mailService;
 
   /** Ver carrito */
   @GetMapping
@@ -219,9 +225,16 @@ public class CartController {
           ))
           .toList();
 
-      orderService.createOrder(userId, lines);
+      OrderResponseDTO order = orderService.createOrder(userId, lines);
       cartService.clearCart(session);
       ra.addFlashAttribute("orderSuccess", true);
+
+      try {
+        UserResponseDTO user = userService.getUserById(userId);
+        String username = (String) session.getAttribute("username");
+        mailService.sendOrderConfirmation(user.getEmail(), username, order);
+      } catch (Exception ignored) {}
+
       return "redirect:/orders";
     } catch (Exception e) {
       ra.addFlashAttribute("cartError", "Error al procesar el pedido: " + e.getMessage());
