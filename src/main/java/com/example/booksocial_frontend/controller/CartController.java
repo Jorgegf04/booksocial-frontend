@@ -109,16 +109,28 @@ public class CartController {
     try {
       ProductResponseDTO product = productService.getProductById(productId);
 
-      if (product.getStock() < quantity) {
+      if (product == null) {
+        ra.addFlashAttribute("cartError", "Producto no encontrado.");
+        return "redirect:/catalog";
+      }
+
+      if (product.getStock() == null || product.getStock() < quantity) {
         ra.addFlashAttribute("cartError", "Stock insuficiente.");
-        return "redirect:/work/" + product.getWorkId();
+        return "redirect:/work/" + (product.getWorkId() != null ? product.getWorkId() : "");
+      }
+
+      if (product.getPrice() == null) {
+        ra.addFlashAttribute("cartError", "Producto sin precio asignado.");
+        return "redirect:/work/" + (product.getWorkId() != null ? product.getWorkId() : "");
       }
 
       // Obtener img de la obra
       String img = null;
       try {
-        WorkResponseDTO work = workService.getWorkById(product.getWorkId());
-        img = work.getImg();
+        if (product.getWorkId() != null) {
+          WorkResponseDTO work = workService.getWorkById(product.getWorkId());
+          if (work != null) img = work.getImg();
+        }
       } catch (Exception ignored) {}
 
       CartItemDTO item = new CartItemDTO(
@@ -178,14 +190,22 @@ public class CartController {
 
     for (Map<String, Object> item : items) {
       try {
-        Long productId = Long.valueOf(item.get("productId").toString());
-        int quantity   = Integer.parseInt(item.get("quantity").toString());
+        Object pidRaw = item.get("productId");
+        Object qtyRaw = item.get("quantity");
+        if (pidRaw == null || qtyRaw == null) continue;
+
+        Long productId = Long.valueOf(pidRaw.toString());
+        int quantity   = Integer.parseInt(qtyRaw.toString());
 
         ProductResponseDTO product = productService.getProductById(productId);
+        if (product == null || product.getPrice() == null) continue;
 
         String img = null;
         try {
-          img = workService.getWorkById(product.getWorkId()).getImg();
+          if (product.getWorkId() != null) {
+            WorkResponseDTO work = workService.getWorkById(product.getWorkId());
+            if (work != null) img = work.getImg();
+          }
         } catch (Exception ignored) {}
 
         cartService.addItem(session, new CartItemDTO(

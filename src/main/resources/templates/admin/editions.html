@@ -142,8 +142,8 @@
               <input type="text" name="title" class="form-control form-control-sm">
             </div>
             <div class="col-md-4">
-              <label class="form-label fw-semibold">Nº Tomos</label>
-              <input type="number" name="totalTomes" class="form-control form-control-sm" min="1">
+              <label class="form-label fw-semibold">Nº Tomos <span style="font-weight:400;font-size:0.75rem;color:var(--color-muted);">(manga/cómic)</span></label>
+              <input type="number" name="totalTomes" class="form-control form-control-sm" min="0" placeholder="—">
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">ISBN</label>
@@ -167,6 +167,20 @@
                 <option value="">— Seleccionar editorial —</option>
                 <option th:each="e : ${editorials}" th:value="${e.id}" th:text="${e.name}"></option>
               </select>
+            </div>
+            <div class="col-12">
+              <hr style="margin:4px 0 8px; border-color:#e8e0d0;">
+              <p style="font-size:0.78rem; color:var(--color-muted); margin-bottom:8px;">
+                Producto (opcional) — si rellenas precio y stock se creará automáticamente el producto para esta edición.
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Precio (€)</label>
+              <input type="number" name="price" class="form-control form-control-sm" step="0.01" min="0" placeholder="ej: 12.99">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Stock</label>
+              <input type="number" name="stock" class="form-control form-control-sm" min="0" placeholder="ej: 50">
             </div>
           </div>
         </div>
@@ -195,8 +209,8 @@
               <input type="text" id="editEditionTitle" name="title" class="form-control form-control-sm">
             </div>
             <div class="col-md-4">
-              <label class="form-label fw-semibold">Nº Tomos</label>
-              <input type="number" id="editEditionTotalTomes" name="totalTomes" class="form-control form-control-sm" min="1">
+              <label class="form-label fw-semibold">Nº Tomos <span style="font-weight:400;font-size:0.75rem;color:var(--color-muted);">(manga/cómic)</span></label>
+              <input type="number" id="editEditionTotalTomes" name="totalTomes" class="form-control form-control-sm" min="0" placeholder="—">
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">ISBN</label>
@@ -219,6 +233,20 @@
                 <option value="">— Seleccionar editorial —</option>
                 <option th:each="e : ${editorials}" th:value="${e.id}" th:text="${e.name}"></option>
               </select>
+            </div>
+            <div class="col-12">
+              <hr style="margin:4px 0 8px; border-color:#e8e0d0;">
+              <p style="font-size:0.78rem; color:var(--color-muted); margin-bottom:8px;">
+                Producto — si rellenas precio y stock se creará o actualizará el producto de esta edición.
+              </p>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Precio (€)</label>
+              <input type="number" id="editEditionPrice" name="price" class="form-control form-control-sm" step="0.01" min="0" placeholder="ej: 12.99">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Stock</label>
+              <input type="number" id="editEditionStock" name="stock" class="form-control form-control-sm" min="0" placeholder="ej: 50">
             </div>
           </div>
         </div>

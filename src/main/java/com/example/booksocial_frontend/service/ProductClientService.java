@@ -4,9 +4,11 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.example.booksocial_frontend.dto.ProductRequestDTO;
 import com.example.booksocial_frontend.dto.ProductResponseDTO;
 
 import jakarta.annotation.PostConstruct;
@@ -41,6 +43,31 @@ public class ProductClientService {
   public ProductResponseDTO getProductById(Long id) {
     return restClient.get()
         .uri("/{id}", id)
+        .retrieve()
+        .body(ProductResponseDTO.class);
+  }
+
+  public List<ProductResponseDTO> getProductsByEdition(Long editionId) {
+    return restClient.get()
+        .uri("/edition/{editionId}", editionId)
+        .retrieve()
+        .body(new ParameterizedTypeReference<List<ProductResponseDTO>>() {});
+  }
+
+  public ProductResponseDTO createProduct(Long editionId, Double price, Integer stock) {
+    return restClient.post()
+        .uri("")
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(new ProductRequestDTO(price, stock, editionId))
+        .retrieve()
+        .body(ProductResponseDTO.class);
+  }
+
+  public ProductResponseDTO updateProduct(Long id, Double price, Integer stock, Long editionId) {
+    return restClient.put()
+        .uri("/{id}", id)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(new ProductRequestDTO(price, stock, editionId))
         .retrieve()
         .body(ProductResponseDTO.class);
   }

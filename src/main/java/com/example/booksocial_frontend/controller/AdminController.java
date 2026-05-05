@@ -194,20 +194,26 @@ public class AdminController {
       WorkResponseDTO created = workClientService.createWork(dto);
       ra.addFlashAttribute("success", "Obra creada correctamente");
 
-      if (authors != null && !authors.isEmpty()) {
-        for (String authorIdStr : authors) {
-          try {
-            Long authorId = Long.parseLong(authorIdStr);
-            AuthorResponseDTO author = authorClientService.getAuthorById(authorId);
-            List<com.example.booksocial_frontend.dto.UserResponseDTO> followers =
-                authorClientService.getFollowers(authorId);
-            for (com.example.booksocial_frontend.dto.UserResponseDTO follower : followers) {
-              mailService.sendNewWorkNotification(
-                  follower.getEmail(), follower.getUsername() != null ? follower.getUsername() : follower.getName(),
-                  created.getTitle(), author.getName());
-            }
-          } catch (Exception ignored) {}
-        }
+      if (created.getAuthors() != null && !created.getAuthors().isEmpty()) {
+        try {
+          List<AuthorResponseDTO> allAuthors = authorClientService.getAllAuthors();
+          for (String authorName : created.getAuthors()) {
+            try {
+              AuthorResponseDTO author = allAuthors.stream()
+                  .filter(a -> a.getName() != null && a.getName().equalsIgnoreCase(authorName))
+                  .findFirst().orElse(null);
+              if (author == null) continue;
+              List<com.example.booksocial_frontend.dto.UserResponseDTO> followers =
+                  authorClientService.getFollowers(author.getId());
+              for (com.example.booksocial_frontend.dto.UserResponseDTO follower : followers) {
+                mailService.sendNewWorkNotification(
+                    follower.getEmail(),
+                    follower.getUsername() != null ? follower.getUsername() : follower.getName(),
+                    created.getTitle(), author.getName());
+              }
+            } catch (Exception ignored) {}
+          }
+        } catch (Exception ignored) {}
       }
     } catch (Exception e) {
       ra.addFlashAttribute("error", "Error al crear la obra: " + e.getMessage());
@@ -227,6 +233,7 @@ public class AdminController {
       @RequestParam(required = false) String img,
       @RequestParam(required = false) MultipartFile imgFile,
       @RequestParam(required = false) List<String> authors,
+      @RequestParam(required = false) Double averageRating,
       RedirectAttributes ra) {
 
     try {
@@ -245,6 +252,7 @@ public class AdminController {
           ? fileUploadClientService.uploadImage(imgFile) : img);
       if (authors != null && !authors.isEmpty())
         dto.setAuthors(authors);
+      dto.setAverageRating(averageRating);
       workClientService.updateWork(id, dto);
       ra.addFlashAttribute("success", "Obra actualizada correctamente");
     } catch (Exception e) {
@@ -382,6 +390,8 @@ public class AdminController {
       @RequestParam(required = false) Long editorialId,
       @RequestParam(required = false) String title,
       @RequestParam(required = false) Integer totalTomes,
+      @RequestParam(required = false) Double price,
+      @RequestParam(required = false) Integer stock,
       RedirectAttributes ra) {
 
     try {
@@ -393,7 +403,10 @@ public class AdminController {
       dto.setEditorialId(editorialId);
       dto.setTitle(title);
       dto.setTotalTomes(totalTomes);
-      editionClientService.createEdition(dto);
+      EditionResponseDTO created = editionClientService.createEdition(dto);
+      if (price != null && stock != null && created.getId() != null) {
+        productClientService.createProduct(created.getId(), price, stock);
+      }
       ra.addFlashAttribute("success", "Edición creada correctamente");
     } catch (Exception e) {
       ra.addFlashAttribute("error", "Error al crear la edición: " + e.getMessage());
@@ -410,6 +423,8 @@ public class AdminController {
       @RequestParam(required = false) Long editorialId,
       @RequestParam(required = false) String title,
       @RequestParam(required = false) Integer totalTomes,
+      @RequestParam(required = false) Double price,
+      @RequestParam(required = false) Integer stock,
       RedirectAttributes ra) {
 
     try {
@@ -422,6 +437,17 @@ public class AdminController {
       dto.setTitle(title);
       dto.setTotalTomes(totalTomes);
       editionClientService.updateEdition(id, dto);
+      if (price != null && stock != null) {
+        try {
+          List<com.example.booksocial_frontend.dto.ProductResponseDTO> existing =
+              productClientService.getProductsByEdition(id);
+          if (!existing.isEmpty()) {
+            productClientService.updateProduct(existing.get(0).getId(), price, stock, id);
+          } else {
+            productClientService.createProduct(id, price, stock);
+          }
+        } catch (Exception ignored) {}
+      }
       ra.addFlashAttribute("success", "Edición actualizada correctamente");
     } catch (Exception e) {
       ra.addFlashAttribute("error", "Error al actualizar la edición: " + e.getMessage());

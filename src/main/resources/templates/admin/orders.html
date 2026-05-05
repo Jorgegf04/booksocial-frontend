@@ -77,7 +77,7 @@
                      style="font-size:0.75rem; color:var(--color-muted);">
                   <span th:each="line, lineStat : ${order.orderLines}"
                         th:if="${lineStat.index < 2}">
-                    <span th:text="${line.workTitle != null} ? ${line.workTitle} : ${line.title}">—</span>
+                    <span th:text="${line.title != null} ? ${line.title} : '—'">—</span>
                     <span th:if="!${lineStat.last} and ${lineStat.index < 1}">, </span>
                   </span>
                   <span th:if="${#lists.size(order.orderLines) > 2}"
@@ -128,10 +128,11 @@
           <label class="form-label fw-semibold">Nuevo estado <span class="text-danger">*</span></label>
           <select name="status" class="form-select form-select-sm" required>
             <option value="">— Seleccionar estado —</option>
-            <option value="PREPARING">📦 En preparación</option>
-            <option value="SHIPPED">🚚 Enviado</option>
-            <option value="IN_TRANSIT">✈️ En tránsito</option>
-            <option value="DELIVERED">✅ Entregado</option>
+            <option value="PREPARING">En preparación</option>
+            <option value="SHIPPED">Enviado</option>
+            <option value="IN_TRANSIT">En tránsito</option>
+            <option value="DELIVERED">Entregado</option>
+            <option value="CANCELED">Cancelado</option>
           </select>
         </div>
         <div class="modal-footer">

@@ -84,6 +84,11 @@ public class AuthController {
     try {
       JwtResponseDTO jwt = authClientService.login(request);
 
+      if (jwt == null || jwt.getToken() == null || jwt.getUserId() == null) {
+        model.addAttribute("error", "Credenciales incorrectas. Verifica tu usuario y contraseña.");
+        return "auth/login";
+      }
+
       session.setAttribute("JWT", jwt.getToken());
       session.setAttribute("userId", jwt.getUserId());
       session.setAttribute("username", jwt.getUsername());
