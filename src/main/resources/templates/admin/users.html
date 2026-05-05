@@ -52,6 +52,7 @@
         <table class="admin-table">
           <thead>
             <tr>
+              <th>Avatar</th>
               <th>Usuario</th>
               <th>Email</th>
               <th>Nombre</th>
@@ -64,12 +65,16 @@
           <tbody>
             <tr th:each="user : ${users}">
               <td>
-                <div class="d-flex align-items-center gap-2">
-                  <div class="admin-user-avatar" style="width:2rem; height:2rem; font-size:0.75rem;"
-                       th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">U</div>
-                  <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
-                        th:text="${user.username}">—</span>
-                </div>
+                <img th:if="${user.img != null and !user.img.isEmpty()}"
+                     th:src="${user.img}" alt="avatar"
+                     style="width:2.2rem; height:2.2rem; object-fit:cover; border-radius:50%; border:1px solid var(--color-outline-variant);">
+                <div th:unless="${user.img != null and !user.img.isEmpty()}"
+                     class="admin-user-avatar" style="width:2.2rem; height:2.2rem; font-size:0.75rem;"
+                     th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">U</div>
+              </td>
+              <td>
+                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
+                      th:text="${user.username}">—</span>
               </td>
               <td style="font-size:0.82rem;" th:text="${user.email}">—</td>
               <td style="font-size:0.82rem;"
@@ -111,7 +116,7 @@
               </td>
             </tr>
             <tr th:if="${users == null or users.isEmpty()}">
-              <td colspan="7" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <td colspan="8" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
                 No hay usuarios registrados
               </td>
             </tr>
@@ -130,7 +135,7 @@
         <h5 class="modal-title">Editar Usuario</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
-      <form id="editUserForm" method="post">
+      <form id="editUserForm" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
             <div class="col-md-6">
@@ -150,9 +155,10 @@
               <input type="text" id="editUserSecondName" name="secondName" class="form-control form-control-sm">
             </div>
             <div class="col-12">
-              <label class="form-label fw-semibold">URL avatar</label>
-              <input type="text" id="editUserImg" name="img" class="form-control form-control-sm"
-                     placeholder="https://...">
+              <label class="form-label fw-semibold">Foto de perfil</label>
+              <input type="hidden" id="editUserImg" name="img">
+              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
+              <div id="editUserImgPreview" class="mt-1" style="font-size:0.75rem; color:var(--color-muted);"></div>
             </div>
           </div>
         </div>
@@ -198,6 +204,8 @@
     document.getElementById('editUserName').value = btn.dataset.name || '';
     document.getElementById('editUserSecondName').value = btn.dataset.secondname || '';
     document.getElementById('editUserImg').value = btn.dataset.img || '';
+    document.getElementById('editUserImgPreview').textContent =
+        btn.dataset.img ? 'Actual: ' + btn.dataset.img : '';
   }
 
   function openDeleteUserModal(btn) {

@@ -1,0 +1,234 @@
+<!--
+  Vista: Gestión de tomos — /admin/tomes
+  Acceso restringido: AdminInterceptor (role=ADMIN).
+
+  Variables del modelo:
+  - tomes    : List<TomeResponseDTO> todos los tomos.
+  - editions : List<EditionResponseDTO> para el selector de edición.
+
+  Los tomos son las unidades físicas de los mangas, vinculados a una edición.
+  El sidebar se incluye con sidebar('tomes') para marcar el item activo.
+-->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tomos — Admin BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+</head>
+<body class="admin-body">
+<div class="admin-layout">
+
+  <div th:replace="~{admin/fragments/sidebar :: sidebar('tomes')}"></div>
+
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <div>
+        <h1 class="admin-page-title">Tomos</h1>
+        <p class="admin-page-subtitle">Gestión de tomos de manga</p>
+      </div>
+      <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+              data-bs-toggle="modal" data-bs-target="#createTomeModal">
+        <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+        Nuevo Tomo
+      </button>
+    </div>
+
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${success}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <p class="admin-card-title">
+          Todos los tomos
+          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+                th:text="'(' + ${#lists.size(tomes)} + ' total)'"></span>
+        </p>
+      </div>
+      <div class="table-responsive">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Nº Tomo</th>
+              <th>Título</th>
+              <th>Edición</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr th:each="tome : ${tomes}">
+              <td style="font-size:0.8rem; color:var(--color-outline);" th:text="${tome.id}">—</td>
+              <td>
+                <span class="admin-badge" th:text="'Tomo ' + ${tome.numberTome}">—</span>
+              </td>
+              <td>
+                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
+                      th:text="${tome.title != null} ? ${tome.title} : '—'">—</span>
+              </td>
+              <td style="font-size:0.82rem;"
+                  th:text="${tome.editionTitle != null} ? ${tome.editionTitle} : (${tome.editionId != null} ? 'Edición #' + ${tome.editionId} : '—')">—</td>
+              <td>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                          title="Editar"
+                          data-bs-toggle="modal" data-bs-target="#editTomeModal"
+                          th:data-id="${tome.id}"
+                          th:data-numbertome="${tome.numberTome}"
+                          th:data-title="${tome.title}"
+                          th:data-editionid="${tome.editionId}"
+                          onclick="openEditTomeModal(this)">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                          title="Eliminar"
+                          data-bs-toggle="modal" data-bs-target="#deleteTomeModal"
+                          th:data-id="${tome.id}"
+                          th:data-title="${tome.title}"
+                          onclick="openDeleteTomeModal(this)">
+                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr th:if="${tomes == null or tomes.isEmpty()}">
+              <td colspan="5" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+                No hay tomos registrados
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal: Crear Tomo -->
+<div class="modal fade" id="createTomeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Nuevo Tomo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post" th:action="@{/admin/tomes/create}">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Nº Tomo <span class="text-danger">*</span></label>
+              <input type="number" name="numberTome" class="form-control form-control-sm" min="1" required>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Título</label>
+              <input type="text" name="title" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Edición <span class="text-danger">*</span></label>
+              <select name="editionId" class="form-select form-select-sm" required>
+                <option value="">— Seleccionar edición —</option>
+                <option th:each="e : ${editions}" th:value="${e.id}"
+                        th:text="${e.title != null} ? ${e.title} + ' (#' + ${e.id} + ')' : 'Edición #' + ${e.id}"></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Crear Tomo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Tomo -->
+<div class="modal fade" id="editTomeModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Tomo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editTomeForm" method="post">
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Nº Tomo <span class="text-danger">*</span></label>
+              <input type="number" id="editTomeNumber" name="numberTome" class="form-control form-control-sm" min="1" required>
+            </div>
+            <div class="col-md-8">
+              <label class="form-label fw-semibold">Título</label>
+              <input type="text" id="editTomeTitle" name="title" class="form-control form-control-sm">
+            </div>
+            <div class="col-12">
+              <label class="form-label fw-semibold">Edición <span class="text-danger">*</span></label>
+              <select id="editTomeEditionId" name="editionId" class="form-select form-select-sm" required>
+                <option value="">— Seleccionar edición —</option>
+                <option th:each="e : ${editions}" th:value="${e.id}"
+                        th:text="${e.title != null} ? ${e.title} + ' (#' + ${e.id} + ')' : 'Edición #' + ${e.id}"></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Eliminar Tomo -->
+<div class="modal fade" id="deleteTomeModal" tabindex="-1">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Eliminar Tomo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar el tomo
+          <strong id="deleteTomeName"></strong>?
+          Esta acción no se puede deshacer.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form id="deleteTomeForm" method="post" class="d-inline">
+          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openEditTomeModal(btn) {
+    document.getElementById('editTomeForm').action = '/admin/tomes/' + btn.dataset.id + '/update';
+    document.getElementById('editTomeNumber').value = btn.dataset.numbertome || '';
+    document.getElementById('editTomeTitle').value = btn.dataset.title || '';
+    const sel = document.getElementById('editTomeEditionId');
+    for (let opt of sel.options) {
+      opt.selected = (opt.value === btn.dataset.editionid);
+    }
+  }
+
+  function openDeleteTomeModal(btn) {
+    document.getElementById('deleteTomeForm').action = '/admin/tomes/' + btn.dataset.id + '/delete';
+    document.getElementById('deleteTomeName').textContent = '"' + (btn.dataset.title || 'este tomo') + '"';
+  }
+</script>
+</body>
+</html>

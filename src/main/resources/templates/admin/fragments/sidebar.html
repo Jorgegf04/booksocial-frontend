@@ -39,11 +39,30 @@
           class="admin-nav-link">
           <span class="material-symbols-outlined">person</span>Autores
         </a>
+        <a href="/admin/editorials"
+          th:classappend="${active == 'editorials'} ? ' active'"
+          class="admin-nav-link">
+          <span class="material-symbols-outlined">business</span>Editoriales
+        </a>
         <a href="/admin/editions"
           th:classappend="${active == 'editions'} ? ' active'"
           class="admin-nav-link">
-          <span
-            class="material-symbols-outlined">collections_bookmark</span>Ediciones
+          <span class="material-symbols-outlined">collections_bookmark</span>Ediciones
+        </a>
+        <a href="/admin/tomes"
+          th:classappend="${active == 'tomes'} ? ' active'"
+          class="admin-nav-link">
+          <span class="material-symbols-outlined">import_contacts</span>Tomos
+        </a>
+        <a href="/admin/chapters"
+          th:classappend="${active == 'chapters'} ? ' active'"
+          class="admin-nav-link">
+          <span class="material-symbols-outlined">article</span>Capítulos
+        </a>
+        <a href="/admin/volumes"
+          th:classappend="${active == 'volumes'} ? ' active'"
+          class="admin-nav-link">
+          <span class="material-symbols-outlined">auto_stories</span>Volúmenes
         </a>
 
         <p class="admin-nav-section">Comercio</p>

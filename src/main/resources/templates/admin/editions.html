@@ -162,8 +162,11 @@
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">ID Editorial</label>
-              <input type="number" name="editorialId" class="form-control form-control-sm" min="1">
+              <label class="form-label fw-semibold">Editorial</label>
+              <select name="editorialId" class="form-select form-select-sm">
+                <option value="">— Seleccionar editorial —</option>
+                <option th:each="e : ${editorials}" th:value="${e.id}" th:text="${e.name}"></option>
+              </select>
             </div>
           </div>
         </div>
@@ -211,8 +214,11 @@
               </select>
             </div>
             <div class="col-md-6">
-              <label class="form-label fw-semibold">ID Editorial</label>
-              <input type="number" id="editEditionEditorialId" name="editorialId" class="form-control form-control-sm" min="1">
+              <label class="form-label fw-semibold">Editorial</label>
+              <select id="editEditionEditorialId" name="editorialId" class="form-select form-select-sm">
+                <option value="">— Seleccionar editorial —</option>
+                <option th:each="e : ${editorials}" th:value="${e.id}" th:text="${e.name}"></option>
+              </select>
             </div>
           </div>
         </div>
@@ -257,7 +263,10 @@
     document.getElementById('editEditionDate').value = btn.dataset.editiondate || '';
     document.getElementById('editEditionTitle').value = btn.dataset.title || '';
     document.getElementById('editEditionTotalTomes').value = btn.dataset.totaltomes || '';
-    document.getElementById('editEditionEditorialId').value = btn.dataset.editorialid || '';
+    const editSel = document.getElementById('editEditionEditorialId');
+    for (let opt of editSel.options) {
+      opt.selected = (opt.value === btn.dataset.editorialid);
+    }
     const workSel = document.getElementById('editEditionWorkId');
     for (let opt of workSel.options) {
       opt.selected = (opt.value === btn.dataset.workid);

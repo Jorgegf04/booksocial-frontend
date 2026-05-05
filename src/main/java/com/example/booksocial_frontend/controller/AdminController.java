@@ -16,28 +16,40 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.booksocial_frontend.dto.AuthorRequestDTO;
 import com.example.booksocial_frontend.dto.AuthorResponseDTO;
+import com.example.booksocial_frontend.dto.ChapterRequestDTO;
+import com.example.booksocial_frontend.dto.ChapterResponseDTO;
 import com.example.booksocial_frontend.dto.CommentResponseDTO;
 import com.example.booksocial_frontend.dto.EditionRequestDTO;
 import com.example.booksocial_frontend.dto.EditionResponseDTO;
+import com.example.booksocial_frontend.dto.EditorialRequestDTO;
+import com.example.booksocial_frontend.dto.EditorialResponseDTO;
 import com.example.booksocial_frontend.dto.EventRequestDTO;
 import com.example.booksocial_frontend.dto.EventResponseDTO;
 import com.example.booksocial_frontend.dto.OrderResponseDTO;
 import com.example.booksocial_frontend.dto.ProductResponseDTO;
+import com.example.booksocial_frontend.dto.TomeRequestDTO;
+import com.example.booksocial_frontend.dto.TomeResponseDTO;
 import com.example.booksocial_frontend.dto.UpdateUserRequestDTO;
 import com.example.booksocial_frontend.dto.UserResponseDTO;
+import com.example.booksocial_frontend.dto.VolumeRequestDTO;
+import com.example.booksocial_frontend.dto.VolumeResponseDTO;
 import com.example.booksocial_frontend.dto.WorkRequestDTO;
 import com.example.booksocial_frontend.dto.WorkResponseDTO;
 import com.example.booksocial_frontend.domain.Demographic;
 import com.example.booksocial_frontend.domain.Genre;
 import com.example.booksocial_frontend.domain.WorkType;
 import com.example.booksocial_frontend.service.AuthorClientService;
+import com.example.booksocial_frontend.service.ChapterClientService;
 import com.example.booksocial_frontend.service.CommentClientService;
 import com.example.booksocial_frontend.service.FileUploadClientService;
 import com.example.booksocial_frontend.service.EditionClientService;
+import com.example.booksocial_frontend.service.EditorialClientService;
 import com.example.booksocial_frontend.service.EventClientService;
 import com.example.booksocial_frontend.service.OrderClientService;
 import com.example.booksocial_frontend.service.ProductClientService;
+import com.example.booksocial_frontend.service.TomeClientService;
 import com.example.booksocial_frontend.service.UserClientService;
+import com.example.booksocial_frontend.service.VolumeClientService;
 import com.example.booksocial_frontend.service.WorkClientService;
 
 import lombok.RequiredArgsConstructor;
@@ -54,6 +66,10 @@ public class AdminController {
   private final WorkClientService workClientService;
   private final AuthorClientService authorClientService;
   private final EditionClientService editionClientService;
+  private final EditorialClientService editorialClientService;
+  private final TomeClientService tomeClientService;
+  private final ChapterClientService chapterClientService;
+  private final VolumeClientService volumeClientService;
   private final CommentClientService commentClientService;
   private final FileUploadClientService fileUploadClientService;
 
@@ -327,8 +343,14 @@ public class AdminController {
       works = workClientService.getAllWorks();
     } catch (Exception ignored) {
     }
+    List<EditorialResponseDTO> editorials = List.of();
+    try {
+      editorials = editorialClientService.getAllEditorials();
+    } catch (Exception ignored) {
+    }
     model.addAttribute("editions", editions);
     model.addAttribute("works", works);
+    model.addAttribute("editorials", editorials);
     return "admin/editions";
   }
 
@@ -484,10 +506,13 @@ public class AdminController {
       @RequestParam(required = false) String name,
       @RequestParam(required = false) String secondName,
       @RequestParam(required = false) String img,
+      @RequestParam(required = false) MultipartFile imgFile,
       RedirectAttributes ra) {
 
     try {
-      UpdateUserRequestDTO dto = new UpdateUserRequestDTO(username, email, name, secondName, img);
+      String finalImg = imgFile != null && !imgFile.isEmpty()
+          ? fileUploadClientService.uploadImage(imgFile) : img;
+      UpdateUserRequestDTO dto = new UpdateUserRequestDTO(username, email, name, secondName, finalImg);
       userClientService.updateUser(id, dto);
       ra.addFlashAttribute("success", "Usuario actualizado correctamente");
     } catch (Exception e) {
@@ -529,6 +554,280 @@ public class AdminController {
       ra.addFlashAttribute("error", "Error al eliminar el comentario: " + e.getMessage());
     }
     return "redirect:/admin/comments";
+  }
+
+  // EDITORIALS
+
+  @GetMapping("/editorials")
+  public String editorials(Model model) {
+    List<EditorialResponseDTO> editorials = List.of();
+    try {
+      editorials = editorialClientService.getAllEditorials();
+    } catch (Exception ignored) {
+    }
+    model.addAttribute("editorials", editorials);
+    return "admin/editorials";
+  }
+
+  @PostMapping("/editorials/create")
+  public String createEditorial(
+      @RequestParam String name,
+      @RequestParam(required = false) String country,
+      RedirectAttributes ra) {
+
+    try {
+      EditorialRequestDTO dto = new EditorialRequestDTO();
+      dto.setName(name);
+      dto.setCountry(country);
+      editorialClientService.createEditorial(dto);
+      ra.addFlashAttribute("success", "Editorial creada correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al crear la editorial: " + e.getMessage());
+    }
+    return "redirect:/admin/editorials";
+  }
+
+  @PostMapping("/editorials/{id}/update")
+  public String updateEditorial(
+      @PathVariable Long id,
+      @RequestParam String name,
+      @RequestParam(required = false) String country,
+      RedirectAttributes ra) {
+
+    try {
+      EditorialRequestDTO dto = new EditorialRequestDTO();
+      dto.setName(name);
+      dto.setCountry(country);
+      editorialClientService.updateEditorial(id, dto);
+      ra.addFlashAttribute("success", "Editorial actualizada correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al actualizar la editorial: " + e.getMessage());
+    }
+    return "redirect:/admin/editorials";
+  }
+
+  @PostMapping("/editorials/{id}/delete")
+  public String deleteEditorial(@PathVariable Long id, RedirectAttributes ra) {
+    try {
+      editorialClientService.deleteEditorial(id);
+      ra.addFlashAttribute("success", "Editorial eliminada correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al eliminar la editorial: " + e.getMessage());
+    }
+    return "redirect:/admin/editorials";
+  }
+
+  // TOMES
+
+  @GetMapping("/tomes")
+  public String tomes(Model model) {
+    List<TomeResponseDTO> tomes = List.of();
+    try {
+      tomes = tomeClientService.getAllTomes();
+    } catch (Exception ignored) {
+    }
+    List<EditionResponseDTO> editions = List.of();
+    try {
+      editions = editionClientService.getAllEditions();
+    } catch (Exception ignored) {
+    }
+    model.addAttribute("tomes", tomes);
+    model.addAttribute("editions", editions);
+    return "admin/tomes";
+  }
+
+  @PostMapping("/tomes/create")
+  public String createTome(
+      @RequestParam Integer numberTome,
+      @RequestParam(required = false) String title,
+      @RequestParam Long editionId,
+      RedirectAttributes ra) {
+
+    try {
+      TomeRequestDTO dto = new TomeRequestDTO();
+      dto.setNumberTome(numberTome);
+      dto.setTitle(title);
+      dto.setEditionId(editionId);
+      tomeClientService.createTome(dto);
+      ra.addFlashAttribute("success", "Tomo creado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al crear el tomo: " + e.getMessage());
+    }
+    return "redirect:/admin/tomes";
+  }
+
+  @PostMapping("/tomes/{id}/update")
+  public String updateTome(
+      @PathVariable Long id,
+      @RequestParam Integer numberTome,
+      @RequestParam(required = false) String title,
+      @RequestParam Long editionId,
+      RedirectAttributes ra) {
+
+    try {
+      TomeRequestDTO dto = new TomeRequestDTO();
+      dto.setNumberTome(numberTome);
+      dto.setTitle(title);
+      dto.setEditionId(editionId);
+      tomeClientService.updateTome(id, dto);
+      ra.addFlashAttribute("success", "Tomo actualizado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al actualizar el tomo: " + e.getMessage());
+    }
+    return "redirect:/admin/tomes";
+  }
+
+  @PostMapping("/tomes/{id}/delete")
+  public String deleteTome(@PathVariable Long id, RedirectAttributes ra) {
+    try {
+      tomeClientService.deleteTome(id);
+      ra.addFlashAttribute("success", "Tomo eliminado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al eliminar el tomo: " + e.getMessage());
+    }
+    return "redirect:/admin/tomes";
+  }
+
+  // CHAPTERS
+
+  @GetMapping("/chapters")
+  public String chapters(Model model) {
+    List<ChapterResponseDTO> chapters = List.of();
+    try {
+      chapters = chapterClientService.getAllChapters();
+    } catch (Exception ignored) {
+    }
+    List<TomeResponseDTO> tomes = List.of();
+    try {
+      tomes = tomeClientService.getAllTomes();
+    } catch (Exception ignored) {
+    }
+    model.addAttribute("chapters", chapters);
+    model.addAttribute("tomes", tomes);
+    return "admin/chapters";
+  }
+
+  @PostMapping("/chapters/create")
+  public String createChapter(
+      @RequestParam Integer chapterNumber,
+      @RequestParam(required = false) String title,
+      @RequestParam Long tomeId,
+      RedirectAttributes ra) {
+
+    try {
+      ChapterRequestDTO dto = new ChapterRequestDTO();
+      dto.setChapterNumber(chapterNumber);
+      dto.setTitle(title);
+      dto.setTomeId(tomeId);
+      chapterClientService.createChapter(dto);
+      ra.addFlashAttribute("success", "Capítulo creado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al crear el capítulo: " + e.getMessage());
+    }
+    return "redirect:/admin/chapters";
+  }
+
+  @PostMapping("/chapters/{id}/update")
+  public String updateChapter(
+      @PathVariable Long id,
+      @RequestParam Integer chapterNumber,
+      @RequestParam(required = false) String title,
+      @RequestParam Long tomeId,
+      RedirectAttributes ra) {
+
+    try {
+      ChapterRequestDTO dto = new ChapterRequestDTO();
+      dto.setChapterNumber(chapterNumber);
+      dto.setTitle(title);
+      dto.setTomeId(tomeId);
+      chapterClientService.updateChapter(id, dto);
+      ra.addFlashAttribute("success", "Capítulo actualizado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al actualizar el capítulo: " + e.getMessage());
+    }
+    return "redirect:/admin/chapters";
+  }
+
+  @PostMapping("/chapters/{id}/delete")
+  public String deleteChapter(@PathVariable Long id, RedirectAttributes ra) {
+    try {
+      chapterClientService.deleteChapter(id);
+      ra.addFlashAttribute("success", "Capítulo eliminado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al eliminar el capítulo: " + e.getMessage());
+    }
+    return "redirect:/admin/chapters";
+  }
+
+  // VOLUMES
+
+  @GetMapping("/volumes")
+  public String volumes(Model model) {
+    List<VolumeResponseDTO> volumes = List.of();
+    try {
+      volumes = volumeClientService.getAllVolumes();
+    } catch (Exception ignored) {
+    }
+    List<EditionResponseDTO> editions = List.of();
+    try {
+      editions = editionClientService.getAllEditions();
+    } catch (Exception ignored) {
+    }
+    model.addAttribute("volumes", volumes);
+    model.addAttribute("editions", editions);
+    return "admin/volumes";
+  }
+
+  @PostMapping("/volumes/create")
+  public String createVolume(
+      @RequestParam Integer volumeNumber,
+      @RequestParam(required = false) String title,
+      @RequestParam Long editionId,
+      RedirectAttributes ra) {
+
+    try {
+      VolumeRequestDTO dto = new VolumeRequestDTO();
+      dto.setVolumeNumber(volumeNumber);
+      dto.setTitle(title);
+      dto.setEditionId(editionId);
+      volumeClientService.createVolume(dto);
+      ra.addFlashAttribute("success", "Volumen creado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al crear el volumen: " + e.getMessage());
+    }
+    return "redirect:/admin/volumes";
+  }
+
+  @PostMapping("/volumes/{id}/update")
+  public String updateVolume(
+      @PathVariable Long id,
+      @RequestParam Integer volumeNumber,
+      @RequestParam(required = false) String title,
+      @RequestParam Long editionId,
+      RedirectAttributes ra) {
+
+    try {
+      VolumeRequestDTO dto = new VolumeRequestDTO();
+      dto.setVolumeNumber(volumeNumber);
+      dto.setTitle(title);
+      dto.setEditionId(editionId);
+      volumeClientService.updateVolume(id, dto);
+      ra.addFlashAttribute("success", "Volumen actualizado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al actualizar el volumen: " + e.getMessage());
+    }
+    return "redirect:/admin/volumes";
+  }
+
+  @PostMapping("/volumes/{id}/delete")
+  public String deleteVolume(@PathVariable Long id, RedirectAttributes ra) {
+    try {
+      volumeClientService.deleteVolume(id);
+      ra.addFlashAttribute("success", "Volumen eliminado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al eliminar el volumen: " + e.getMessage());
+    }
+    return "redirect:/admin/volumes";
   }
 
   // COMMERCE (sin CRUD)
