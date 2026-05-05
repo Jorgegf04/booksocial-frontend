@@ -3,6 +3,7 @@ package com.example.booksocial_frontend.service;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -12,15 +13,14 @@ import com.example.booksocial_frontend.dto.OrderLineResponseDTO;
 import com.example.booksocial_frontend.dto.OrderResponseDTO;
 
 import jakarta.mail.internet.MimeMessage;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class MailService {
 
-    private final JavaMailSender mailSender;
+    @Autowired(required = false)
+    private JavaMailSender mailSender;
 
     @Value("${spring.mail.username:}")
     private String fromEmail;
@@ -165,6 +165,10 @@ public class MailService {
     }
 
     private void send(String to, String subject, String htmlBody) throws Exception {
+        if (mailSender == null || fromEmail == null || fromEmail.isBlank()) {
+            log.debug("Mail no configurado — email omitido para {}", to);
+            return;
+        }
         MimeMessage message = mailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
         helper.setFrom(fromEmail);
