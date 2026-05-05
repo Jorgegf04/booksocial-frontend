@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.client.ResourceAccessException;
 
 import com.example.booksocial_frontend.dto.JwtResponseDTO;
 import com.example.booksocial_frontend.dto.LoginRequestDTO;
@@ -97,8 +98,11 @@ public class AuthController {
 
       return "redirect:/catalog";
 
+    } catch (ResourceAccessException e) {
+      model.addAttribute("error", "El servidor no está disponible. Inténtelo más tarde.");
+      return "auth/login";
     } catch (Exception e) {
-      model.addAttribute("error", "Credenciales incorrectas");
+      model.addAttribute("error", "Credenciales incorrectas. Verifica tu usuario y contraseña.");
       return "auth/login";
     }
   }
@@ -186,6 +190,10 @@ public class AuthController {
       authClientService.register(request);
       ra.addFlashAttribute("success", "¡Cuenta creada! Ya puedes iniciar sesión.");
       return "redirect:/auth/login";
+    } catch (ResourceAccessException e) {
+      model.addAttribute("registerRequest", request);
+      model.addAttribute("error", "El servidor no está disponible. Inténtelo más tarde.");
+      return "auth/register";
     } catch (Exception e) {
       model.addAttribute("registerRequest", request);
       model.addAttribute("error", "Error al registrarse: " + e.getMessage());

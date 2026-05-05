@@ -1,0 +1,119 @@
+<!--
+  Vista: Página de error de Spring Boot — captura errores no controlados por @ControllerAdvice.
+  Spring Boot inyecta automáticamente: status, error, message, path, timestamp.
+-->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:text="'Error ' + ${status} + ' — BookSocial'">Error — BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <style>
+    body {
+      background-color: #fcf9f3;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Manrope', sans-serif;
+    }
+    .error-box {
+      max-width: 520px;
+      width: 100%;
+      background: #fff;
+      border-radius: 1.25rem;
+      padding: 3rem 2.5rem;
+      box-shadow: 0 4px 32px rgba(45,76,62,0.09);
+      text-align: center;
+    }
+    .error-code {
+      font-size: 5rem;
+      font-weight: 800;
+      line-height: 1;
+      color: #2D4C3E;
+      letter-spacing: -0.04em;
+    }
+    .error-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1c1c18;
+      margin: 0.75rem 0 0.5rem;
+    }
+    .error-msg {
+      font-size: 0.9rem;
+      color: #414844;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .error-path {
+      font-size: 0.75rem;
+      color: #727974;
+      background: #f0eee8;
+      border-radius: 0.5rem;
+      padding: 0.3rem 0.75rem;
+      display: inline-block;
+      margin-bottom: 1.75rem;
+      font-family: monospace;
+    }
+    .btn-back {
+      background: #2D4C3E;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.65rem 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-block;
+      transition: background .15s;
+    }
+    .btn-back:hover { background: #1e3a2f; color: #fff; }
+    .btn-secondary-link {
+      font-size: 0.85rem;
+      color: #414844;
+      text-decoration: none;
+      margin-left: 1rem;
+    }
+    .btn-secondary-link:hover { color: #2D4C3E; text-decoration: underline; }
+  </style>
+</head>
+<body>
+<div class="error-box">
+
+  <!-- Código de estado -->
+  <div class="error-code" th:text="${status}">500</div>
+
+  <!-- Título amigable -->
+  <h1 class="error-title"
+      th:text="${status == 404} ? 'Página no encontrada'
+             : (status == 403 ? 'Acceso denegado'
+             : (status == 503 or status == 502 ? 'Servicio no disponible'
+             : 'Error inesperado'))">Error</h1>
+
+  <!-- Mensaje descriptivo -->
+  <p class="error-msg"
+     th:text="${status == 404} ? 'El recurso que buscas no existe o ha sido eliminado.'
+            : (status == 403 ? 'No tienes permisos para acceder a esta página.'
+            : (status == 503 or status == 502 ? 'No se puede conectar con el servidor. Inténtalo más tarde.'
+            : 'Ha ocurrido un error inesperado. Por favor, inténtelo más tarde.'))">
+    Ha ocurrido un error.
+  </p>
+
+  <!-- Ruta de la petición -->
+  <div th:if="${path != null}" class="error-path" th:text="'Ruta: ' + ${path}"></div>
+
+  <!-- Acciones -->
+  <div>
+    <a href="javascript:history.back()" class="btn-back">← Volver</a>
+    <a href="/catalog" class="btn-secondary-link">Ir al catálogo</a>
+  </div>
+
+  <!-- Branding -->
+  <p style="margin-top:2.5rem; font-size:0.75rem; color:#727974;">
+    <strong style="color:#2D4C3E;">BookSocial</strong> — El Curador Digital
+  </p>
+</div>
+</body>
+</html>
