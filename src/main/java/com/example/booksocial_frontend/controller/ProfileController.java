@@ -15,6 +15,7 @@ import com.example.booksocial_frontend.dto.TrackingWorkRequestDTO;
 import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
 import com.example.booksocial_frontend.dto.UpdateUserRequestDTO;
 import com.example.booksocial_frontend.dto.UserResponseDTO;
+import com.example.booksocial_frontend.exception.ApiErrorUtils;
 import com.example.booksocial_frontend.service.FileUploadClientService;
 import com.example.booksocial_frontend.service.OrderClientService;
 import com.example.booksocial_frontend.service.TrackingOrderClientService;
@@ -133,18 +134,30 @@ public class ProfileController {
   }
 
   @PostMapping("/{id}/follow")
-  public String follow(@PathVariable Long id, HttpSession session) {
+  public String follow(@PathVariable Long id, HttpSession session,
+                       org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
     Long sessionUserId = (Long) session.getAttribute("userId");
     if (sessionUserId == null) return "redirect:/auth/login";
-    userService.followUser(sessionUserId, id);
+    try {
+      userService.followUser(sessionUserId, id);
+    } catch (Exception e) {
+      log.warn("[PROFILE] Error al seguir usuario id={}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
+    }
     return "redirect:/user/" + id;
   }
 
   @PostMapping("/{id}/unfollow")
-  public String unfollow(@PathVariable Long id, HttpSession session) {
+  public String unfollow(@PathVariable Long id, HttpSession session,
+                         org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
     Long sessionUserId = (Long) session.getAttribute("userId");
     if (sessionUserId == null) return "redirect:/auth/login";
-    userService.unfollowUser(sessionUserId, id);
+    try {
+      userService.unfollowUser(sessionUserId, id);
+    } catch (Exception e) {
+      log.warn("[PROFILE] Error al dejar de seguir usuario id={}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
+    }
     return "redirect:/user/" + id;
   }
 
@@ -160,22 +173,28 @@ public class ProfileController {
   @PostMapping("/{userId}/tracking/{trackingId}/next-status")
   public String advanceTrackingStatus(@PathVariable Long userId,
                                        @PathVariable Long trackingId,
-                                       HttpSession session) {
+                                       HttpSession session,
+                                       org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
     Long sessionUserId = (Long) session.getAttribute("userId");
     if (sessionUserId == null || !sessionUserId.equals(userId)) {
       return "redirect:/auth/login";
     }
 
-    List<TrackingWorkResponseDTO> trackings = userService.getTrackingByUser(userId);
-    TrackingWorkResponseDTO current = trackings.stream()
-        .filter(t -> t.getId().equals(trackingId))
-        .findFirst()
-        .orElse(null);
+    try {
+      List<TrackingWorkResponseDTO> trackings = userService.getTrackingByUser(userId);
+      TrackingWorkResponseDTO current = trackings.stream()
+          .filter(t -> t.getId().equals(trackingId))
+          .findFirst()
+          .orElse(null);
 
-    if (current != null) {
-      String nextStatus = getNextStatus(current.getStatus());
-      trackingService.update(trackingId,
-          new TrackingWorkRequestDTO(userId, current.getWorkId(), nextStatus));
+      if (current != null) {
+        String nextStatus = getNextStatus(current.getStatus());
+        trackingService.update(trackingId,
+            new TrackingWorkRequestDTO(userId, current.getWorkId(), nextStatus));
+      }
+    } catch (Exception e) {
+      log.warn("[PROFILE] Error al avanzar estado de tracking id={}: {}", trackingId, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
     }
 
     return "redirect:/user/" + userId;
@@ -195,18 +214,24 @@ public class ProfileController {
   public String updateProfile(@PathVariable Long id,
                                @ModelAttribute UpdateUserRequestDTO form,
                                @RequestParam(required = false) MultipartFile avatarFile,
-                               HttpSession session) {
+                               HttpSession session,
+                               org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
 
     Long sessionUserId = (Long) session.getAttribute("userId");
     if (sessionUserId == null || !sessionUserId.equals(id)) {
       return "redirect:/auth/login";
     }
 
-    if (avatarFile != null && !avatarFile.isEmpty()) {
-      form.setImg(fileUploadClientService.uploadImage(avatarFile));
+    try {
+      if (avatarFile != null && !avatarFile.isEmpty()) {
+        form.setImg(fileUploadClientService.uploadImage(avatarFile));
+      }
+      userService.updateUser(id, form);
+      ra.addFlashAttribute("successMsg", "Perfil actualizado correctamente.");
+    } catch (Exception e) {
+      log.warn("[PROFILE] Error al actualizar usuario id={}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
     }
-
-    userService.updateUser(id, form);
-    return "redirect:/user/" + id + "?updated=true";
+    return "redirect:/user/" + id;
   }
 }

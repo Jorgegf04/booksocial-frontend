@@ -1,13 +1,26 @@
-<!--
+<!--/*
+  ============================================================
   Vista: Gestión de editoriales — /admin/editorials
-  Acceso restringido: AdminInterceptor (role=ADMIN).
+  Controlador: AdminEditorialsController (GET/POST)
+  Acceso restringido: AdminInterceptor redirige a /auth/login si role != ADMIN.
 
-  Variables del modelo:
-  - editorials : List<EditorialResponseDTO> todas las editoriales.
+  Recibe del modelo:
+    - editorials : List<EditorialResponseDTO> — todas las editoriales.
+                   Cada EditorialResponseDTO expone: id, name, country.
+    - success    : String (opcional) — mensaje flash tras operación correcta.
+    - error      : String (opcional) — mensaje flash tras error.
 
-  Permite crear, editar y eliminar editoriales.
-  El sidebar se incluye con sidebar('editorials') para marcar el item activo.
--->
+  Operaciones CRUD:
+    - Crear : POST /admin/editorials/create      (form urlencoded, sin archivo)
+    - Editar: POST /admin/editorials/{id}/update
+    - Borrar: POST /admin/editorials/{id}/delete
+
+  Es la vista más simple del panel admin: sin imágenes ni relaciones complejas.
+  El formulario no usa enctype="multipart/form-data" porque no hay subida de archivos.
+
+  CSS específico: /css/pages/admin/admin-shared.css
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -17,13 +30,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos comunes a todas las vistas de administración -->
+  <link rel="stylesheet" th:href="@{/css/pages/admin/admin-shared.css}">
 </head>
 <body class="admin-body">
 <div class="admin-layout">
 
+  <!-- Sidebar: argumento 'editorials' marca el enlace de Editoriales como activo -->
   <div th:replace="~{admin/fragments/sidebar :: sidebar('editorials')}"></div>
 
   <main class="admin-main">
+
+    <!-- Topbar: título + botón para abrir el modal de creación -->
     <div class="admin-topbar">
       <div>
         <h1 class="admin-page-title">Editoriales</h1>
@@ -31,12 +49,13 @@
       </div>
       <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
               data-bs-toggle="modal" data-bs-target="#createEditorialModal">
-        <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+        <!-- admin-topbar-btn-icon: reduce el icono al tamaño del botón (admin-shared.css) -->
+        <span class="material-symbols-outlined admin-topbar-btn-icon">add</span>
         Nueva Editorial
       </button>
     </div>
 
-    <!-- Flash messages -->
+    <!-- Mensajes flash -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
       <span th:text="${success}"></span>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -46,11 +65,16 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <!-- Tabla de editoriales -->
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">
           Todas las editoriales
-          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+          <!--
+            admin-table-count: badge de recuento junto al título (admin-shared.css).
+            #lists.size(editorials): número total de editoriales en la lista.
+          -->
+          <span class="admin-table-count"
                 th:text="'(' + ${#lists.size(editorials)} + ' total)'"></span>
         </p>
       </div>
@@ -65,16 +89,24 @@
             </tr>
           </thead>
           <tbody>
+            <!-- th:each: itera sobre todas las editoriales -->
             <tr th:each="editorial : ${editorials}">
-              <td style="font-size:0.8rem; color:var(--color-outline);" th:text="${editorial.id}">—</td>
+              <!-- admin-table-id: columna de id en pequeño y atenuado (admin-shared.css) -->
+              <td class="admin-table-id" th:text="${editorial.id}">—</td>
               <td>
-                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
-                      th:text="${editorial.name}">—</span>
+                <!-- admin-table-name: nombre en negrita y color primary (admin-shared.css) -->
+                <span class="admin-table-name" th:text="${editorial.name}">—</span>
               </td>
-              <td style="font-size:0.82rem;"
+              <!-- admin-table-meta: texto secundario reducido (admin-shared.css) -->
+              <td class="admin-table-meta"
                   th:text="${editorial.country != null} ? ${editorial.country} : '—'">—</td>
               <td>
                 <div class="d-flex gap-1">
+                  <!--
+                    th:data-id / th:data-name / th:data-country:
+                    Thymeleaf renderiza estos como atributos data-* estándar de HTML.
+                    La función JS los lee para rellenar el formulario de edición.
+                  -->
                   <button type="button" class="btn btn-sm btn-outline-secondary p-1"
                           title="Editar"
                           data-bs-toggle="modal" data-bs-target="#editEditorialModal"
@@ -82,7 +114,8 @@
                           th:data-name="${editorial.name}"
                           th:data-country="${editorial.country}"
                           onclick="openEditEditorialModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                    <!-- admin-table-action-icon: icono reducido en botones de acción (admin-shared.css) -->
+                    <span class="material-symbols-outlined admin-table-action-icon">edit</span>
                   </button>
                   <button type="button" class="btn btn-sm btn-outline-danger p-1"
                           title="Eliminar"
@@ -90,13 +123,15 @@
                           th:data-id="${editorial.id}"
                           th:data-name="${editorial.name}"
                           onclick="openDeleteEditorialModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                    <span class="material-symbols-outlined admin-table-action-icon">delete</span>
                   </button>
                 </div>
               </td>
             </tr>
+            <!-- Fila vacía si no hay editoriales -->
             <tr th:if="${editorials == null or editorials.isEmpty()}">
-              <td colspan="4" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <!-- admin-table-empty: mensaje de lista vacía (admin-shared.css) -->
+              <td colspan="4" class="text-center py-4 admin-table-empty">
                 No hay editoriales registradas
               </td>
             </tr>
@@ -107,7 +142,15 @@
   </main>
 </div>
 
+<!-- ============================================================
+     MODALES BOOTSTRAP — fuera del .admin-layout
+     ============================================================ -->
+
 <!-- Modal: Crear Editorial -->
+<!--
+  Sin enctype="multipart/form-data": el formulario solo envía texto (name, country),
+  por lo que el encoding por defecto (application/x-www-form-urlencoded) es suficiente.
+-->
 <div class="modal fade" id="createEditorialModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -177,7 +220,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar la editorial
+        <!-- admin-modal-confirm: tamaño del párrafo de confirmación (admin-shared.css) -->
+        <p class="admin-modal-confirm">¿Seguro que quieres eliminar la editorial
           <strong id="deleteEditorialName"></strong>?
           Esta acción no se puede deshacer.
         </p>

@@ -1,19 +1,43 @@
+<!--/*
+  ============================================================
+  Fragmento: Barra lateral del panel de administración
+  Ruta de inclusión: th:replace="~{admin/fragments/sidebar :: sidebar('nombre-sección')}"
+  Acceso restringido: AdminInterceptor redirige a /auth/login si role != ADMIN.
+
+  Este fichero define un FRAGMENTO Thymeleaf con parámetro.
+  Un fragmento es un trozo de HTML reutilizable que otras vistas pueden
+  "incrustar" en su lugar con th:replace o th:insert.
+
+  Cómo funciona th:fragment con parámetro:
+    th:fragment="sidebar(active)"
+    → Declara el fragmento y acepta un argumento llamado 'active'.
+    → Cuando otra vista lo incluye con sidebar('dashboard'),
+      la variable 'active' vale 'dashboard' dentro de este bloque.
+
+  Cómo se usa th:classappend para marcar el enlace activo:
+    th:classappend="${active == 'dashboard'} ? ' active'"
+    → Si la condición es verdadera, añade la clase ' active' al class ya existente.
+    → El espacio antes de 'active' es importante: evita juntar la nueva clase
+      con las anteriores sin separación (e.g. "admin-nav-linkactive").
+    → Es equivalente a lo que harías con v-bind:class en Vue o className en React.
+
+  Acceso a la sesión HTTP en Thymeleaf:
+    ${session.username}
+    → Thymeleaf expone el objeto HttpSession directamente con la variable 'session'.
+    → Permite leer atributos que el controlador guardó con session.setAttribute("username", ...).
+    → #strings.substring(session.username, 0, 1).toUpperCase() extrae la inicial del nombre.
+
+  Clases CSS propias (main.css):
+    admin-sidebar, admin-sidebar-logo, admin-nav, admin-nav-section,
+    admin-nav-link, admin-nav-link-danger, admin-sidebar-bottom,
+    admin-user-chip, admin-user-avatar, admin-user-name, admin-user-role.
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-  <!--
-  Vista: Sibebar - Es un fragmento que se reutiliza en todas las vistas de admin
-  Acceso restringido: AdminInterceptor (role=ADMIN).
-
-  Variables del modelo:
-  No tiene variables solo rutas hacia diferentes vistas para gestionar todos los apartdos 
-
-  Permite navagar dentro del panel del adminsitrador del sistema, tanto su pagina inicial, como los diferentes apartados que puede gestionar
-
-  Aqui la etiqueta de Thymeleaf th:append la utiliza para agregar estilos cuando ese elemento esta activo, es como una forma de manipular el DOM que tambien lo intregran frameworks como Vue que hemos visto en clase 
-  
--->
   <body>
 
+    <!-- th:fragment="sidebar(active)": declara el fragmento con parámetro de sección activa -->
     <aside th:fragment="sidebar(active)" class="admin-sidebar">
       <div class="admin-sidebar-logo">
         <span class="material-symbols-outlined">menu_book</span>
@@ -22,13 +46,19 @@
 
       <nav class="admin-nav">
 
+        <!-- Sección General -->
         <p class="admin-nav-section">General</p>
+        <!--
+          th:classappend: añade ' active' al class si active == 'dashboard'.
+          El espacio delante de 'active' separa la nueva clase de las existentes.
+        -->
         <a href="/admin/dashboard"
           th:classappend="${active == 'dashboard'} ? ' active'"
           class="admin-nav-link">
           <span class="material-symbols-outlined">grid_view</span>Dashboard
         </a>
 
+        <!-- Sección Catálogo: gestión de contenidos del fondo editorial -->
         <p class="admin-nav-section">Catálogo</p>
         <a href="/admin/works" th:classappend="${active == 'works'} ? ' active'"
           class="admin-nav-link">
@@ -65,6 +95,7 @@
           <span class="material-symbols-outlined">auto_stories</span>Volúmenes
         </a>
 
+        <!-- Sección Comercio: tienda y logística -->
         <p class="admin-nav-section">Comercio</p>
         <a href="/admin/inventory"
           th:classappend="${active == 'inventory'} ? ' active'"
@@ -77,6 +108,7 @@
           <span class="material-symbols-outlined">receipt_long</span>Pedidos
         </a>
 
+        <!-- Sección Comunidad: usuarios, reseñas y eventos -->
         <p class="admin-nav-section">Comunidad</p>
         <a href="/admin/users" th:classappend="${active == 'users'} ? ' active'"
           class="admin-nav-link">
@@ -95,6 +127,7 @@
 
       </nav>
 
+      <!-- Parte inferior: accesos rápidos y chip del usuario en sesión -->
       <div class="admin-sidebar-bottom">
         <a href="/catalog" class="admin-nav-link">
           <span class="material-symbols-outlined">library_books</span>Ver
@@ -103,6 +136,11 @@
         <a href="/auth/logout" class="admin-nav-link admin-nav-link-danger">
           <span class="material-symbols-outlined">logout</span>Cerrar sesión
         </a>
+        <!--
+          Chip del usuario: muestra la inicial y el nombre de sesión.
+          ${session.username}: accede al atributo 'username' de la HttpSession.
+          #strings.substring(..., 0, 1).toUpperCase(): extrae la inicial en mayúscula.
+        -->
         <div class="admin-user-chip">
           <div class="admin-user-avatar"
             th:text="${session.username != null} ? ${#strings.substring(session.username, 0, 1).toUpperCase()} : 'A'">A</div>

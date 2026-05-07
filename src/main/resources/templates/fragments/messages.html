@@ -1,0 +1,53 @@
+<!--/*
+  ============================================================
+  Fragmento: Mensajes flash (éxito / error)
+  Ruta: Se incluye en cualquier vista que necesite feedback al usuario
+  Controlador: — (fragmento reutilizable, sin controlador propio)
+  Uso: <div th:replace="~{fragments/messages :: messages}"></div>
+
+  Recibe del modelo (flash attributes — ambos opcionales):
+    - successMsg : String → mensaje de operación correcta (verde)
+    - errorMsg   : String → mensaje de error de negocio (rojo)
+
+  Los flash attributes los añade el controlador con
+  RedirectAttributes.addFlashAttribute() antes de hacer redirect.
+  ============================================================
+*/-->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<!--
+  th:fragment="messages": define el bloque como fragmento reutilizable.
+  Los dos divs internos son condicionales: solo se renderizan si el
+  atributo flash correspondiente existe en el modelo.
+-->
+<div th:fragment="messages">
+
+  <!--
+    th:if: Thymeleaf evalúa la condición; si successMsg no existe o es null,
+    este div no aparece en el HTML final.
+    alert: clase Bootstrap que da estilos base de alerta (padding, display block).
+    d-flex align-items-center gap-2: alinea icono y texto en fila.
+    alert-success-msg: estilos de color verde definidos en main.css.
+  -->
+  <div th:if="${successMsg}"
+       class="alert d-flex align-items-center gap-2 mb-4 alert-success-msg"
+       role="alert">
+    <!-- alert-msg-icon: ajusta el tamaño del icono Material Symbols -->
+    <span class="material-symbols-outlined alert-msg-icon">check_circle</span>
+    <!-- th:text: reemplaza el contenido del span con el valor del atributo flash -->
+    <span th:text="${successMsg}"></span>
+  </div>
+
+  <!-- Alerta de error: misma estructura pero con colores rojos -->
+  <div th:if="${errorMsg}"
+       class="alert d-flex align-items-center gap-2 mb-4 alert-error-msg"
+       role="alert">
+    <span class="material-symbols-outlined alert-msg-icon">error</span>
+    <span th:text="${errorMsg}"></span>
+  </div>
+
+</div>
+</body>
+</html>

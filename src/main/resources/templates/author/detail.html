@@ -1,3 +1,26 @@
+<!--/*
+  ============================================================
+  Vista: Detalle de autor
+  Ruta: /author/{id}
+  Controlador: AuthorController#detail() (GET)
+
+  Recibe del modelo:
+    - author       : AuthorResponseDTO — datos completos del autor
+                     (nombre, foto, nacionalidad, birthDate, obras, followerCount).
+    - loggedIn     : boolean           — true si hay sesión activa.
+    - following    : boolean           — true si el usuario en sesión ya sigue al autor.
+    - followSuccess : String (opcional) — mensaje flash tras seguir con éxito.
+    - followError   : String (opcional) — mensaje flash si el follow falló.
+
+  Estructura de la página:
+    · Columna izquierda (col-lg-4): foto, nombre, stats, botón seguir/dejar de seguir.
+    · Columna derecha (col-lg-8): grid de obras del autor con portadas escalonadas.
+
+  Fragmentos incluidos:
+    - fragments/navbar :: navbar
+    - fragments/footer :: footer
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,16 +29,26 @@
   <title th:text="${author.name} + ' — BookSocial'">Autor — BookSocial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos del listado y detalle de autores (compartido con list.html) -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/author.css}">
 </head>
 <body>
 
+<!-- NAVBAR -->
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<main class="container" style="padding-top:6rem; padding-bottom:5rem;">
+<!-- author-main: padding-top compensa la navbar fixed (author.css) -->
+<main class="container author-main">
 
-  <!-- Flash messages -->
+  <!-- Mensajes flash de seguir / dejar de seguir -->
+  <!--
+    alert alert-success/danger: Bootstrap — cajas de notificación verde/roja.
+    alert-dismissible: Bootstrap — añade el botón de cierre (×).
+    fade show: Bootstrap — animación de entrada del alert.
+    data-bs-dismiss="alert": Bootstrap JS — cierra el alert al hacer clic.
+  -->
   <div th:if="${followSuccess}" class="alert alert-success alert-dismissible fade show mb-4" role="alert">
-    <span class="material-symbols-outlined align-middle me-1" style="font-size:1.1rem;">check_circle</span>
+    <span class="material-symbols-outlined align-middle me-1 author-search-icon">check_circle</span>
     <span th:text="${followSuccess}"></span>
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>
@@ -24,136 +57,196 @@
     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
   </div>
 
+  <!-- Layout de dos columnas: aside izquierda + section derecha -->
   <div class="row g-5">
 
     <!-- ═══ COLUMNA IZQUIERDA: Ficha del autor ═══ -->
     <aside class="col-lg-4">
-      <div class="sticky-top" style="top:6rem;">
+      <!--
+        sticky-top: Bootstrap — hace que el aside se quede fijo al hacer scroll.
+        author-detail-sticky: top:6rem para no quedar bajo la navbar (author.css).
+      -->
+      <div class="sticky-top author-detail-sticky">
 
-        <!-- Foto -->
-        <div class="mb-4 rounded-lg overflow-hidden"
-             style="aspect-ratio:3/4; background:var(--color-surface-l);">
+        <!-- Foto del autor: aspecto 3:4 -->
+        <!--
+          author-detail-photo: aspect-ratio:3/4 + fondo gris (author.css).
+          rounded-lg: border-radius más pronunciado.
+          overflow-hidden: Bootstrap — recorta la foto al border-radius.
+        -->
+        <div class="mb-4 rounded-lg overflow-hidden author-detail-photo">
           <img th:if="${author.img != null and !author.img.isEmpty()}"
-               th:src="${author.img}" th:alt="${author.name}"
-               style="width:100%; height:100%; object-fit:cover;">
+               th:src="${author.img}" th:alt="${author.name}">
+          <!--
+            author-detail-photo-placeholder: mismo fondo gris que el wrapper (author.css).
+            author-detail-placeholder-icon: icono de persona a 6rem (author.css).
+          -->
           <div th:unless="${author.img != null and !author.img.isEmpty()}"
-               class="d-flex align-items-center justify-content-center h-100"
-               style="background:var(--color-surface-l);">
-            <span class="material-symbols-outlined"
-                  style="font-size:6rem; color:var(--color-outline-l);">person</span>
+               class="d-flex align-items-center justify-content-center h-100 author-detail-photo-placeholder">
+            <span class="material-symbols-outlined author-detail-placeholder-icon">person</span>
           </div>
         </div>
 
-        <!-- Nombre y nacionalidad -->
-        <h1 class="font-serif mb-1" style="font-size:2rem; color:var(--bs-primary);"
+        <!-- Nombre del autor y su nacionalidad -->
+        <!-- author-detail-name: serif grande en color primary (author.css) -->
+        <h1 class="font-serif mb-1 author-detail-name"
             th:text="${author.name}">Nombre del autor</h1>
-        <p class="mb-3" style="color:var(--color-muted); font-size:0.85rem; letter-spacing:.08em; text-transform:uppercase;"
+        <!--
+          author-detail-nationality: uppercase + letter-spacing + color muted (author.css).
+        -->
+        <p class="mb-3 author-detail-nationality"
            th:text="${author.nationality != null ? author.nationality : ''}"></p>
 
-        <!-- Estadísticas -->
-        <div class="d-flex gap-4 py-3 mb-4"
-             style="border-top:1px solid var(--color-outline-l); border-bottom:1px solid var(--color-outline-l);">
+        <!-- Bloque de estadísticas: seguidores, obras, año de nacimiento -->
+        <!--
+          author-detail-stats: border-top y border-bottom (author.css).
+          py-3: Bootstrap — padding vertical para separar del nombre y los botones.
+        -->
+        <div class="d-flex gap-4 py-3 mb-4 author-detail-stats">
           <div>
-            <div class="font-serif fw-bold" style="font-size:1.5rem; color:var(--bs-primary);"
+            <!--
+              author-stat-num: serif grande en color primary (author.css).
+              author-stat-label: uppercase muy pequeño + color muted (author.css).
+            -->
+            <div class="font-serif fw-bold author-stat-num"
                  th:text="${author.followerCount != null ? author.followerCount : 0}">0</div>
-            <div style="font-size:0.72rem; color:var(--color-muted); text-transform:uppercase; letter-spacing:.08em;">Seguidores</div>
+            <div class="author-stat-label">Seguidores</div>
           </div>
           <div>
-            <div class="font-serif fw-bold" style="font-size:1.5rem; color:var(--bs-primary);"
+            <!-- #lists.size(): utilidad Thymeleaf para contar elementos de una lista -->
+            <div class="font-serif fw-bold author-stat-num"
                  th:text="${author.works != null ? #lists.size(author.works) : 0}">0</div>
-            <div style="font-size:0.72rem; color:var(--color-muted); text-transform:uppercase; letter-spacing:.08em;">Obras</div>
+            <div class="author-stat-label">Obras</div>
           </div>
           <div th:if="${author.birthDate != null}">
-            <div class="font-serif fw-bold" style="font-size:1.5rem; color:var(--bs-primary);"
+            <!-- #temporals.year(): extrae solo el año de un LocalDate -->
+            <div class="font-serif fw-bold author-stat-num"
                  th:text="${#temporals.year(author.birthDate)}">—</div>
-            <div style="font-size:0.72rem; color:var(--color-muted); text-transform:uppercase; letter-spacing:.08em;">Nacimiento</div>
+            <div class="author-stat-label">Nacimiento</div>
           </div>
         </div>
 
-        <!-- Botón seguir / dejar de seguir (solo con sesión) -->
+        <!-- Botones de acción: solo si hay sesión activa -->
+        <!--
+          th:block: contenedor lógico de Thymeleaf sin HTML propio.
+          th:if="${loggedIn}": solo renderiza si hay sesión.
+        -->
         <th:block th:if="${loggedIn}">
 
+          <!--
+            th:if="${!following}": muestra "Seguir" si aún no sigue al autor.
+            btn-primary-pill: botón verde de ancho completo (main.css).
+            author-action-btn: modificador de padding para este contexto (author.css).
+          -->
           <form th:if="${!following}" th:action="@{'/author/' + ${author.id} + '/follow'}" method="post">
-            <button type="submit" class="btn-primary-pill w-100 d-flex align-items-center justify-content-center gap-2"
-                    style="padding:.75rem;">
-              <span class="material-symbols-outlined" style="font-size:1.1rem;">person_add</span>
+            <button type="submit"
+                    class="btn-primary-pill w-100 d-flex align-items-center justify-content-center gap-2 author-action-btn">
+              <span class="material-symbols-outlined author-search-icon">person_add</span>
               Seguir autor
             </button>
           </form>
 
+          <!--
+            th:if="${following}": muestra "Siguiendo ✓" si ya sigue al autor.
+            author-unfollow-btn: ghost pill con mismo padding que el botón de seguir (author.css).
+            w-100 d-flex: Bootstrap — ancho completo + flex para alinear icono y texto.
+          -->
           <form th:if="${following}" th:action="@{'/author/' + ${author.id} + '/unfollow'}" method="post">
-            <button type="submit" class="w-100 d-flex align-items-center justify-content-center gap-2"
-                    style="padding:.75rem; font-weight:600; border:1.5px solid var(--bs-primary);
-                           border-radius:2rem; background:transparent; color:var(--bs-primary); cursor:pointer;">
-              <span class="material-symbols-outlined" style="font-size:1.1rem;">how_to_reg</span>
+            <button type="submit"
+                    class="w-100 d-flex align-items-center justify-content-center gap-2 author-unfollow-btn">
+              <span class="material-symbols-outlined author-search-icon">how_to_reg</span>
               Siguiendo ✓
             </button>
           </form>
 
         </th:block>
 
-        <!-- Sin sesión -->
+        <!-- Sin sesión: enlace directo al login -->
+        <!--
+          th:unless="${loggedIn}": renderiza solo si NO hay sesión.
+          d-block text-center: Bootstrap — convierte el enlace en bloque centrado.
+        -->
         <a th:unless="${loggedIn}" href="/auth/login"
-           class="btn-primary-pill d-block text-center text-decoration-none"
-           style="padding:.75rem;">
+           class="btn-primary-pill d-block text-center text-decoration-none author-action-btn">
           Inicia sesión para seguir
         </a>
 
       </div>
     </aside>
 
-    <!-- ═══ COLUMNA DERECHA: Obras ═══ -->
+    <!-- ═══ COLUMNA DERECHA: Obras del autor ═══ -->
     <section class="col-lg-8">
 
+      <!-- Cabecera con línea decorativa -->
       <div class="d-flex align-items-end gap-3 mb-5">
-        <h2 class="font-serif mb-0" style="font-size:1.8rem; color:var(--bs-primary);">Obras del autor</h2>
-        <div class="flex-grow-1" style="border-bottom:1px solid var(--color-outline-l); margin-bottom:4px;"></div>
+        <!-- author-works-heading: font-serif + color primary (author.css) -->
+        <h2 class="font-serif mb-0 author-works-heading">Obras del autor</h2>
+        <!-- author-works-divider: border-bottom sutil hasta el final de la fila (author.css) -->
+        <div class="flex-grow-1 author-works-divider"></div>
       </div>
 
-      <!-- Sin obras -->
+      <!-- Estado vacío: sin obras registradas para este autor -->
       <div th:if="${author.works == null or author.works.isEmpty()}"
-           class="text-center py-5" style="background:var(--color-surface-l); border-radius:1rem;">
-        <span class="material-symbols-outlined d-block mb-2"
-              style="font-size:3.5rem; color:var(--color-outline-l);">menu_book</span>
-        <p class="font-serif mb-1" style="color:var(--bs-primary); font-size:1rem;">
+           class="text-center py-5 author-empty">
+        <span class="material-symbols-outlined d-block mb-2 author-empty-icon">menu_book</span>
+        <p class="font-serif mb-1 author-works-empty-text">
           Aún no hay obras registradas para este autor.
         </p>
       </div>
 
-      <!-- Grid de obras (diseño escalonado 2 columnas) -->
+      <!-- Grid de obras con diseño escalonado: cada columna impar baja 5rem -->
+      <!--
+        row g-5: Bootstrap — grid con gutters amplios para el diseño editorial.
+        th:unless: renderiza si la lista de obras NO está vacía.
+      -->
       <div class="row g-5" th:unless="${author.works == null or author.works.isEmpty()}">
+
+        <!--
+          th:classappend="${iterStat.index % 2 == 1} ? ' mt-5'":
+          añade margin-top al índice impar para crear el efecto escalonado.
+          iterStat: objeto de estado del bucle — iterStat.index es el índice 0-based.
+        -->
         <div th:each="work, iterStat : ${author.works}"
              th:classappend="${iterStat.index % 2 == 1} ? ' mt-5'"
              class="col-sm-6">
+
+          <!--
+            group-work: tiene reglas de hover en author.css (transform img, opacity h3).
+            text-decoration-none d-block: Bootstrap — enlace sin subrayado de ancho completo.
+          -->
           <a th:href="@{'/work/' + ${work.id}}" class="text-decoration-none d-block group-work">
 
-            <!-- Portada -->
-            <div class="overflow-hidden mb-3"
-                 style="aspect-ratio:2/3; background:var(--color-surface-l); border-radius:.25rem; position:relative;">
+            <!-- Portada: aspecto 2:3 con badge superpuesto -->
+            <!--
+              author-work-cover: aspect-ratio:2/3 + bg gris + position:relative (author.css).
+              overflow-hidden: Bootstrap — recorta la imagen y el badge al border-radius.
+            -->
+            <div class="overflow-hidden mb-3 author-work-cover">
               <img th:if="${work.img != null and !work.img.isEmpty()}"
-                   th:src="${work.img}" th:alt="${work.title}"
-                   style="width:100%; height:100%; object-fit:cover; transition:transform .6s ease;">
+                   th:src="${work.img}" th:alt="${work.title}">
               <div th:unless="${work.img != null and !work.img.isEmpty()}"
                    class="d-flex align-items-center justify-content-center h-100">
-                <span class="material-symbols-outlined"
-                      style="font-size:4rem; color:var(--color-outline-l);">menu_book</span>
+                <span class="material-symbols-outlined author-work-cover-icon">menu_book</span>
               </div>
 
-              <!-- Badge de género -->
+              <!--
+                author-work-genre-badge: pastilla de género superpuesta en esquina (author.css).
+                position-absolute: Bootstrap — posiciona el badge relativo al contenedor.
+              -->
               <span th:if="${work.genre != null}"
                     th:text="${work.genre}"
-                    class="position-absolute"
-                    style="top:.75rem; right:.75rem; background:var(--color-surface-l);
-                           color:var(--bs-primary); font-size:.65rem; font-weight:700;
-                           padding:.25rem .6rem; border-radius:.25rem; letter-spacing:.06em;
-                           text-transform:uppercase;"></span>
+                    class="position-absolute author-work-genre-badge"></span>
             </div>
 
-            <!-- Info -->
-            <h3 class="font-serif mb-1"
-                style="font-size:1.1rem; color:var(--bs-primary); transition:opacity .2s;"
+            <!-- Título y metadatos de la obra -->
+            <!-- author-work-title: serif + color primary + transition opacity (author.css) -->
+            <h3 class="font-serif mb-1 author-work-title"
                 th:text="${work.title}">Título</h3>
-            <p style="font-size:.75rem; color:var(--color-muted); letter-spacing:.07em; text-transform:uppercase;"
+            <!--
+              author-work-meta: uppercase pequeño + letter-spacing (author.css).
+              #temporals.year(): extrae solo el año de la fecha de publicación.
+            -->
+            <p class="author-work-meta"
                th:text="${(work.type != null ? work.type : '') + (work.publicationDate != null ? ' · ' + #temporals.year(work.publicationDate) : '')}"></p>
 
           </a>
@@ -165,12 +258,9 @@
 
 </main>
 
+<!-- FOOTER -->
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<style>
-  .group-work:hover img { transform: scale(1.04); }
-  .group-work:hover h3  { opacity: .75; }
-</style>
 </body>
 </html>

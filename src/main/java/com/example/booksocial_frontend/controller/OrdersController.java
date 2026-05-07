@@ -12,6 +12,7 @@ import com.example.booksocial_frontend.service.OrderClientService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controlador MVC del historial de pedidos del usuario autenticado.
@@ -23,6 +24,7 @@ import lombok.RequiredArgsConstructor;
  * @version 1.4
  * @since 2026-04-22
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/orders")
@@ -39,6 +41,7 @@ public class OrdersController {
       List<OrderResponseDTO> orders = orderService.getOrdersByUser(userId);
       model.addAttribute("orders", orders);
     } catch (Exception e) {
+      log.warn("[ORDERS] Error al cargar pedidos de userId={}: {}", userId, e.getMessage());
       model.addAttribute("orders", List.of());
     }
 

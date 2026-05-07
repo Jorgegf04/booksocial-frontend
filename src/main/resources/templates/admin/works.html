@@ -1,16 +1,43 @@
-<!--
+<!--/*
+  ============================================================
   Vista: Gestión de obras — /admin/works
-  Acceso restringido: AdminInterceptor (role=ADMIN).
+  Controlador: AdminWorksController (GET/POST)
+  Acceso restringido: AdminInterceptor redirige a /auth/login si role != ADMIN.
 
-  Variables del modelo:
-  - works   : List<WorkResponseDTO> todas las obras del catálogo.
-  - authors : List<AuthorResponseDTO> para el selector del formulario de creación.
-  - genres  : valores de Genre[] para el selector de género.
-  - types   : valores de WorkType[] para el selector de tipo.
+  Recibe del modelo:
+    - works        : List<WorkResponseDTO>   — todas las obras del catálogo.
+    - authors      : List<AuthorResponseDTO> — para el selector del formulario.
+    - genres       : Genre[]                 — valores del enum para el selector.
+    - types        : WorkType[]              — valores del enum para el selector.
+    - demographics : Demographic[]           — valores del enum para el selector.
+    - success      : String (opcional)       — mensaje flash tras operación correcta.
+    - error        : String (opcional)       — mensaje flash tras error.
 
-  Permite crear, editar y eliminar obras del catálogo.
-  El sidebar se incluye con sidebar('works') para marcar el item activo.
--->
+  Operaciones CRUD:
+    - Crear : POST /admin/works/create           (multipart/form-data, sube imagen)
+    - Editar: POST /admin/works/{id}/update      (multipart/form-data)
+    - Borrar: POST /admin/works/{id}/delete
+
+  Patrón de modales Bootstrap con th:data-*:
+    Los botones "Editar" y "Eliminar" de cada fila llevan los datos de la obra
+    en atributos th:data-id, th:data-title… Thymeleaf los renderiza como
+    data-id="123" data-title="Naruto" en el HTML final.
+    El onclick llama a funciones JS que leen esos atributos con btn.dataset.X
+    y rellenan el modal correspondiente antes de que se abra.
+
+  Bootstrap modals:
+    data-bs-toggle="modal" data-bs-target="#id": abre el modal con ese id.
+    modal fade / modal-dialog / modal-content / modal-header / modal-body / modal-footer:
+    estructura estándar de un modal Bootstrap 5.
+    modal-lg / modal-sm: tamaños predefinidos del diálogo.
+
+  Mensajes flash (alert-dismissible):
+    alert alert-success fade show: Bootstrap — alerta verde animada.
+    btn-close + data-bs-dismiss="alert": cierra la alerta con JS de Bootstrap.
+
+  CSS específico: /css/pages/admin/admin-shared.css
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -20,26 +47,40 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos comunes a todas las vistas de administración -->
+  <link rel="stylesheet" th:href="@{/css/pages/admin/admin-shared.css}">
 </head>
 <body class="admin-body">
 <div class="admin-layout">
 
+  <!-- Sidebar: argumento 'works' marca el enlace de Obras como activo -->
   <div th:replace="~{admin/fragments/sidebar :: sidebar('works')}"></div>
 
   <main class="admin-main">
+
+    <!-- Topbar: título + botón para abrir el modal de creación -->
     <div class="admin-topbar">
       <div>
         <h1 class="admin-page-title">Obras</h1>
         <p class="admin-page-subtitle">Catálogo completo de libros, manga y cómics</p>
       </div>
+      <!--
+        data-bs-toggle="modal" + data-bs-target="#createWorkModal":
+        Bootstrap — abre el modal con ese id al hacer click, sin JS propio.
+      -->
       <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
               data-bs-toggle="modal" data-bs-target="#createWorkModal">
-        <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+        <!-- admin-topbar-btn-icon: reduce el icono Material al tamaño del botón (admin-shared.css) -->
+        <span class="material-symbols-outlined admin-topbar-btn-icon">add</span>
         Nueva Obra
       </button>
     </div>
 
-    <!-- Flash messages -->
+    <!-- Mensajes flash: solo se renderizan si el modelo incluye success o error -->
+    <!--
+      alert-dismissible fade show: Bootstrap — alerta con botón de cierre y animación.
+      th:if: Thymeleaf renderiza el bloque solo si la variable existe y no es null.
+    -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
       <span th:text="${success}"></span>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -49,11 +90,16 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <!-- Tabla de obras -->
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">
           Todas las obras
-          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+          <!--
+            admin-table-count: badge de recuento junto al título (admin-shared.css).
+            #lists.size(lista): utilidad Thymeleaf para contar elementos de una lista.
+          -->
+          <span class="admin-table-count"
                 th:text="'(' + ${#lists.size(works)} + ' total)'"></span>
         </p>
       </div>
@@ -73,38 +119,59 @@
             </tr>
           </thead>
           <tbody>
+            <!-- th:each: itera sobre todas las obras del catálogo -->
             <tr th:each="work : ${works}">
               <td>
+                <!--
+                  admin-work-thumb: cuadrado de miniatura con background-image (main.css).
+                  th:style: la URL de la imagen es dinámica → no puede ir a CSS externo.
+                -->
                 <div class="admin-work-thumb"
                      th:style="${work.img != null and !work.img.isEmpty()} ? 'background-image:url(' + ${work.img} + ')' : ''">
+                  <!--
+                    th:if: muestra el icono solo cuando no hay imagen.
+                    admin-table-thumb-icon: tamaño y color del placeholder (admin-shared.css).
+                  -->
                   <span th:if="${work.img == null or work.img.isEmpty()}"
-                        class="material-symbols-outlined"
-                        style="font-size:1rem; color:var(--color-outline);">menu_book</span>
+                        class="material-symbols-outlined admin-table-thumb-icon">menu_book</span>
                 </div>
               </td>
               <td>
-                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
-                      th:text="${work.title}">—</span>
+                <!-- admin-table-name: nombre principal en negrita y color primary (admin-shared.css) -->
+                <span class="admin-table-name" th:text="${work.title}">—</span>
               </td>
               <td>
                 <span class="admin-badge" th:text="${work.type != null} ? ${work.type.name()} : '—'">—</span>
               </td>
-              <td style="font-size:0.82rem;"
+              <!--
+                admin-table-meta: texto secundario pequeño (admin-shared.css).
+                #strings.replace: reemplaza '_' por espacio en el nombre del enum.
+              -->
+              <td class="admin-table-meta"
                   th:text="${work.genre != null} ? ${#strings.replace(work.genre.name(), '_', ' ')} : '—'">—</td>
-              <td style="font-size:0.82rem;"
+              <td class="admin-table-meta"
                   th:text="${work.demographic != null} ? ${work.demographic.name()} : '—'">—</td>
-              <td style="font-size:0.82rem;"
+              <td class="admin-table-meta"
                   th:text="${work.publicationDate != null} ? ${#temporals.format(work.publicationDate, 'dd/MM/yyyy')} : '—'">—</td>
               <td>
+                <!--
+                  admin-work-rating: valoración en verde (admin-shared.css).
+                  th:unless: complementario de th:if — se renderiza cuando la condición es FALSA.
+                -->
                 <span th:if="${work.averageRating != null}"
-                      style="font-size:0.82rem; color:#2d7a4f; font-weight:600;"
+                      class="admin-work-rating"
                       th:text="${#numbers.formatDecimal(work.averageRating, 1, 1)} + ' ★'">—</span>
-                <span th:unless="${work.averageRating != null}" style="color:var(--color-outline);">—</span>
+                <!-- admin-work-rating-empty: dash atenuado cuando no hay rating -->
+                <span th:unless="${work.averageRating != null}" class="admin-work-rating-empty">—</span>
               </td>
-              <td style="font-size:0.82rem;"
+              <td class="admin-table-meta"
                   th:text="${work.authors != null and !work.authors.isEmpty()} ? ${#strings.listJoin(work.authors, ', ')} : '—'">—</td>
               <td>
                 <div class="d-flex gap-1">
+                  <!--
+                    th:data-*: Thymeleaf serializa cualquier th:data-X como el atributo data-X
+                    en el HTML final. El JS lo lee con btn.dataset.X para rellenar el modal.
+                  -->
                   <button type="button" class="btn btn-sm btn-outline-secondary p-1"
                           title="Editar"
                           data-bs-toggle="modal" data-bs-target="#editWorkModal"
@@ -119,7 +186,8 @@
                           th:data-authors="${work.authors != null} ? ${#strings.listJoin(work.authors, ', ')} : ''"
                           th:data-rating="${work.averageRating != null} ? ${work.averageRating} : ''"
                           onclick="openEditWorkModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                    <!-- admin-table-action-icon: tamaño reducido para iconos de acción (admin-shared.css) -->
+                    <span class="material-symbols-outlined admin-table-action-icon">edit</span>
                   </button>
                   <button type="button" class="btn btn-sm btn-outline-danger p-1"
                           title="Eliminar"
@@ -127,13 +195,15 @@
                           th:data-id="${work.id}"
                           th:data-title="${work.title}"
                           onclick="openDeleteModal('deleteWorkForm', this.dataset.id, '/admin/works/', '/update', this.dataset.title, 'deleteWorkName')">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                    <span class="material-symbols-outlined admin-table-action-icon">delete</span>
                   </button>
                 </div>
               </td>
             </tr>
+            <!-- Fila vacía si no hay obras -->
             <tr th:if="${works == null or works.isEmpty()}">
-              <td colspan="9" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <!-- admin-table-empty: mensaje de lista vacía (admin-shared.css) -->
+              <td colspan="9" class="text-center py-4 admin-table-empty">
                 No hay obras registradas
               </td>
             </tr>
@@ -144,7 +214,18 @@
   </main>
 </div>
 
+<!-- ============================================================
+     MODALES BOOTSTRAP
+     Todos los modales van FUERA del .admin-layout para evitar
+     que el z-index del sidebar interfiera con el overlay.
+     ============================================================ -->
+
 <!-- Modal: Crear Obra -->
+<!--
+  modal fade: Bootstrap — oculto por defecto, con transición de opacidad al abrirse.
+  modal-dialog modal-lg: diálogo centrado de tamaño grande.
+  enctype="multipart/form-data": necesario para enviar el campo imgFile (archivo binario).
+-->
 <div class="modal fade" id="createWorkModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -154,13 +235,22 @@
       </div>
       <form method="post" th:action="@{/admin/works/create}" enctype="multipart/form-data">
         <div class="modal-body">
+          <!--
+            row g-3: Bootstrap — grid de columnas con gap de 1rem entre celdas.
+            col-md-8 / col-md-4: Bootstrap — anchos de columna en pantallas medianas+.
+          -->
           <div class="row g-3">
             <div class="col-md-8">
+              <!-- text-danger: Bootstrap — color rojo para el asterisco de campo obligatorio -->
               <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
               <input type="text" name="title" class="form-control form-control-sm" required>
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Tipo</label>
+              <!--
+                th:each sobre un array de enum: Thymeleaf también itera sobre arrays Java.
+                th:value="${t.name()}: envía el nombre del enum como valor del option.
+              -->
               <select name="type" class="form-select form-select-sm">
                 <option value="">— Sin tipo —</option>
                 <option th:each="t : ${types}" th:value="${t.name()}" th:text="${t.name()}"></option>
@@ -191,6 +281,7 @@
             </div>
             <div class="col-md-8">
               <label class="form-label fw-semibold">Imagen de portada</label>
+              <!-- accept="image/*": el explorador de archivos filtra por imágenes -->
               <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
             </div>
             <div class="col-md-4">
@@ -200,6 +291,7 @@
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Autores</label>
+              <!-- multiple size="4": permite selección múltiple y muestra 4 opciones a la vez -->
               <select name="authors" class="form-select form-select-sm" multiple size="4">
                 <option th:each="a : ${authors}" th:value="${a.name}" th:text="${a.name}"></option>
               </select>
@@ -217,6 +309,10 @@
 </div>
 
 <!-- Modal: Editar Obra -->
+<!--
+  id="editWorkForm": referenciado por openEditWorkModal() para cambiar la action
+  con el id de la obra antes de enviar el formulario.
+-->
 <div class="modal fade" id="editWorkModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -270,7 +366,8 @@
               <label class="form-label fw-semibold">Imagen de portada</label>
               <input type="hidden" id="editWorkImg" name="img">
               <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
-              <div id="editWorkImgPreview" class="mt-1" style="font-size:0.75rem; color:var(--color-muted);"></div>
+              <!-- admin-img-preview: hint pequeño con la URL actual (admin-shared.css) -->
+              <div id="editWorkImgPreview" class="mt-1 admin-img-preview"></div>
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Autores</label>
@@ -291,6 +388,7 @@
 </div>
 
 <!-- Modal: Eliminar Obra -->
+<!-- modal-sm: diálogo pequeño para confirmaciones sencillas -->
 <div class="modal fade" id="deleteWorkModal" tabindex="-1">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
@@ -299,13 +397,17 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar
+        <!-- admin-modal-confirm: tamaño de texto del párrafo de confirmación (admin-shared.css) -->
+        <p class="admin-modal-confirm">¿Seguro que quieres eliminar
           <strong id="deleteWorkName"></strong>?
           Esta acción no se puede deshacer.
         </p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <!--
+          d-inline: Bootstrap — evita que el form ocupe todo el ancho y rompa el layout del footer.
+        -->
         <form id="deleteWorkForm" method="post" class="d-inline">
           <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
         </form>
@@ -316,6 +418,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+  /* Rellena el modal de edición con los datos del botón pulsado */
   function openEditWorkModal(btn) {
     const id = btn.dataset.id;
     document.getElementById('editWorkForm').action = '/admin/works/' + id + '/update';
@@ -336,11 +439,13 @@
     }
   }
 
+  /* Configura el formulario de eliminación con el id y nombre de la obra */
   function openDeleteModal(formId, id, basePath, suffix, name, nameSpanId) {
     document.getElementById(formId).action = basePath + id + '/delete';
     if (nameSpanId) document.getElementById(nameSpanId).textContent = '"' + name + '"';
   }
 
+  /* Marca como seleccionada la opción cuyo value coincide con value */
   function setSelectValue(selectId, value) {
     const sel = document.getElementById(selectId);
     if (!sel) return;

@@ -1919,3 +1919,98 @@ h1, h2, h3, h4, h5, h6, .font-serif {
   .admin-main { margin-left: 0; padding: 1rem; }
   .admin-metrics { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ============================================================
+   NAVBAR — Búsqueda y botones de autenticación
+   ============================================================ */
+
+/* Formulario de búsqueda integrado: posición relativa para el input-group */
+.navbar-search-form  { position: relative; }
+.navbar-search-group { width: 240px; }
+.navbar-search-input { border-radius: 2rem 0 0 2rem; padding-right: 0.5rem; }
+.navbar-search-btn {
+  border-radius: 0 2rem 2rem 0;
+  background-color: var(--bs-primary);
+  color: #fff;
+  border: none;
+  padding: 0 0.75rem;
+}
+.navbar-search-btn .material-symbols-outlined { font-size: 1rem; vertical-align: middle; }
+
+/* Enlace al carrito: hereda el color de marca */
+.navbar-cart-link { color: var(--bs-primary); }
+
+/* Botones visibles cuando el usuario NO está autenticado */
+.navbar-btn-login    { color: var(--color-muted); font-weight: 600; }
+.navbar-btn-register { background-color: var(--bs-primary); color: #fff; font-weight: 600; }
+
+/* Enlace y botón del usuario autenticado */
+.navbar-user-link {
+  color: var(--bs-primary);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.navbar-user-link .material-symbols-outlined { font-size: 1.2rem; }
+.navbar-btn-logout {
+  border: 1.5px solid var(--bs-primary);
+  color: var(--bs-primary);
+  font-weight: 600;
+}
+
+/* ============================================================
+   FOOTER — Extras
+   ============================================================ */
+
+/* Párrafo descriptivo de la marca bajo el logo */
+.footer-brand-desc { font-size: 0.875rem; max-width: 18rem; }
+/* Iconos dentro de los botones de redes sociales */
+.site-footer .social-icon .material-symbols-outlined { font-size: 1.1rem; }
+/* Separador horizontal entre columnas y barra inferior */
+.footer-divider {
+  border-color: rgba(192, 236, 218, 0.15);
+  margin-top: 3rem;
+  margin-bottom: 1.5rem;
+}
+.footer-bottom-bar { font-size: 0.8rem; }
+/* Símbolo de corazón en el texto del copyright */
+.footer-heart { color: #c0ecda; }
+
+/* ============================================================
+   FLASH MESSAGES
+   ============================================================ */
+
+/* Alerta de operación correcta (verde) */
+.alert-success-msg {
+  background: rgba(45, 76, 62, 0.08);
+  border: 1px solid rgba(45, 76, 62, 0.2);
+  border-radius: 0.75rem;
+  color: var(--bs-primary);
+}
+/* Alerta de error de negocio (rojo) */
+.alert-error-msg {
+  background: rgba(186, 26, 26, 0.08);
+  border: 1px solid rgba(186, 26, 26, 0.2);
+  border-radius: 0.75rem;
+  color: #ba1a1a;
+}
+/* Icono a la izquierda del mensaje (check_circle / error) */
+.alert-msg-icon { font-size: 1.1rem; }
+
+/* ============================================================
+   COMMENTS — Extras de interacción
+   ============================================================ */
+
+/* Botón de like cuando el usuario ya ha reaccionado */
+.comment-action--liked  { color: var(--bs-primary); font-weight: 700; }
+/* Modo invitado: no se puede interactuar con el like */
+.comment-action--guest  { cursor: default; pointer-events: none; }
+/* Botón de eliminar: color de peligro */
+.comment-action--delete { color: #dc3545; }
+/* Icono pequeño dentro de los botones de acción del comentario */
+.comment-icon           { font-size: 0.9rem; }
+/* Formulario de respuesta: oculto por defecto, JS lo muestra via display */
+.comment-reply-form     { display: none; margin-top: 0.75rem; }
+.comment-reply-textarea { width: 100%; resize: vertical; }
+/* Tamaño reducido para los botones Cancelar/Responder del formulario inline */
+.comment-reply-btn         { font-size: 0.8rem; }
+.comment-reply-btn--submit { padding: 0.4rem 1.25rem; }

@@ -1,26 +1,33 @@
-<!--
-  Vista: Historial de pedidos — /orders
-  Controlador: OrdersController (GET /orders)
+<!--/*
+  ============================================================
+  Vista: Historial de pedidos
+  Ruta: /orders
+  Controlador: OrdersController#history() (GET)
   Requiere sesión activa; si no hay userId en sesión se redirige a /auth/login.
 
-  Variables del modelo:
-  - orders       : List<OrderResponseDTO> pedidos del usuario autenticado, ordenados
-                   por fecha descendente. Obtenidos via OrderClientService.getOrdersByUser(userId).
-  - orderSuccess : Boolean (opcional) true si se acaba de completar un checkout desde /cart
+  Recibe del modelo:
+    - orders       : List<OrderResponseDTO> — pedidos del usuario, ordenados por fecha desc.
+                     Obtenidos via OrderClientService.getOrdersByUser(userId).
+    - orderSuccess : Boolean (opcional)     — true si se acaba de completar un checkout.
 
   Estructura de OrderResponseDTO:
-  - id         : Long identificador del pedido
-  - date       : LocalDateTime fecha de creación
-  - total      : double importe total del pedido
-  - totalItems : int número total de artículos
-  - orderLines : List<OrderLineResponseDTO> con title (edición), price, quantity, subtotal
+    - id         : Long                         — identificador del pedido.
+    - date       : LocalDateTime                — fecha de creación.
+    - total      : double                       — importe total del pedido.
+    - totalItems : int                          — número total de artículos.
+    - orderLines : List<OrderLineResponseDTO>   — con title, price, quantity, subtotal.
 
   Cada pedido se renderiza como una .order-card con:
-  - Cabecera: número de pedido, fecha formateada y total en badge verde.
-  - Cuerpo  : lista de líneas (título de edición, cantidad, precio unitario, subtotal).
+    - Cabecera: número de pedido, fecha y total en badge verde.
+    - Cuerpo  : lista de líneas (título de edición, cantidad, precio unitario, subtotal).
 
   Si orders está vacío se muestra un estado vacío con enlace al catálogo.
--->
+
+  Fragmentos incluidos:
+    - fragments/navbar :: navbar
+    - fragments/footer :: footer
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -29,81 +36,131 @@
   <title>Mis Pedidos — BookSocial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos del historial de pedidos -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/orders.css}">
 </head>
 <body>
 
+  <!-- NAVBAR -->
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
+  <!-- orders-main: padding-top compensa la navbar fixed (orders.css) -->
+  <main class="container orders-main">
 
-    <!-- Confirmación de compra -->
-    <div th:if="${orderSuccess}" class="alert d-flex align-items-center gap-2 mb-4"
-         style="background:rgba(45,76,62,0.08); border:1px solid rgba(45,76,62,0.2); border-radius:0.75rem; color:var(--bs-primary);">
+    <!-- Alerta de confirmación tras completar un checkout desde /cart -->
+    <!--
+      orders-confirm-alert: fondo verde muy suave + borde + border-radius (orders.css).
+      th:if="${orderSuccess}": solo se muestra si el modelo incluye orderSuccess=true.
+    -->
+    <div th:if="${orderSuccess}"
+         class="alert d-flex align-items-center gap-2 mb-4 orders-confirm-alert">
       <span class="material-symbols-outlined">check_circle</span>
       ¡Pedido confirmado correctamente! Ya está en preparación.
     </div>
 
-    <!-- Header -->
+    <!-- Cabecera de la página -->
     <header class="mb-5">
       <p class="filter-section-title mb-1">Mi cuenta</p>
-      <h1 class="font-serif" style="font-size:clamp(2rem,4vw,2.75rem); font-weight:700; color:var(--bs-primary);">
+      <!-- orders-heading: clamp() para responsive (orders.css) -->
+      <h1 class="font-serif orders-heading">
         Mis Pedidos
       </h1>
-      <p style="color:var(--color-muted);">Historial completo de tus compras en BookSocial.</p>
+      <!-- orders-subheading: color muted (orders.css) -->
+      <p class="orders-subheading">Historial completo de tus compras en BookSocial.</p>
     </header>
 
-    <!-- Sin pedidos -->
+    <!-- Estado vacío: sin pedidos -->
+    <!-- orders-empty: fondo gris claro + border-radius (orders.css) -->
     <div th:if="${orders == null or orders.isEmpty()}"
-         class="text-center py-5" style="background:var(--color-surface-l); border-radius:1.25rem;">
-      <span class="material-symbols-outlined d-block mb-3"
-            style="font-size:4rem; color:var(--color-outline-l);">receipt_long</span>
-      <p class="font-serif mb-2" style="font-size:1.2rem; color:var(--bs-primary);">Todavía no tienes pedidos</p>
-      <p style="color:var(--color-muted); font-size:0.875rem; margin-bottom:1.5rem;">
+         class="text-center py-5 orders-empty">
+      <span class="material-symbols-outlined d-block mb-3 orders-empty-icon">receipt_long</span>
+      <p class="font-serif mb-2 orders-empty-title">Todavía no tienes pedidos</p>
+      <p class="orders-empty-text">
         Explora el catálogo y haz tu primera compra.
       </p>
-      <a href="/catalog" class="btn-primary-pill" style="text-decoration:none; padding:0.7rem 1.75rem; font-size:0.875rem;">
+      <!-- orders-empty-btn: modificador de padding sobre btn-primary-pill (orders.css) -->
+      <a href="/catalog" class="btn-primary-pill orders-empty-btn">
         Explorar catálogo
       </a>
     </div>
 
     <!-- Lista de pedidos -->
+    <!--
+      d-flex flex-column gap-4: Bootstrap — stack vertical de tarjetas.
+      th:if: solo se renderiza si hay pedidos en la lista.
+    -->
     <div th:if="${orders != null and !orders.isEmpty()}"
          class="d-flex flex-column gap-4">
 
+      <!--
+        th:each="order : ${orders}": itera sobre todos los pedidos del usuario.
+        order-card: tarjeta de pedido con cabecera y líneas (main.css).
+      -->
       <div th:each="order : ${orders}" class="order-card">
 
-        <!-- Cabecera pedido -->
+        <!-- Cabecera del pedido: icono, número, fecha, total e items -->
         <div class="order-card-header">
           <div class="d-flex align-items-center gap-3">
+            <!--
+              order-card-icon: contenedor circular del icono (main.css).
+              orders-icon-color: color primary del icono (orders.css).
+            -->
             <div class="order-card-icon">
-              <span class="material-symbols-outlined" style="color:var(--bs-primary);">package_2</span>
+              <span class="material-symbols-outlined orders-icon-color">package_2</span>
             </div>
             <div>
-              <p class="fw-bold mb-0" style="color:var(--bs-primary);">Pedido #<span th:text="${order.id}"></span></p>
-              <p class="mb-0" style="font-size:0.78rem; color:var(--color-muted);"
+              <!-- orders-order-id: color primary para el número de pedido (orders.css) -->
+              <p class="fw-bold mb-0 orders-order-id">
+                Pedido #<span th:text="${order.id}"></span>
+              </p>
+              <!-- orders-order-date: font-size pequeño + color muted (orders.css) -->
+              <p class="mb-0 orders-order-date"
                  th:text="${#temporals.format(order.date, 'dd MMM yyyy, HH:mm')}"></p>
             </div>
           </div>
           <div class="text-end">
-            <span class="order-total-badge" th:text="'€' + ${#numbers.formatDecimal(order.total, 1, 2)}">€0.00</span>
-            <p class="mb-0 mt-1" style="font-size:0.72rem; color:var(--color-muted);"
+            <!--
+              order-total-badge: importe total en pastilla verde (main.css).
+              #numbers.formatDecimal: formatea con 1 entero y 2 decimales.
+            -->
+            <span class="order-total-badge"
+                  th:text="'€' + ${#numbers.formatDecimal(order.total, 1, 2)}">€0.00</span>
+            <!-- orders-order-items: font-size muy pequeño + color muted (orders.css) -->
+            <p class="mb-0 mt-1 orders-order-items"
                th:text="${order.totalItems} + ' artículo(s)'"></p>
           </div>
         </div>
 
-        <!-- Líneas del pedido -->
-        <div class="order-lines" th:if="${order.orderLines != null and !order.orderLines.isEmpty()}">
+        <!-- Líneas del pedido: cada producto comprado -->
+        <!--
+          order-lines: contenedor de líneas con separadores (main.css).
+          th:if: solo se renderiza si el pedido tiene líneas.
+        -->
+        <div class="order-lines"
+             th:if="${order.orderLines != null and !order.orderLines.isEmpty()}">
+
+          <!--
+            th:each="line : ${order.orderLines}": itera sobre cada línea del pedido.
+            order-line: fila flex de la línea (main.css).
+          -->
           <div th:each="line : ${order.orderLines}" class="order-line">
+            <!--
+              order-line-icon: contenedor del icono de la línea (main.css).
+              orders-line-icon: color y tamaño del icono (orders.css).
+            -->
             <div class="order-line-icon">
-              <span class="material-symbols-outlined" style="font-size:1rem; color:var(--color-outline);">auto_stories</span>
+              <span class="material-symbols-outlined orders-line-icon">auto_stories</span>
             </div>
             <div class="flex-grow-1">
-              <p class="mb-0 fw-bold" style="font-size:0.875rem; color:var(--bs-primary);"
+              <!-- orders-line-title: font-size + color primary (orders.css) -->
+              <p class="mb-0 fw-bold orders-line-title"
                  th:text="${line.title}">Título</p>
-              <p class="mb-0" style="font-size:0.75rem; color:var(--color-muted);"
+              <!-- orders-line-meta: cantidad y precio unitario en gris (orders.css) -->
+              <p class="mb-0 orders-line-meta"
                  th:text="'x' + ${line.quantity} + ' · €' + ${#numbers.formatDecimal(line.price, 1, 2)} + ' c/u'"></p>
             </div>
-            <span class="fw-bold" style="font-size:0.875rem; color:var(--bs-primary);"
+            <!-- orders-line-subtotal: importe de la línea en color primary (orders.css) -->
+            <span class="fw-bold orders-line-subtotal"
                   th:text="'€' + ${#numbers.formatDecimal(line.subtotal, 1, 2)}">€0.00</span>
           </div>
         </div>
@@ -114,6 +171,7 @@
 
   </main>
 
+  <!-- FOOTER -->
   <div th:replace="~{fragments/footer :: footer}"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

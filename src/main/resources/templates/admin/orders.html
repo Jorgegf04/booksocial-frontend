@@ -1,15 +1,29 @@
-<!--
+<!--/*
+  ============================================================
   Vista: Gestión de pedidos — /admin/orders
-  Acceso restringido: AdminInterceptor (role=ADMIN).
+  Controlador: AdminOrdersController (GET/POST)
+  Acceso restringido: AdminInterceptor redirige a /auth/login si role != ADMIN.
 
-  Variables del modelo:
-  - orders : List<OrderResponseDTO> todos los pedidos del sistema.
+  Recibe del modelo:
+    - orders  : List<OrderResponseDTO> — todos los pedidos del sistema.
+                Cada OrderResponseDTO expone: id, username, date, totalItems,
+                total, orderLines (List<OrderLineResponseDTO> con title, quantity…).
+    - success : String (opcional) — mensaje flash tras actualizar el estado.
+    - error   : String (opcional) — mensaje flash tras error.
 
-  Permite ver todos los pedidos y actualizar su estado de tracking
-  (PREPARING → SHIPPED → IN_TRANSIT → DELIVERED).
-  Al cambiar el estado se envía un email de notificación al usuario.
-  El sidebar se incluye con sidebar('orders') para marcar el item activo.
--->
+  Flujo de tracking de pedidos:
+    El administrador puede actualizar el estado de cada pedido mediante
+    un modal. Al guardar, el backend envía un email de notificación al usuario.
+    Estados disponibles: PREPARING → SHIPPED → IN_TRANSIT → DELIVERED | CANCELED.
+
+  Columna "Líneas": muestra un preview comprimido de los primeros 2 títulos
+  de las líneas del pedido. Si hay más de 2, añade "+N más".
+    - lineStat.index: posición 0-based en la iteración.
+    - lineStat.last: true cuando es el último elemento.
+
+  CSS específico: /css/pages/admin/admin-shared.css
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -19,13 +33,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos comunes a todas las vistas de administración -->
+  <link rel="stylesheet" th:href="@{/css/pages/admin/admin-shared.css}">
 </head>
 <body class="admin-body">
 <div class="admin-layout">
 
+  <!-- Sidebar: argumento 'orders' marca el enlace de Pedidos como activo -->
   <div th:replace="~{admin/fragments/sidebar :: sidebar('orders')}"></div>
 
   <main class="admin-main">
+
+    <!-- Topbar: sin botón de creación (los pedidos los generan los usuarios) -->
     <div class="admin-topbar">
       <div>
         <h1 class="admin-page-title">Pedidos</h1>
@@ -33,7 +52,7 @@
       </div>
     </div>
 
-    <!-- Flash messages -->
+    <!-- Mensajes flash -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
       <span th:text="${success}"></span>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -43,10 +62,15 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <!-- Tabla de pedidos -->
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">Todos los pedidos
-          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+          <!--
+            admin-table-count: badge de recuento junto al título (admin-shared.css).
+            #lists.size(orders): número total de pedidos en la lista.
+          -->
+          <span class="admin-table-count"
                 th:text="'(' + ${#lists.size(orders)} + ' total)'"></span>
         </p>
       </div>
@@ -64,17 +88,26 @@
             </tr>
           </thead>
           <tbody>
+            <!-- th:each: itera sobre todos los pedidos -->
             <tr th:each="order : ${orders}">
-              <td style="font-weight:700; color:var(--bs-primary);" th:text="'#' + ${order.id}">#1</td>
-              <td style="font-size:0.85rem;" th:text="${order.username != null} ? ${order.username} : '—'">—</td>
-              <td style="font-size:0.82rem;"
+              <!-- admin-order-id: número de pedido en negrita y color primary (admin-shared.css) -->
+              <td class="admin-order-id" th:text="'#' + ${order.id}">#1</td>
+              <!-- admin-table-meta: tamaño reducido para celdas secundarias (admin-shared.css) -->
+              <td class="admin-table-meta" th:text="${order.username != null} ? ${order.username} : '—'">—</td>
+              <td class="admin-table-meta"
                   th:text="${order.date != null} ? ${#temporals.format(order.date, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
-              <td style="font-size:0.82rem;" th:text="${order.totalItems != null} ? ${order.totalItems} : '—'">—</td>
-              <td style="font-weight:700; color:#2d7a4f;"
+              <td class="admin-table-meta" th:text="${order.totalItems != null} ? ${order.totalItems} : '—'">—</td>
+              <!-- admin-inv-price: precio en verde y negrita (admin-shared.css) -->
+              <td class="admin-inv-price"
                   th:text="'€' + ${#numbers.formatDecimal(order.total != null ? order.total : 0, 1, 2)}">€0.00</td>
               <td>
+                <!--
+                  admin-order-lines: preview comprimido de líneas (admin-shared.css).
+                  th:if / lineStat: el objeto de estado permite usar lineStat.index y lineStat.last
+                  para limitar a 2 títulos y añadir coma entre ellos.
+                -->
                 <div th:if="${order.orderLines != null and !order.orderLines.isEmpty()}"
-                     style="font-size:0.75rem; color:var(--color-muted);">
+                     class="admin-order-lines">
                   <span th:each="line, lineStat : ${order.orderLines}"
                         th:if="${lineStat.index < 2}">
                     <span th:text="${line.title != null} ? ${line.title} : '—'">—</span>
@@ -92,12 +125,15 @@
                         th:data-orderid="${order.id}"
                         th:data-username="${order.username}"
                         onclick="openTrackingModal(this)">
-                  <span class="material-symbols-outlined" style="font-size:0.9rem;">local_shipping</span>
+                  <!-- admin-table-action-icon: icono reducido (admin-shared.css) -->
+                  <span class="material-symbols-outlined admin-table-action-icon">local_shipping</span>
                 </button>
               </td>
             </tr>
+            <!-- Fila vacía si no hay pedidos -->
             <tr th:if="${orders == null or orders.isEmpty()}">
-              <td colspan="7" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <!-- admin-table-empty: mensaje de lista vacía (admin-shared.css) -->
+              <td colspan="7" class="text-center py-4 admin-table-empty">
                 No hay pedidos registrados
               </td>
             </tr>
@@ -107,6 +143,10 @@
     </div>
   </main>
 </div>
+
+<!-- ============================================================
+     MODAL DE TRACKING — fuera del .admin-layout
+     ============================================================ -->
 
 <!-- Modal: Actualizar estado del pedido -->
 <div class="modal fade" id="trackingModal" tabindex="-1">
@@ -118,11 +158,20 @@
       </div>
       <form id="trackingForm" method="post">
         <div class="modal-body">
-          <p style="font-size:0.9rem; margin-bottom:16px;">
+          <!--
+            admin-tracking-order: tamaño del párrafo principal (admin-shared.css).
+            mb-3: Bootstrap — margen inferior de 1rem (equivale a los 16px originales).
+            admin-tracking-username: resalta el nombre en color primary (admin-shared.css).
+          -->
+          <p class="admin-tracking-order mb-3">
             Pedido <strong id="trackingOrderId"></strong>
-            — Usuario: <span id="trackingUsername" style="color:var(--bs-primary);"></span>
+            — Usuario: <span id="trackingUsername" class="admin-tracking-username"></span>
           </p>
-          <p style="font-size:0.82rem; color:var(--color-muted); margin-bottom:16px;">
+          <!--
+            admin-tracking-note: nota informativa en gris (admin-shared.css).
+            Se informa al admin de que el cambio de estado enviará un email al usuario.
+          -->
+          <p class="admin-tracking-note mb-3">
             Al guardar se enviará un email de notificación al usuario.
           </p>
           <label class="form-label fw-semibold">Nuevo estado <span class="text-danger">*</span></label>

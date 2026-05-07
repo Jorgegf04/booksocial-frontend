@@ -8,10 +8,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.booksocial_frontend.dto.EventResponseDTO;
+import com.example.booksocial_frontend.exception.ApiErrorUtils;
 import com.example.booksocial_frontend.service.EventClientService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controlador MVC del módulo de eventos de BookSocial.
@@ -31,6 +33,7 @@ import lombok.RequiredArgsConstructor;
  * @version 1.4
  * @since 2026-04-22
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/events")
@@ -52,6 +55,7 @@ public class EventsController {
       model.addAttribute("secondary", secondary);
       model.addAttribute("upcoming", upcoming);
     } catch (Exception e) {
+      log.warn("[EVENTS] Error al cargar eventos: {}", e.getMessage());
       model.addAttribute("featured", null);
       model.addAttribute("secondary", null);
       model.addAttribute("upcoming", List.of());
@@ -73,7 +77,8 @@ public class EventsController {
       eventService.joinEvent(id, userId);
       ra.addFlashAttribute("successMsg", "Te has unido al evento correctamente.");
     } catch (Exception e) {
-      ra.addFlashAttribute("errorMsg", e.getMessage());
+      log.warn("[EVENTS] Error al unirse al evento id={}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/events";
   }
@@ -88,7 +93,8 @@ public class EventsController {
       eventService.leaveEvent(id, userId);
       ra.addFlashAttribute("successMsg", "Has abandonado el evento.");
     } catch (Exception e) {
-      ra.addFlashAttribute("errorMsg", e.getMessage());
+      log.warn("[EVENTS] Error al abandonar el evento id={}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/events";
   }

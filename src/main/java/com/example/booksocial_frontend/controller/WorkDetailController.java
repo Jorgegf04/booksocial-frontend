@@ -25,6 +25,7 @@ import com.example.booksocial_frontend.dto.ReactionResponseDTO;
 import com.example.booksocial_frontend.dto.TrackingWorkRequestDTO;
 import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
 import com.example.booksocial_frontend.dto.WorkResponseDTO;
+import com.example.booksocial_frontend.service.AuthorClientService;
 import com.example.booksocial_frontend.service.CommentClientService;
 import com.example.booksocial_frontend.service.EditionClientService;
 import com.example.booksocial_frontend.service.ProductClientService;
@@ -34,6 +35,7 @@ import com.example.booksocial_frontend.service.WorkClientService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controlador MVC del detalle de obra en BookSocial.
@@ -61,12 +63,14 @@ import lombok.RequiredArgsConstructor;
  * @version 1.4
  * @since 2026-04-22
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/work")
 public class WorkDetailController {
 
   private final WorkClientService workService;
+  private final AuthorClientService authorService;
   private final EditionClientService editionService;
   private final CommentClientService commentService;
   private final ProductClientService productService;
@@ -115,7 +119,8 @@ public class WorkDetailController {
           productsByEdition.putIfAbsent(p.getEditionId(), p);
         }
       }
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[WORK_DETAIL] Error al cargar productos para obra id={}: {}", id, e.getMessage());
     }
 
     // Contar total de comentarios (árbol completo)
@@ -142,7 +147,8 @@ public class WorkDetailController {
               .anyMatch(r -> userId.equals(r.getUserId()) && Boolean.TRUE.equals(r.getLiked()));
           if (liked)
             userLikedCommentIds.add(comment.getId());
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+          log.warn("[WORK_DETAIL] Error al cargar reacciones del comentario id={}: {}", comment.getId(), e.getMessage());
         }
       }
     }
@@ -155,11 +161,23 @@ public class WorkDetailController {
             .filter(t -> id.equals(t.getWorkId()))
             .findFirst()
             .orElse(null);
-      } catch (Exception ignored) {
+      } catch (Exception e) {
+        log.warn("[WORK_DETAIL] Error al cargar tracking para userId={} workId={}: {}", userId, id, e.getMessage());
       }
     }
 
+    // Map author name → id for clickable links in the template
+    Map<String, Long> authorIds = new HashMap<>();
+    try {
+      authorService.getAllAuthors().forEach(a -> {
+        if (a.getName() != null && a.getId() != null) authorIds.put(a.getName(), a.getId());
+      });
+    } catch (Exception e) {
+      log.warn("[WORK_DETAIL] Error al cargar autores: {}", e.getMessage());
+    }
+
     model.addAttribute("work", work);
+    model.addAttribute("authorIds", authorIds);
     model.addAttribute("editions", editions);
     model.addAttribute("comments", comments);
     model.addAttribute("commentCount", totalCommentCount);

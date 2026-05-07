@@ -1,0 +1,94 @@
+/* ============================================================
+   cart.css — Estilos del carrito de compra
+   Vista: cart/index.html
+   Controlador: CartController (GET /cart, POST /cart/update|remove|checkout)
+   ============================================================ */
+
+/* === Espaciado del main === */
+.cart-main {
+  padding-top: 6rem;
+  padding-bottom: 5rem;
+}
+
+/* === Alertas de éxito y error del carrito === */
+/* Diseño propio en lugar de usar Bootstrap alert, con fondo muy suave */
+.cart-alert-success {
+  background: rgba(45, 76, 62, 0.08);
+  border: 1px solid rgba(45, 76, 62, 0.2);
+  border-radius: 0.75rem;
+  color: var(--bs-primary);
+}
+.cart-alert-error {
+  background: rgba(186, 26, 26, 0.08);
+  border: 1px solid rgba(186, 26, 26, 0.2);
+  border-radius: 0.75rem;
+  color: #ba1a1a;
+}
+
+/* === Cabecera de la página === */
+.cart-heading {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--bs-primary);
+}
+.cart-subheading { color: var(--color-muted); max-width: 36rem; }
+
+/* === Estado vacío del carrito === */
+.cart-empty {
+  background: var(--color-surface-l);
+  border-radius: 1.25rem;
+}
+.cart-empty-icon  { font-size: 4rem; color: var(--color-outline-l); }
+.cart-empty-title { font-size: 1.2rem; color: var(--bs-primary); }
+.cart-empty-text  { color: var(--color-muted); font-size: 0.875rem; margin-bottom: 1.5rem; }
+.cart-empty-btn   { text-decoration: none; padding: 0.7rem 1.75rem; font-size: 0.875rem; }
+
+/* === Items del carrito === */
+
+/* Icono placeholder cuando la obra no tiene imagen */
+.cart-placeholder-icon { font-size: 2rem; color: var(--color-outline-l); }
+
+/* Iconos de los botones de cantidad y eliminar */
+.cart-qty-icon    { font-size: 1rem; }
+.cart-remove-icon { font-size: 1.1rem; }
+
+/* Icono del enlace "Seguir explorando" */
+.cart-back-icon { font-size: 1.1rem; }
+
+/* === Panel de resumen (columna derecha) === */
+.cart-summary-heading { font-size: 1.4rem; color: var(--bs-primary); }
+
+/* Fila de envío: añade border-bottom para separar de los totales */
+.cart-summary-row--bordered { border-bottom: 1px solid var(--color-outline-l); }
+
+/* Icono, título y descripción de la fila de envío */
+.cart-summary-shipping-icon  { color: var(--bs-primary); }
+.cart-summary-shipping-title { font-size: 0.875rem; color: var(--bs-primary); }
+.cart-summary-shipping-desc  { font-size: 0.75rem; color: var(--color-muted); }
+
+/* === Filas de totales (subtotal, envío, total) === */
+.cart-total-row   { font-size: 0.9rem; }
+.cart-total-label { color: var(--color-muted); }
+.cart-total-value { color: var(--bs-primary); }
+
+/* Fila final "Total": borde superior discontinuo y tamaño mayor */
+.cart-total-final {
+  border-top: 1.5px dashed var(--color-outline-l);
+  font-size: 1.1rem;
+}
+
+/* === Botón de confirmar compra y seguridad === */
+.cart-checkout-btn { padding: 1rem; font-size: 1rem; }
+.cart-secure-text  { font-size: 0.75rem; color: var(--color-outline); }
+.cart-secure-icon  { font-size: 0.9rem; }
+
+/* === Sección de sugerencias === */
+.cart-suggestions-heading { font-size: 1.5rem; color: var(--bs-primary); }
+
+/* Etiqueta de demografía en las tarjetas de sugerencias */
+.cart-work-demographic {
+  font-size: 0.75rem;
+  color: var(--color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

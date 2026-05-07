@@ -1,0 +1,289 @@
+/* ============================================================
+   auth.css — Estilos del área de autenticación
+   Vistas que lo usan: auth/login.html, auth/register.html
+   Cubre el layout de dos paneles (decorativo + formulario).
+   ============================================================ */
+
+/* Necesario para que el layout flex ocupe el 100% de la ventana */
+html, body { height: 100%; margin: 0; }
+
+/* === Wrapper principal: dos paneles en fila === */
+.auth-wrapper {
+  min-height: 100vh;
+  display: flex;
+}
+
+/* === Panel izquierdo decorativo (verde degradado) === */
+.auth-panel {
+  width: 42%;
+  background: linear-gradient(160deg, #1a3328 0%, #2D4C3E 50%, #3a6050 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 3rem 3.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Círculos decorativos generados con pseudo-elementos */
+.auth-panel::before {
+  content: '';
+  position: absolute;
+  top: -120px; right: -120px;
+  width: 360px; height: 360px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.auth-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -80px; left: -80px;
+  width: 280px; height: 280px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Logo "BookSocial" en el panel izquierdo */
+.auth-brand {
+  font-family: 'Noto Serif', serif;
+  font-style: italic;
+  font-size: 1.7rem;
+  color: #c0ecda;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.auth-brand span { color: #fff; }
+
+/* Zona de cita literaria: z-index para quedar sobre los pseudo-elementos */
+.auth-panel-middle { position: relative; z-index: 1; }
+
+/* Cita en serif itálica */
+.auth-panel-quote {
+  font-family: 'Noto Serif', serif;
+  font-style: italic;
+  font-size: 1.55rem;
+  color: rgba(255, 255, 255, 0.92);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+/* Autor de la cita o subtítulo */
+.auth-panel-sub {
+  font-size: 0.82rem;
+  color: rgba(192, 236, 218, 0.75);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Texto de copyright al pie del panel */
+.auth-panel-footer {
+  font-size: 0.78rem;
+  color: rgba(192, 236, 218, 0.5);
+}
+
+/* === Lista de ventajas (solo en register) === */
+.auth-panel-perks {
+  margin-top: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.auth-perk {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.82rem;
+  color: rgba(192, 236, 218, 0.8);
+}
+
+.auth-perk-icon {
+  width: 28px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* === Panel derecho: contiene el formulario === */
+.auth-form-side {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 2rem;
+  background-color: var(--color-bg);
+}
+
+/* Versión con scroll para el formulario de registro (más campos) */
+.auth-form-side--scroll { overflow-y: auto; }
+
+/* === Tarjeta del formulario === */
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* Register tiene más campos; necesita un poco más de ancho */
+.auth-card--wide {
+  max-width: 460px;
+  padding: 0.5rem 0;
+}
+
+/* Título principal del formulario */
+.auth-card-title {
+  font-family: 'Noto Serif', serif;
+  font-size: 1.75rem;
+  color: var(--color-text);
+  margin-bottom: 0.25rem;
+}
+
+/* Subtítulo bajo el título principal */
+.auth-card-sub {
+  font-size: 0.85rem;
+  color: var(--color-outline);
+  margin-bottom: 2rem;
+}
+
+/* Reducción del margen inferior en el formulario de registro */
+.auth-card-sub--tight { margin-bottom: 1.75rem; }
+
+/* === Etiquetas de sección (solo en register: "Datos de cuenta", etc.) === */
+.auth-section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-outline);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-outline-l);
+}
+
+/* === Labels de campo === */
+.auth-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-muted);
+  margin-bottom: 0.35rem;
+}
+
+/* === Inputs del formulario === */
+.auth-input {
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-outline-l);
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.auth-input:focus {
+  border-color: var(--bs-primary);
+  box-shadow: 0 0 0 3px rgba(45, 76, 62, 0.12);
+  background: #fff;
+  outline: none;
+}
+
+/* Campos opcionales: fondo ligeramente diferente para señalarlo visualmente */
+.auth-input.optional { background: var(--color-surface-l); }
+
+/* Etiqueta "(opcional)" inline */
+.auth-optional-tag {
+  font-size: 0.72rem;
+  color: var(--color-outline);
+  margin-left: 0.3rem;
+  font-weight: 400;
+}
+
+/* === Botón de envío del formulario === */
+.auth-btn {
+  background: var(--bs-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  width: 100%;
+  transition: background 0.15s, transform 0.1s;
+}
+.auth-btn:hover { background: #1a3328; transform: translateY(-1px); }
+
+/* === Separador "o" entre formulario y enlace de cambio === */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--color-outline-l);
+  font-size: 0.78rem;
+  margin: 1.25rem 0;
+}
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--color-outline-l);
+}
+
+/* === Enlace de navegación entre login y register === */
+.auth-link {
+  font-size: 0.85rem;
+  color: var(--bs-primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+.auth-link:hover { text-decoration: underline; }
+
+/* === Wrapper para input + botón ojo === */
+.auth-input-group { position: relative; }
+
+/* Botón de mostrar/ocultar contraseña superpuesto dentro del input */
+.auth-pw-toggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--color-outline);
+  cursor: pointer;
+  padding: 0;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* === Barra de fortaleza de contraseña (register) === */
+.pw-strength {
+  height: 3px;
+  border-radius: 2px;
+  margin-top: 6px;
+  transition: all 0.3s;
+  background: var(--color-outline-l);
+}
+.pw-strength.weak   { background: #e05252; width: 30%; }
+.pw-strength.medium { background: #d4a017; width: 65%; }
+.pw-strength.strong { background: #2d7a4f; width: 100%; }
+
+/* === Texto auxiliar bajo los campos (pistas, validaciones) === */
+/* Sobreescribe el font-size de Bootstrap's .form-text */
+.auth-form-hint { font-size: 0.75rem; }
+
+/* Párrafo de cambio de vista ("¿No tienes cuenta?") */
+.auth-switch-text { font-size: 0.85rem; color: var(--color-muted); }
+
+/* Tamaño de los mensajes flash de Bootstrap dentro del formulario */
+.auth-alert-text { font-size: 0.85rem; }
+
+/* === Responsive: el panel decorativo desaparece en móvil === */
+@media (max-width: 768px) {
+  .auth-panel { display: none; }
+}

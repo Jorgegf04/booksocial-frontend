@@ -1,101 +1,132 @@
+<!--/*
+  ============================================================
+  Fragmento: comment
+  Ruta: Se incluye en work/detail.html para renderizar comentarios
+  Controlador: — (fragmento recursivo, sin controlador propio)
+  Uso: th:replace="~{fragments/comment :: comment(...)}"
+
+  Parámetros recibidos:
+    - comment             : CommentResponseDTO → comentario actual a renderizar
+    - work                : WorkResponseDTO    → obra a la que pertenece
+    - loggedIn            : boolean            → true si hay usuario en sesión
+    - sessionUserId       : Long               → ID del usuario autenticado (null si no hay sesión)
+    - sessionRole         : String             → rol del usuario ("ADMIN", "REGISTERED", etc.)
+    - reactionCounts      : Map<Long, Integer> → mapa comentarioId → número total de likes
+    - userLikedCommentIds : Set<Long>          → IDs de comentarios que el usuario ya likeó
+
+  Árbol jerárquico (recursividad):
+    - comment.replies se itera con th:each; cada reply vuelve a llamar a este fragmento.
+    - La profundidad máxima la controla el backend en CommentServiceImpl.
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
 <!--
-  ============================================================
-  Fragmento Thymeleaf: comment
-  ============================================================
-  Renderiza un comentario y todo su árbol de respuestas de forma
-  recursiva. Cada nodo del árbol invoca de nuevo a este mismo
-  fragmento con el comentario hijo (th:replace recursivo al final).
-
-  Parámetros recibidos:
-    - comment             : CommentResponseDTO — comentario actual a renderizar.
-    - work                : WorkResponseDTO    — obra a la que pertenece el comentario.
-    - loggedIn            : boolean            — true si hay usuario en sesión.
-    - sessionUserId       : Long               — ID del usuario autenticado (null si no hay sesión).
-    - sessionRole         : String             — rol del usuario ("ADMIN", "REGISTERED", etc.).
-    - reactionCounts      : Map<Long, Integer> — mapa comentarioId → número total de likes.
-    - userLikedCommentIds : Set<Long>          — IDs de comentarios que el usuario ya ha likeado.
-
-  Comportamiento de las reacciones (toggle):
-    - Si el usuario NO ha likeado el comentario → botón estilo normal.
-    - Si el usuario YA ha likeado → botón resaltado (color primario + icono filled).
-    - El formulario POST envía al endpoint /work/{wid}/comment/{cid}/reaction.
-
-  Permisos de eliminación:
-    - Visible únicamente si loggedIn Y (comment.userId == sessionUserId OR sessionRole == "ADMIN").
-
-  Árbol jerárquico:
-    - Las respuestas se iteran con th:each sobre comment.replies.
-    - Cada respuesta invoca de nuevo este mismo fragmento (recursividad Thymeleaf).
-    - La profundidad real del árbol está limitada en el backend por el mapper de CommentServiceImpl.
-  ============================================================
+  th:fragment con parámetros: Thymeleaf permite declarar fragmentos que reciben
+  variables como si fuesen argumentos de una función.
+  comment-card: flex row con gap entre avatar y contenido (main.css).
 -->
 <div th:fragment="comment(comment, work, loggedIn, sessionUserId, sessionRole, reactionCounts, userLikedCommentIds)"
      class="comment-card">
 
-  <!-- Avatar -->
+  <!--
+    Avatar circular con la inicial del nombre de usuario.
+    #strings.substring(...).toUpperCase(): función utilitaria de Thymeleaf.
+    comment-avatar: círculo con fondo gris y texto verde (main.css).
+  -->
   <div class="comment-avatar"
        th:text="${comment.username != null ? #strings.substring(comment.username, 0, 1).toUpperCase() : '?'}">
   </div>
 
+  <!-- Cuerpo del comentario: crece para ocupar el espacio restante -->
+  <!-- flex-grow-1: Bootstrap — hace que este div ocupe todo el ancho disponible -->
   <div class="flex-grow-1">
 
-    <!-- Cabecera -->
+    <!-- Cabecera: nombre, fecha y etiqueta "(editado)" si aplica -->
     <div class="d-flex align-items-center gap-2 mb-1">
+      <!--
+        th:href="@{...}": construye la URL de forma segura.
+        El ID del usuario viene del DTO del comentario (no de la sesión).
+      -->
       <a th:href="@{'/user/' + ${comment.userId}}"
          class="comment-username text-decoration-none"
          th:text="${comment.username}">Usuario</a>
+      <!--
+        #temporals.format(): función Thymeleaf para formatear fechas Java (LocalDate/LocalDateTime).
+        comment-date: texto pequeño y atenuado (main.css).
+      -->
       <span class="comment-date"
             th:text="${comment.date != null ? #temporals.format(comment.date, 'dd MMM yyyy') : ''}"></span>
       <span th:if="${comment.edited}" class="comment-date">(editado)</span>
     </div>
 
-    <!-- Contenido -->
+    <!-- Contenido del comentario -->
     <p class="comment-body" th:text="${comment.content}"></p>
 
-    <!-- Acciones -->
+    <!-- Barra de acciones: like, responder, eliminar -->
+    <!-- flex-wrap: permite que los botones bajen a la siguiente línea en pantallas pequeñas -->
     <div class="d-flex gap-3 align-items-center flex-wrap">
 
-      <!-- Like: autenticado -->
+      <!-- Like para usuario autenticado: formulario POST (necesita sesión) -->
+      <!--
+        th:block th:if: muestra el formulario de like solo si el usuario está logueado.
+        d-inline: evita que el <form> rompa el flujo flex del padre.
+      -->
       <th:block th:if="${loggedIn}">
         <form th:action="@{/work/{wid}/comment/{cid}/reaction(wid=${work.id},cid=${comment.id})}"
               method="post" class="d-inline">
+          <!--
+            th:classappend: añade la clase solo si la condición es verdadera, sin borrar las existentes.
+            comment-action--liked: cambia color y peso de fuente al estado "ya likeado" (main.css).
+            userLikedCommentIds.contains(): Set<Long> con los IDs ya reaccionados por el usuario actual.
+          -->
           <button type="submit" class="comment-action"
-                  th:style="${userLikedCommentIds.contains(comment.id)} ? 'color:var(--bs-primary); font-weight:700;' : ''">
-            <span class="material-symbols-outlined"
-                  th:classappend="${userLikedCommentIds.contains(comment.id)} ? ' material-symbols-filled' : ''"
-                  style="font-size:0.9rem;">thumb_up</span>
+                  th:classappend="${userLikedCommentIds.contains(comment.id)} ? ' comment-action--liked' : ''">
+            <!--
+              th:classappend sobre el icono: añade material-symbols-filled para el icono relleno.
+              comment-icon: reduce el tamaño del símbolo Material (main.css).
+            -->
+            <span class="material-symbols-outlined comment-icon"
+                  th:classappend="${userLikedCommentIds.contains(comment.id)} ? ' material-symbols-filled' : ''">thumb_up</span>
+            <!-- reactionCounts[comment.id]: acceso al mapa para obtener el contador de este comentario -->
             <span th:text="${reactionCounts[comment.id] != null ? reactionCounts[comment.id] : 0}">0</span>
           </button>
         </form>
       </th:block>
 
-      <!-- Like: invitado -->
+      <!-- Like para visitante (sin sesión): solo muestra el contador, sin acción -->
+      <!--
+        th:unless: es el opuesto de th:if — renderiza cuando la condición es FALSA.
+        comment-action--guest: desactiva el cursor y pointer-events (main.css).
+      -->
       <th:block th:unless="${loggedIn}">
-        <span class="comment-action" style="cursor:default; pointer-events:none;">
-          <span class="material-symbols-outlined" style="font-size:0.9rem;">thumb_up</span>
+        <span class="comment-action comment-action--guest">
+          <span class="material-symbols-outlined comment-icon">thumb_up</span>
           <span th:text="${reactionCounts[comment.id] != null ? reactionCounts[comment.id] : 0}">0</span>
         </span>
       </th:block>
 
-      <!-- Responder -->
+      <!-- Botón "Responder": visible solo si hay sesión activa -->
+      <!--
+        th:attr: asigna atributos HTML arbitrarios; aquí crea data-reply-target dinámico
+        con el ID del comentario para que el JS del detail pueda mostrar el formulario.
+      -->
       <button th:if="${loggedIn}" type="button" class="comment-action"
               th:attr="data-reply-target='reply-form-' + ${comment.id}">
-        <span class="material-symbols-outlined" style="font-size:0.9rem;">reply</span>
+        <span class="material-symbols-outlined comment-icon">reply</span>
         Responder
       </button>
 
-      <!-- Eliminar (propio o admin) -->
+      <!-- Botón "Eliminar": visible si el comentario es propio O el usuario es ADMIN -->
       <th:block th:if="${loggedIn and (comment.userId == sessionUserId or sessionRole == 'ADMIN')}">
         <form th:action="@{/work/{wid}/comment/{cid}/delete(wid=${work.id},cid=${comment.id})}"
               method="post" class="d-inline">
-          <button type="submit" class="comment-action"
-                  style="color:#dc3545;"
+          <!-- comment-action--delete: color rojo de peligro (main.css) -->
+          <button type="submit" class="comment-action comment-action--delete"
                   onclick="return confirm('¿Eliminar este comentario?')">
-            <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+            <span class="material-symbols-outlined comment-icon">delete</span>
             Eliminar
           </button>
         </form>
@@ -103,29 +134,42 @@
 
     </div>
 
-    <!-- Formulario de respuesta (oculto por defecto) -->
-    <div th:id="'reply-form-' + ${comment.id}" style="display:none; margin-top:0.75rem;">
+    <!-- Formulario de respuesta: oculto por defecto, JS lo muestra al pulsar "Responder" -->
+    <!--
+      comment-reply-form: display:none + margin-top (main.css).
+      th:id dinámico: cada comentario tiene su propio formulario oculto con ID único.
+    -->
+    <div th:id="'reply-form-' + ${comment.id}" class="comment-reply-form">
       <form th:action="@{/work/{wid}/comment/{pid}/reply(wid=${work.id},pid=${comment.id})}"
             method="post">
+        <!-- comment-reply-textarea: ancho completo con redimensión vertical (main.css) -->
         <textarea name="content" rows="2"
                   placeholder="Escribe tu respuesta..."
                   required minlength="1" maxlength="1000"
-                  style="width:100%; resize:vertical;"></textarea>
+                  class="comment-reply-textarea"></textarea>
         <div class="d-flex gap-2 justify-content-end mt-2">
-          <button type="button" class="btn-ghost-pill"
-                  style="font-size:0.8rem;"
+          <!--
+            comment-reply-btn: reduce el font-size de los botones del formulario (main.css).
+            data-reply-target: el JS lo usa para ocultar este formulario al cancelar.
+          -->
+          <button type="button" class="btn-ghost-pill comment-reply-btn"
                   th:attr="data-reply-target='reply-form-' + ${comment.id}">
             Cancelar
           </button>
-          <button type="submit" class="btn-primary-pill"
-                  style="padding:0.4rem 1.25rem; font-size:0.8rem;">
+          <!-- comment-reply-btn--submit: añade padding al botón de envío (main.css) -->
+          <button type="submit" class="btn-primary-pill comment-reply-btn comment-reply-btn--submit">
             Responder
           </button>
         </div>
       </form>
     </div>
 
-    <!-- Árbol de respuestas (recursivo) -->
+    <!-- Árbol de respuestas: recursividad Thymeleaf -->
+    <!--
+      th:if con condición compuesta: evita renderizar el bloque si no hay respuestas.
+      th:each="reply : ${comment.replies}": itera la lista de respuestas del comentario actual.
+      th:replace recursivo: vuelve a llamar a este mismo fragmento con cada respuesta como raíz.
+    -->
     <div class="reply-thread mt-3"
          th:if="${comment.replies != null and !comment.replies.isEmpty()}">
       <div th:each="reply : ${comment.replies}" class="mb-3">

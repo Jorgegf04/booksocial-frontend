@@ -1,0 +1,37 @@
+/* ============================================================
+   dashboard.css — Estilos del panel de administración
+   Vista: admin/dashboard.html
+   Controlador: AdminController#dashboard() (GET /admin/dashboard)
+   Requiere role=ADMIN (AdminInterceptor).
+   ============================================================ */
+
+/* === Topbar: botón "Ver catálogo" === */
+/* Modificador de tamaño sobre btn-primary-pill */
+.dashboard-catalog-btn  { font-size: 0.8rem; padding: 0.5rem 1.25rem; }
+.dashboard-catalog-icon { font-size: 1rem; }
+
+/* === Tabla de obras: thumbnail === */
+/* Icono placeholder cuando la obra no tiene imagen */
+.dashboard-work-thumb-icon { font-size: 1rem; color: var(--color-outline); }
+
+/* === Celdas vacías en tablas === */
+/* Estilo de la fila "No hay X disponibles" en tablas admin */
+.dashboard-empty-cell { color: var(--color-outline); font-size: 0.85rem; }
+
+/* === Tarjeta de stock bajo === */
+.dashboard-stock-title     { font-size: 0.82rem; font-weight: 600; color: var(--bs-primary); }
+.dashboard-stock-editorial { font-size: 0.75rem; color: var(--color-outline); }
+
+/* === Tarjeta de próximos eventos === */
+.dashboard-event-title        { font-size: 0.82rem; font-weight: 600; color: var(--bs-primary); }
+.dashboard-event-date         { font-size: 0.75rem; color: var(--color-outline); }
+.dashboard-event-participants { font-size: 0.75rem; color: var(--color-outline); white-space: nowrap; }
+
+/* === Tarjeta de usuarios: stats de resumen === */
+.dashboard-stat-label { font-size: 0.82rem; color: var(--color-muted); }
+.dashboard-stat-value { font-size: 0.9rem; font-weight: 700; color: var(--bs-primary); }
+/* Valor en verde para "Nuevos este mes" */
+.dashboard-stat-value--positive { font-size: 0.9rem; font-weight: 700; color: #2d7a4f; }
+
+/* === Estado vacío dentro de tarjetas (sin stock, sin eventos…) === */
+.dashboard-card-empty { color: var(--color-outline); font-size: 0.82rem; }

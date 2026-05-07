@@ -1,3 +1,40 @@
+<!--/*
+  ============================================================
+  Vista: Detalle de obra
+  Ruta: /work/{id}
+  Controlador: WorkDetailController#detail() (GET)
+
+  Recibe del modelo:
+    - work                : WorkResponseDTO               — datos completos de la obra.
+    - editions            : List<EditionResponseDTO>      — ediciones disponibles.
+    - authorIds           : Map<String, Long>             — ID de cada autor (para enlazar).
+    - comments            : List<CommentResponseDTO>      — árbol de comentarios raíz.
+    - commentCount        : int                           — total de comentarios (todos los niveles).
+    - productsByEdition   : Map<Long, ProductResponseDTO> — producto con stock por edición.
+    - loggedIn            : boolean                       — true si hay sesión activa.
+    - sessionUserId       : Long                          — ID del usuario en sesión.
+    - sessionRole         : String                        — rol del usuario ("ADMIN", "USER").
+    - reactionCounts      : Map<Long, Integer>            — likes por comentario.
+    - userLikedCommentIds : Set<Long>                     — IDs de comentarios likeados.
+    - userTracking        : TrackingWorkResponseDTO       — seguimiento de la obra (null si no sigue).
+
+  Lógica de negocio visible en la vista:
+    · inLibrary  = userTracking != null and userTracking.status != 'PENDING'
+    · inWishlist = userTracking != null and userTracking.status == 'PENDING'
+    · El botón "Añadir a biblioteca" muestra opacidad reducida si inLibrary es true.
+    · El botón "Comprar" se oculta (d-none) si no hay producto para la edición seleccionada.
+    · El bloque de comentarios usa el fragmento recursivo fragments/comment.
+
+  Fragmentos incluidos:
+    - fragments/navbar    :: navbar
+    - fragments/footer    :: footer
+    - fragments/comment   :: comment  (uno por cada raíz, recursivo para respuestas)
+
+  Scripts inline:
+    - Edition chip selection: actualiza ficha técnica y botón comprar al elegir edición.
+    - Reply form toggle: muestra/oculta formulario de respuesta en cada comentario.
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,111 +43,134 @@
   <title th:text="${work.title} + ' — BookSocial'">Obra — BookSocial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos específicos de la página de detalle -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/detail.css}">
 </head>
 <body>
 
-  <!-- NAVBAR -->
+  <!-- NAVBAR: fragmento reutilizable con búsqueda, carrito y acciones de sesión -->
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  <!--
-    ============================================================
-    Vista: work/detail.html
-    ============================================================
-    Página de detalle de una obra del catálogo.
-
-    Modelo recibido del WorkDetailController:
-      - work                 : WorkResponseDTO               — datos de la obra.
-      - editions             : List<EditionResponseDTO>      — ediciones disponibles.
-      - comments             : List<CommentResponseDTO>      — árbol de comentarios raíz,
-                                                               ordenado por fecha descendente.
-      - commentCount         : int                           — total de comentarios (árbol completo).
-      - productsByEdition    : Map<Long, ProductResponseDTO> — producto con stock por edición.
-      - loggedIn             : boolean                       — true si hay sesión activa.
-      - sessionUserId        : Long                          — ID del usuario en sesión.
-      - sessionRole          : String                        — rol del usuario en sesión.
-      - reactionCounts       : Map<Long, Integer>            — likes por comentario (árbol completo).
-      - userLikedCommentIds  : Set<Long>                     — IDs de comentarios likeados por sesión.
-      - userTracking         : TrackingWorkResponseDTO       — seguimiento de la obra por el usuario (null si no sigue).
-
-    Estructura de la página:
-      · Hero: portada + info principal (título, autores, género, valoración, tipo).
-      · Ediciones: selector de edición con precio, stock y botón de añadir al carrito.
-        - th:each sobre editions → muestra datos de cada edición.
-        - th:if sobre productsByEdition[edition.id] → solo muestra botón si hay stock.
-      · Acciones de biblioteca/wishlist (toggle): botones POST al controlador.
-        - userTracking == null → mostrar ambos botones (añadir a biblioteca o wishlist).
-        - userTracking.status == PENDING → en wishlist (botón para quitar de wishlist).
-        - userTracking.status != PENDING → en biblioteca (botón para quitar de biblioteca).
-      · Sección de comentarios:
-        - Formulario POST para publicar comentario raíz (requiere loggedIn).
-        - Árbol de comentarios renderizado con el fragmento recursivo fragments/comment.
-        - Cada comentario puede tener respuestas anidadas sin límite de profundidad visual.
-    ============================================================
-  -->
-
-  <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
+  <!-- detail-main: padding-top compensa la navbar fixed (definido en detail.css) -->
+  <main class="container detail-main">
 
     <!-- ================================================================
          HERO: Portada + Info principal
+         detail-section--spaced: añade margin-bottom: 5rem !important para
+         separar visualmente el hero del bloque de ediciones.
          ================================================================ -->
-    <section class="row g-5 mb-5 align-items-start" style="margin-bottom: 5rem !important;">
+    <section class="row g-5 mb-5 align-items-start detail-section--spaced">
 
       <!-- Columna portada -->
       <div class="col-lg-4 col-md-5">
+        <!--
+          detail-cover-wrapper / detail-cover-blur: clases de main.css que crean
+          el efecto de desenfoque detrás de la portada.
+        -->
         <div class="detail-cover-wrapper">
           <div class="detail-cover-blur"></div>
+          <!--
+            th:if / th:unless: muestra la imagen si existe, placeholder si no.
+            !work.img.isEmpty(): comprueba que el string no esté vacío además de no ser null.
+          -->
           <img th:if="${work.img != null and !work.img.isEmpty()}"
                th:src="${work.img}"
                th:alt="${work.title}">
+          <!--
+            detail-cover-placeholder: color outline + min-height:20rem (detail.css).
+            detail-cover-icon: font-size:5rem para el icono de Material Symbols (detail.css).
+          -->
           <div th:unless="${work.img != null and !work.img.isEmpty()}"
-               class="d-flex flex-column align-items-center justify-content-center py-5"
-               style="color:var(--color-outline); min-height:20rem;">
-            <span class="material-symbols-outlined" style="font-size:5rem;">menu_book</span>
+               class="d-flex flex-column align-items-center justify-content-center py-5 detail-cover-placeholder">
+            <span class="material-symbols-outlined detail-cover-icon">menu_book</span>
           </div>
         </div>
       </div>
 
-      <!-- Columna info -->
+      <!-- Columna info: título, autor, rating, CTAs -->
       <div class="col-lg-8 col-md-7">
 
-        <!-- Badge tipo + fecha -->
+        <!-- Badge tipo + fecha de publicación -->
         <div class="d-flex align-items-center gap-3 mb-3">
+          <!--
+            book-badge / book-badge-new: clases de main.css para el pill de tipo de obra.
+            position-static: cancela el position:absolute que book-badge aplica en las cards.
+          -->
           <span class="book-badge book-badge-new position-static"
                 th:text="${work.type != null ? work.type.name() : ''}"></span>
-          <span style="font-size:0.85rem; color:var(--color-outline);"
+          <!--
+            detail-pub-date: font-size:0.85rem + color muted (detail.css).
+            #temporals.format(): utilidad Thymeleaf para formatear LocalDate/LocalDateTime.
+          -->
+          <span class="detail-pub-date"
                 th:text="${work.publicationDate != null ? #temporals.format(work.publicationDate, 'MMMM yyyy') : ''}">
           </span>
         </div>
 
-        <!-- Título -->
-        <h1 class="font-serif mb-2"
-            style="font-size: clamp(2rem, 5vw, 3.5rem); color:var(--bs-primary); line-height:1.1;"
+        <!-- Título principal de la obra -->
+        <!--
+          detail-title: font-size con clamp() para responsive (detail.css).
+          font-serif: clase de main.css que aplica la fuente Noto Serif.
+        -->
+        <h1 class="font-serif mb-2 detail-title"
             th:text="${work.title}">Título</h1>
 
-        <!-- Descripción breve (subtítulo) -->
-        <p class="fst-italic mb-4"
-           style="font-size:1.05rem; color:var(--bs-primary);"
+        <!-- Género como subtítulo en itálica -->
+        <!--
+          detail-genre: color --bs-primary y font-size ligeramente mayor (detail.css).
+          fst-italic: Bootstrap — equivale a font-style: italic.
+          #strings.replace(): utilidad Thymeleaf para reemplazar caracteres en cadenas.
+        -->
+        <p class="fst-italic mb-4 detail-genre"
            th:text="${work.genre != null ? #strings.replace(work.genre.name(), '_', ' ') : ''}">
         </p>
 
-        <!-- Meta: autor / rating / demografía -->
-        <div class="d-flex align-items-center gap-4 flex-wrap mb-4 pb-4"
-             style="border-bottom: 1px solid var(--color-outline-l);">
+        <!-- Meta: autor / rating / demografía con separadores verticales -->
+        <!--
+          detail-meta-divider: border-bottom de 1px para separar del bloque siguiente (detail.css).
+          flex-wrap: Bootstrap — permite que los items se partan en pantallas pequeñas.
+        -->
+        <div class="d-flex align-items-center gap-4 flex-wrap mb-4 pb-4 detail-meta-divider">
 
           <div th:if="${work.authors != null and !work.authors.isEmpty()}">
             <p class="detail-meta-label mb-1">Autor</p>
-            <p class="detail-meta-value mb-0"
-               th:text="${#strings.listJoin(work.authors, ', ')}"></p>
+            <p class="detail-meta-value mb-0">
+              <!--
+                th:block: contenedor lógico de Thymeleaf que no genera HTML propio.
+                iter: objeto de estado del bucle (iter.last → true si es el último elemento).
+              -->
+              <th:block th:each="authorName, iter : ${work.authors}">
+                <!--
+                  detail-author-link: color:inherit + subrayado (detail.css).
+                  authorIds es un Map<String, Long> — si el autor tiene ID, se enlaza.
+                -->
+                <a th:if="${authorIds != null and authorIds[authorName] != null}"
+                   th:href="@{'/author/' + ${authorIds[authorName]}}"
+                   th:text="${authorName}"
+                   class="detail-author-link"></a>
+                <span th:unless="${authorIds != null and authorIds[authorName] != null}"
+                      th:text="${authorName}"></span>
+                <span th:if="${!iter.last}">, </span>
+              </th:block>
+            </p>
           </div>
 
+          <!-- detail-divider: separador visual vertical (clase de main.css) -->
           <div class="detail-divider" th:if="${work.authors != null and !work.authors.isEmpty()}"></div>
 
           <div th:if="${work.averageRating != null}">
             <p class="detail-meta-label mb-1">Valoración</p>
             <div class="d-flex align-items-center gap-1">
+              <!--
+                #numbers.formatDecimal(valor, mínEnteros, mínDecimales):
+                formatea el número con 1 entero y 1 decimal (ej: "7.5").
+              -->
               <span class="detail-meta-value" th:text="${#numbers.formatDecimal(work.averageRating, 1, 1)}"></span>
-              <span class="material-symbols-outlined material-symbols-filled"
-                    style="font-size:1rem; color:var(--bs-primary);">star</span>
+              <!--
+                material-symbols-filled: activa la variante rellena del icono.
+                detail-rating-star: color primary y font-size:1rem (detail.css).
+              -->
+              <span class="material-symbols-outlined material-symbols-filled detail-rating-star">star</span>
             </div>
           </div>
 
@@ -123,14 +183,21 @@
 
         </div>
 
-        <!-- Descripción larga -->
-        <p class="mb-4" style="font-size:1rem; color:var(--color-muted); line-height:1.8; max-width:52ch;"
+        <!-- Descripción larga de la obra -->
+        <!-- detail-description: font-size, line-height y max-width para legibilidad (detail.css) -->
+        <p class="mb-4 detail-description"
            th:text="${work.description}">Descripción</p>
 
-        <!-- Selección de edición -->
+        <!-- Selector de edición: chips interactivos que actualizan la ficha técnica via JS -->
         <div class="mb-4" th:if="${editions != null and !editions.isEmpty()}">
           <p class="filter-section-title mb-3">Seleccionar edición</p>
           <div class="d-flex flex-wrap gap-3">
+            <!--
+              edition-chip: botón tipo pill (main.css).
+              th:classappend="${iter.first} ? 'active'": añade 'active' solo al primer chip.
+              th:attr: permite definir múltiples atributos data-* en una sola línea.
+              Los data-* almacenan los datos de edición y producto que el JS leerá al hacer clic.
+            -->
             <button th:each="edition, iter : ${editions}"
                     th:classappend="${iter.first} ? 'active'"
                     class="edition-chip"
@@ -150,52 +217,72 @@
           </div>
         </div>
 
-        <!-- CTAs -->
+        <!-- CTAs: Biblioteca, Comprar, Wishlist -->
+        <!--
+          th:with: declara variables locales reutilizables en este bloque y sus hijos.
+          inLibrary / inWishlist se calculan aquí para usarlos en los tres botones.
+        -->
         <div class="d-flex flex-wrap align-items-center gap-3 mt-4"
              th:with="firstProduct=${editions != null and !editions.isEmpty() ? productsByEdition.get(editions.get(0).id) : null},
                       inLibrary=${userTracking != null and userTracking.status != 'PENDING'},
                       inWishlist=${userTracking != null and userTracking.status == 'PENDING'}">
 
-          <!-- Añadir a biblioteca (form si logueado, link a login si invitado) -->
+          <!-- Botón "Añadir a biblioteca" (form POST si logueado, enlace a login si invitado) -->
           <th:block th:if="${loggedIn}">
             <form th:action="@{/work/{wid}/library(wid=${work.id})}" method="post" class="d-inline">
+              <!--
+                th:classappend con detail-btn-library--active: añade opacidad 0.85
+                si la obra ya está en biblioteca, indicando que ya está añadida.
+                Conversión de th:style a th:classappend: misma lógica, estilo en detail.css.
+              -->
               <button type="submit" class="btn-primary-pill d-inline-flex align-items-center gap-2"
-                      th:style="${inLibrary} ? 'opacity:0.85;' : ''">
-                <span class="material-symbols-outlined"
-                      style="font-size:1.1rem; vertical-align:middle;"
+                      th:classappend="${inLibrary} ? ' detail-btn-library--active' : ''">
+                <!--
+                  detail-action-icon: font-size:1.1rem + vertical-align:middle (detail.css).
+                  th:text cambia el icono entre 'library_books' (en biblioteca) y 'library_add'.
+                -->
+                <span class="material-symbols-outlined detail-action-icon"
                       th:text="${inLibrary} ? 'library_books' : 'library_add'"></span>
                 <span th:text="${inLibrary} ? 'En biblioteca' : 'Añadir a biblioteca'"></span>
               </button>
             </form>
           </th:block>
           <th:block th:unless="${loggedIn}">
-            <a href="/auth/login" class="btn-primary-pill d-inline-flex align-items-center gap-2"
-               style="text-decoration:none;">
-              <span class="material-symbols-outlined" style="font-size:1.1rem; vertical-align:middle;">library_add</span>
+            <!-- text-decoration-none: Bootstrap — quita el subrayado del enlace -->
+            <a href="/auth/login" class="btn-primary-pill d-inline-flex align-items-center gap-2 text-decoration-none">
+              <span class="material-symbols-outlined detail-action-icon">library_add</span>
               Añadir a biblioteca
             </a>
           </th:block>
 
-          <!-- Botón comprar dinámico -->
+          <!-- Botón comprar: se oculta si no hay producto para la edición seleccionada -->
           <th:block th:if="${!productsByEdition.isEmpty()}">
             <form th:action="@{/cart/add}" method="post" class="d-inline" id="buy-form">
               <input type="hidden" name="productId" id="buy-product-id"
                      th:value="${firstProduct != null ? firstProduct.id : ''}">
+              <!--
+                detail-btn-buy: background-color verde oscuro (#163528) que contrasta
+                con el botón principal (detail.css).
+                th:classappend d-none: oculta si no hay producto para la primera edición.
+              -->
               <button type="submit" id="buy-btn"
-                      class="btn-primary-pill d-inline-flex align-items-center gap-2"
-                      style="background-color:#163528;"
+                      class="btn-primary-pill d-inline-flex align-items-center gap-2 detail-btn-buy"
                       th:classappend="${firstProduct == null ? 'd-none' : ''}">
-                <span class="material-symbols-outlined" style="font-size:1.1rem;">shopping_cart</span>
+                <span class="material-symbols-outlined detail-action-icon">shopping_cart</span>
                 Comprar · €<span id="buy-price"
                     th:text="${firstProduct != null ? #numbers.formatDecimal(firstProduct.price,1,2) : ''}"></span>
               </button>
             </form>
+            <!--
+              detail-no-stock: font-size:0.85rem + color outline (detail.css).
+              d-none: Bootstrap — oculto por defecto; JS lo intercambia con el botón comprar.
+            -->
             <span id="no-stock-msg"
-                  th:classappend="${firstProduct != null ? 'd-none' : ''}"
-                  style="font-size:0.85rem; color:var(--color-outline);">Sin stock en esta edición</span>
+                  class="detail-no-stock"
+                  th:classappend="${firstProduct != null ? 'd-none' : ''}">Sin stock en esta edición</span>
           </th:block>
 
-          <!-- Guardar en wishlist -->
+          <!-- Botón wishlist: toggle favorito -->
           <th:block th:if="${loggedIn}">
             <form th:action="@{/work/{wid}/wishlist(wid=${work.id})}" method="post" class="d-inline">
               <button type="submit" class="btn-ghost-pill d-inline-flex align-items-center gap-2">
@@ -207,8 +294,7 @@
             </form>
           </th:block>
           <th:block th:unless="${loggedIn}">
-            <a href="/auth/login" class="btn-ghost-pill d-inline-flex align-items-center gap-2"
-               style="text-decoration:none;">
+            <a href="/auth/login" class="btn-ghost-pill d-inline-flex align-items-center gap-2 text-decoration-none">
               <span class="material-symbols-outlined">favorite_border</span>
               Guardar en wishlist
             </a>
@@ -220,26 +306,39 @@
     </section>
 
     <!-- ================================================================
-         BENTO: Ediciones / Specs
+         BENTO: Ediciones disponibles + Ficha técnica
+         detail-section--spaced: mismo separador de 5rem que el hero.
          ================================================================ -->
-    <section class="row g-4 mb-5" style="margin-bottom: 5rem !important;"
+    <section class="row g-4 mb-5 detail-section--spaced"
              th:if="${editions != null and !editions.isEmpty()}">
 
-      <!-- Listado de ediciones -->
+      <!-- Listado de todas las ediciones como tarjetas -->
       <div class="col-md-8">
-        <div class="p-4 h-100" style="background:var(--color-surface-l); border-radius:1rem;">
+        <!--
+          detail-editions-wrapper: fondo gris claro + border-radius (detail.css).
+          h-100: Bootstrap — height:100% para alinear con la ficha técnica.
+        -->
+        <div class="p-4 h-100 detail-editions-wrapper">
           <p class="filter-section-title mb-4">Ediciones disponibles</p>
           <div class="row g-3">
             <div class="col-sm-6" th:each="edition : ${editions}">
-              <div class="p-3 rounded-3" style="background:white; border:1px solid var(--color-outline-l);">
-                <p class="mb-1" style="font-weight:700; font-size:0.9rem; color:var(--bs-primary);"
+              <!--
+                detail-edition-card: fondo blanco + border sutil (detail.css).
+                rounded-3: Bootstrap — border-radius: 0.5rem.
+              -->
+              <div class="p-3 rounded-3 detail-edition-card">
+                <!--
+                  detail-edition-title: font-weight:700 + color primary (detail.css).
+                  detail-edition-meta: font-size pequeño + color muted (detail.css).
+                -->
+                <p class="mb-1 detail-edition-title"
                    th:text="${edition.title != null ? edition.title : edition.editorialName}"></p>
-                <p class="mb-1" style="font-size:0.78rem; color:var(--color-muted);"
+                <p class="mb-1 detail-edition-meta"
                    th:text="'Editorial: ' + ${edition.editorialName}"></p>
-                <p class="mb-1" style="font-size:0.78rem; color:var(--color-muted);"
+                <p class="mb-1 detail-edition-meta"
                    th:if="${edition.isbn != null}"
                    th:text="'ISBN: ' + ${edition.isbn}"></p>
-                <p class="mb-0" style="font-size:0.78rem; color:var(--color-muted);"
+                <p class="mb-0 detail-edition-meta"
                    th:if="${edition.editionDate != null}"
                    th:text="'Publicado: ' + ${#temporals.format(edition.editionDate, 'yyyy')}"></p>
               </div>
@@ -248,10 +347,15 @@
         </div>
       </div>
 
-      <!-- Specs técnicos (se actualiza dinámicamente al cambiar de edición) -->
+      <!-- Ficha técnica: se actualiza dinámicamente al cambiar de edición -->
       <div class="col-md-4" th:with="ed=${editions[0]}">
         <div class="specs-card h-100" id="edition-specs">
           <p class="specs-title">Ficha técnica</p>
+          <!--
+            spec-row / spec-label / spec-val: clases de main.css para las filas
+            de especificaciones (llave: valor).
+            id="spec-*": el JS actualiza el contenido al cambiar el chip de edición.
+          -->
           <div class="spec-row">
             <span class="spec-label">Editorial</span>
             <span class="spec-val" id="spec-editorial" th:text="${ed.editorialName}">—</span>
@@ -286,66 +390,93 @@
     </section>
 
     <!-- ================================================================
-         COMENTARIOS
+         COMENTARIOS: Formulario + árbol de comentarios
          ================================================================ -->
-    <section id="comments" style="max-width: 52rem; margin: 0 auto;">
+    <!--
+      detail-comments-section: max-width:52rem + margin auto para centrar (detail.css).
+    -->
+    <section id="comments" class="detail-comments-section">
 
-      <!-- Cabecera -->
-      <div class="d-flex align-items-center justify-content-between mb-4"
-           style="padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-outline-l);">
-        <h2 class="font-serif mb-0" style="font-size:1.8rem; color:var(--bs-primary);">
+      <!-- Cabecera de la sección con título y contador -->
+      <!--
+        detail-comments-header: padding-bottom + border-bottom para separar
+        visualmente del contenido de comentarios (detail.css).
+      -->
+      <div class="d-flex align-items-center justify-content-between mb-4 detail-comments-header">
+        <!-- detail-comments-heading: font-serif grande en color primary (detail.css) -->
+        <h2 class="font-serif mb-0 detail-comments-heading">
           Diálogo de la comunidad
         </h2>
-        <div class="d-flex align-items-center gap-1" style="color:var(--color-outline);">
-          <span class="material-symbols-outlined" style="font-size:1.1rem;">forum</span>
-          <span style="font-weight:700; font-size:0.875rem;"
+        <!-- detail-comments-meta: color muted para el bloque icono+número (detail.css) -->
+        <div class="d-flex align-items-center gap-1 detail-comments-meta">
+          <!-- detail-action-icon: font-size:1.1rem + vertical-align:middle (detail.css) -->
+          <span class="material-symbols-outlined detail-action-icon">forum</span>
+          <!-- detail-comments-count: font-weight:700 + font-size:0.875rem (detail.css) -->
+          <span class="detail-comments-count"
                 th:text="${commentCount} + ' comentarios'">0 comentarios</span>
         </div>
       </div>
 
-      <!-- Flash errors -->
+      <!-- Alertas de error de comentario o de tracking de la obra -->
+      <!--
+        detail-comment-error: border-radius:0.75rem + font-size:0.875rem (detail.css).
+        alert alert-danger: Bootstrap — caja roja de error.
+      -->
       <div th:if="${commentError}"
-           class="alert alert-danger py-2 px-3 mb-3"
-           style="border-radius:0.75rem; font-size:0.875rem;"
+           class="alert alert-danger py-2 px-3 mb-3 detail-comment-error"
            th:text="${commentError}"></div>
       <div th:if="${trackingError}"
-           class="alert alert-danger py-2 px-3 mb-3"
-           style="border-radius:0.75rem; font-size:0.875rem;"
+           class="alert alert-danger py-2 px-3 mb-3 detail-comment-error"
            th:text="${trackingError}"></div>
 
-      <!-- Input nuevo comentario -->
+      <!-- Área de nuevo comentario -->
       <div class="comment-input-area mb-4">
         <p class="filter-section-title mb-3">Únete a la conversación</p>
 
-        <!-- Usuario autenticado: formulario -->
+        <!-- Usuario autenticado: muestra el formulario de comentario -->
         <th:block th:if="${loggedIn}">
           <form th:action="@{/work/{wid}/comment(wid=${work.id})}" method="post">
+            <!--
+              detail-comment-textarea: width:100% + resize:vertical (detail.css).
+              minlength / maxlength: validación HTML5 nativa.
+            -->
             <textarea name="content" rows="3"
                       placeholder="Comparte tu opinión sobre esta obra..."
                       required minlength="1" maxlength="1000"
-                      style="width:100%; resize:vertical;"></textarea>
+                      class="detail-comment-textarea"></textarea>
             <div class="d-flex justify-content-end mt-3">
-              <button type="submit" class="btn-primary-pill"
-                      style="padding: 0.6rem 1.75rem; font-size:0.875rem;">
+              <!-- detail-comment-submit: padding y font-size del botón (detail.css) -->
+              <button type="submit" class="btn-primary-pill detail-comment-submit">
                 Publicar comentario
               </button>
             </div>
           </form>
         </th:block>
 
-        <!-- Invitado: invitar a iniciar sesión -->
+        <!-- Invitado: invita a iniciar sesión en lugar del formulario -->
         <th:block th:unless="${loggedIn}">
-          <div class="text-center py-3" style="color:var(--color-muted); font-size:0.9rem;">
-            <span class="material-symbols-outlined d-block mb-2"
-                  style="font-size:2rem; color:var(--color-outline);">lock</span>
-            <a href="/auth/login"
-               style="color:var(--bs-primary); font-weight:600;">Inicia sesión</a>
+          <!--
+            detail-comment-guest: color muted + font-size reducido (detail.css).
+          -->
+          <div class="text-center py-3 detail-comment-guest">
+            <!--
+              detail-lock-icon: font-size:2rem + color outline (detail.css).
+              d-block: Bootstrap — display:block para que el icono ocupe su propia línea.
+            -->
+            <span class="material-symbols-outlined d-block mb-2 detail-lock-icon">lock</span>
+            <!-- detail-login-link: color primary + font-weight:600 (detail.css) -->
+            <a href="/auth/login" class="detail-login-link">Inicia sesión</a>
             para participar en la conversación.
           </div>
         </th:block>
       </div>
 
-      <!-- Lista de comentarios -->
+      <!-- Lista de comentarios raíz (cada uno puede tener respuestas anidadas) -->
+      <!--
+        th:replace con el fragmento recursivo comment.
+        El fragmento se llama a sí mismo para renderizar replies sin límite de profundidad.
+        Ver fragments/comment.html para la estructura completa.
+      -->
       <div class="d-flex flex-column gap-4"
            th:if="${comments != null and !comments.isEmpty()}">
 
@@ -355,11 +486,16 @@
 
       </div>
 
-      <!-- Estado vacío -->
+      <!-- Estado vacío: ningún comentario todavía -->
+      <!--
+        detail-empty-comments: color outline (detail.css).
+        detail-empty-comments-icon: font-size:3rem (detail.css).
+        detail-empty-comments-text: font-size:0.9rem (detail.css).
+      -->
       <div th:if="${comments == null or comments.isEmpty()}"
-           class="text-center py-5" style="color: var(--color-outline);">
-        <span class="material-symbols-outlined d-block mb-2" style="font-size:3rem;">chat_bubble_outline</span>
-        <p style="font-size:0.9rem;">Sé el primero en comentar esta obra.</p>
+           class="text-center py-5 detail-empty-comments">
+        <span class="material-symbols-outlined d-block mb-2 detail-empty-comments-icon">chat_bubble_outline</span>
+        <p class="detail-empty-comments-text">Sé el primero en comentar esta obra.</p>
       </div>
 
     </section>
@@ -371,7 +507,13 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Edition chip selection + ficha técnica dinámica + botón comprar dinámico -->
+  <!--
+    Edition chip selection + ficha técnica dinámica + botón comprar dinámico.
+    Al hacer clic en un chip de edición:
+      1. Se marca el chip como activo.
+      2. Se actualiza la ficha técnica con los datos del chip (data-*).
+      3. Se actualiza el botón comprar con el productId y precio correctos.
+  -->
   <script>
     document.querySelectorAll('.edition-chip').forEach(chip => {
       chip.addEventListener('click', () => {
@@ -432,7 +574,7 @@
     });
   </script>
 
-  <!-- Reply form toggle -->
+  <!-- Reply form toggle: muestra u oculta el formulario de respuesta de cada comentario -->
   <script>
     document.querySelectorAll('[data-reply-target]').forEach(btn => {
       btn.addEventListener('click', () => {

@@ -1,27 +1,34 @@
-<!--
-  Vista: Carrito de compra — /cart
-  Controlador: CartController (GET /cart)
+<!--/*
+  ============================================================
+  Vista: Carrito de compra
+  Ruta: /cart
+  Controlador: CartController#cart() (GET)
 
-  Variables del modelo:
-  - cartItems  : List<CartItemDTO> ítems almacenados en sesión HTTP bajo la clave "cart"
-                 Cada ítem expone: productId, workTitle, workImg, editionTitle,
-                 editorialName, price, quantity
-  - subtotal   : double suma de (price × quantity) de todos los ítems
-  - shipping   : double coste de envío fijo (5.50 €)
-  - total      : double subtotal + shipping
-  - suggestions: List<WorkResponseDTO> hasta 4 obras del catálogo sugeridas al usuario
-  - cartSuccess: String (opcional) mensaje de confirmación tras añadir/actualizar
-  - cartError  : String (opcional) mensaje de error
+  Recibe del modelo:
+    - cartItems   : List<CartItemDTO>     — ítems en sesión HTTP (clave "cart").
+                    Cada ítem expone: productId, workTitle, workImg, editionTitle,
+                    editorialName, price, quantity.
+    - subtotal    : double                — suma de (price × quantity) de todos los ítems.
+    - shipping    : double                — coste de envío fijo (5.50 €).
+    - total       : double                — subtotal + shipping.
+    - suggestions : List<WorkResponseDTO> — hasta 4 obras sugeridas del catálogo.
+    - cartSuccess : String (opcional)     — confirmación tras añadir/actualizar.
+    - cartError   : String (opcional)     — mensaje de error.
 
-  Flujo del carrito (sesión — no persistido en BD):
-  - POST /cart/update  : cambia la cantidad de un producto; quantity=0 lo elimina
-  - POST /cart/remove/{productId} : elimina el ítem directamente
-  - POST /cart/checkout : crea el Order en el backend via OrderClientService
-                          y redirige a /orders con flag orderSuccess=true
+  Flujo del carrito (sesión HTTP — no persistido en BD):
+    · POST /cart/update                : cambia la cantidad; quantity=0 elimina el ítem.
+    · POST /cart/remove/{productId}    : elimina el ítem directamente.
+    · POST /cart/checkout              : crea el Order en el backend via OrderClientService
+                                         y redirige a /orders con orderSuccess=true.
 
-  El panel derecho de resumen sólo se muestra si cartItems no está vacío.
-  La sección de sugerencias sólo se muestra si suggestions no está vacío.
--->
+  El panel derecho de resumen solo se muestra si cartItems no está vacío.
+  La sección de sugerencias solo se muestra si suggestions no está vacío.
+
+  Fragmentos incluidos:
+    - fragments/navbar :: navbar
+    - fragments/footer :: footer
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -30,36 +37,48 @@
   <title>Carrito — BookSocial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos del carrito de compra -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/cart.css}">
 </head>
 <body>
 
+  <!-- NAVBAR -->
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
+  <!-- cart-main: padding-top compensa la navbar fixed (cart.css) -->
+  <main class="container cart-main">
 
-    <!-- Alerts -->
-    <div th:if="${cartSuccess}" class="alert d-flex align-items-center gap-2 mb-4"
-         style="background:rgba(45,76,62,0.08); border:1px solid rgba(45,76,62,0.2); border-radius:0.75rem; color:var(--bs-primary);">
+    <!-- Alertas de éxito y error del carrito -->
+    <!--
+      cart-alert-success / cart-alert-error: fondos suaves con borde (cart.css).
+      d-flex align-items-center gap-2: Bootstrap — icono y texto alineados en fila.
+      th:if: Thymeleaf solo renderiza si el atributo del modelo existe y no es null.
+    -->
+    <div th:if="${cartSuccess}"
+         class="alert d-flex align-items-center gap-2 mb-4 cart-alert-success">
       <span class="material-symbols-outlined">check_circle</span>
       <span th:text="${cartSuccess}"></span>
     </div>
-    <div th:if="${cartError}" class="alert d-flex align-items-center gap-2 mb-4"
-         style="background:rgba(186,26,26,0.08); border:1px solid rgba(186,26,26,0.2); border-radius:0.75rem; color:#ba1a1a;">
+    <div th:if="${cartError}"
+         class="alert d-flex align-items-center gap-2 mb-4 cart-alert-error">
       <span class="material-symbols-outlined">error</span>
       <span th:text="${cartError}"></span>
     </div>
 
-    <!-- Header -->
+    <!-- Cabecera de la página -->
     <header class="mb-5">
       <p class="filter-section-title mb-1">BookSocial</p>
-      <h1 class="font-serif" style="font-size:clamp(2rem,4vw,3rem); font-weight:700; color:var(--bs-primary);">
+      <!-- cart-heading: clamp() para tamaño responsive (cart.css) -->
+      <h1 class="font-serif cart-heading">
         Tu Colección Curada
       </h1>
-      <p style="color:var(--color-muted); max-width:36rem;">
+      <!-- cart-subheading: color muted + max-width para legibilidad (cart.css) -->
+      <p class="cart-subheading">
         Revisa tus selecciones antes de confirmar la compra.
       </p>
     </header>
 
+    <!-- Layout dos columnas: items (izquierda) + resumen (derecha) -->
     <div class="row g-5 align-items-start">
 
       <!-- ================================================
@@ -68,26 +87,41 @@
       <div class="col-lg-7">
 
         <!-- Carrito vacío -->
+        <!-- cart-empty: fondo gris claro + border-radius (cart.css) -->
         <div th:if="${cartItems == null or cartItems.isEmpty()}"
-             class="text-center py-5" style="background:var(--color-surface-l); border-radius:1.25rem;">
-          <span class="material-symbols-outlined d-block mb-3"
-                style="font-size:4rem; color:var(--color-outline-l);">shopping_cart</span>
-          <p class="font-serif mb-2" style="font-size:1.2rem; color:var(--bs-primary);">Tu carrito está vacío</p>
-          <p style="color:var(--color-muted); font-size:0.875rem; margin-bottom:1.5rem;">
+             class="text-center py-5 cart-empty">
+          <!-- cart-empty-icon: icono grande en gris claro (cart.css) -->
+          <span class="material-symbols-outlined d-block mb-3 cart-empty-icon">shopping_cart</span>
+          <p class="font-serif mb-2 cart-empty-title">Tu carrito está vacío</p>
+          <p class="cart-empty-text">
             Explora el catálogo y añade obras a tu colección.
           </p>
-          <a href="/catalog" class="btn-primary-pill" style="text-decoration:none; padding:0.7rem 1.75rem; font-size:0.875rem;">
+          <!-- cart-empty-btn: modificador de padding sobre btn-primary-pill (cart.css) -->
+          <a href="/catalog" class="btn-primary-pill cart-empty-btn">
             Explorar catálogo
           </a>
         </div>
 
-        <!-- Lista de ítems -->
+        <!-- Lista de ítems del carrito -->
+        <!--
+          th:if: renderiza el div solo si hay ítems en el carrito.
+          d-flex flex-column gap-4: Bootstrap — stack vertical con separación entre ítems.
+        -->
         <div th:if="${cartItems != null and !cartItems.isEmpty()}"
              class="d-flex flex-column gap-4">
 
+          <!--
+            th:each="item : ${cartItems}": itera sobre la lista de ítems del carrito.
+            cart-item: tarjeta de ítem con layout flex (main.css).
+          -->
           <div th:each="item : ${cartItems}" class="cart-item">
 
-            <!-- Portada -->
+            <!-- Portada de la obra -->
+            <!--
+              cart-item-cover: contenedor cuadrado para la portada (main.css).
+              cart-item-img: imagen ajustada al contenedor (main.css).
+              cart-item-img-placeholder: fondo gris para obras sin imagen (main.css).
+            -->
             <div class="cart-item-cover">
               <img th:if="${item.workImg != null and !item.workImg.isEmpty()}"
                    th:src="${item.workImg}"
@@ -95,40 +129,54 @@
                    class="cart-item-img">
               <div th:unless="${item.workImg != null and !item.workImg.isEmpty()}"
                    class="cart-item-img-placeholder">
-                <span class="material-symbols-outlined" style="font-size:2rem; color:var(--color-outline-l);">menu_book</span>
+                <!-- cart-placeholder-icon: icono de libro grande en gris (cart.css) -->
+                <span class="material-symbols-outlined cart-placeholder-icon">menu_book</span>
               </div>
             </div>
 
-            <!-- Info -->
+            <!-- Información del ítem: título, edición, precio, cantidad -->
             <div class="flex-grow-1">
               <div class="d-flex justify-content-between align-items-start mb-1">
                 <div>
+                  <!-- cart-item-title / cart-item-sub / cart-item-price: main.css -->
                   <h3 class="font-serif cart-item-title" th:text="${item.workTitle}">Título</h3>
-                  <p class="cart-item-sub" th:text="${item.editionTitle + (item.editorialName != null ? ' • ' + item.editorialName : '')}">Edición</p>
+                  <p class="cart-item-sub"
+                     th:text="${item.editionTitle + (item.editorialName != null ? ' • ' + item.editorialName : '')}">Edición</p>
                 </div>
-                <span class="cart-item-price" th:text="'€' + ${#numbers.formatDecimal(item.price, 1, 2)}">€0.00</span>
+                <span class="cart-item-price"
+                      th:text="'€' + ${#numbers.formatDecimal(item.price, 1, 2)}">€0.00</span>
               </div>
 
-              <!-- Cantidad + eliminar -->
+              <!-- Control de cantidad y botón eliminar -->
               <div class="d-flex align-items-center justify-content-between mt-3">
+                <!--
+                  Formulario de cantidad: dos botones - y + envían el formulario con
+                  la quantity nueva en el campo name="quantity".
+                  quantity=0 indica al controlador que elimine el ítem.
+                  cart-qty-control / cart-qty-btn / cart-qty-num: main.css.
+                -->
                 <form th:action="@{/cart/update}" method="post" class="d-flex align-items-center gap-0">
                   <input type="hidden" name="productId" th:value="${item.productId}">
                   <div class="cart-qty-control">
                     <button type="submit" name="quantity" th:value="${item.quantity - 1}"
                             class="cart-qty-btn">
-                      <span class="material-symbols-outlined" style="font-size:1rem;">remove</span>
+                      <!-- cart-qty-icon: font-size:1rem (cart.css) -->
+                      <span class="material-symbols-outlined cart-qty-icon">remove</span>
                     </button>
                     <span class="cart-qty-num" th:text="${item.quantity}">1</span>
                     <button type="submit" name="quantity" th:value="${item.quantity + 1}"
                             class="cart-qty-btn">
-                      <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+                      <span class="material-symbols-outlined cart-qty-icon">add</span>
                     </button>
                   </div>
                 </form>
 
+                <!-- Botón eliminar: envía POST a /cart/remove/{productId} -->
+                <!-- cart-remove-btn: botón de texto con icono de papelera (main.css) -->
                 <form th:action="@{'/cart/remove/' + ${item.productId}}" method="post">
                   <button type="submit" class="cart-remove-btn">
-                    <span class="material-symbols-outlined" style="font-size:1.1rem;">delete</span>
+                    <!-- cart-remove-icon: font-size:1.1rem (cart.css) -->
+                    <span class="material-symbols-outlined cart-remove-icon">delete</span>
                     Eliminar
                   </button>
                 </form>
@@ -137,10 +185,15 @@
 
           </div>
 
-          <!-- Volver al catálogo -->
+          <!-- Enlace para seguir comprando -->
           <div class="pt-2">
+            <!--
+              btn-ghost-pill: botón outline con borde (main.css).
+              text-decoration-none: Bootstrap — quita el subrayado del enlace.
+            -->
             <a href="/catalog" class="btn-ghost-pill text-decoration-none">
-              <span class="material-symbols-outlined" style="font-size:1.1rem;">arrow_back</span>
+              <!-- cart-back-icon: font-size:1.1rem (cart.css) -->
+              <span class="material-symbols-outlined cart-back-icon">arrow_back</span>
               Seguir explorando
             </a>
           </div>
@@ -150,55 +203,82 @@
 
       <!-- ================================================
            COLUMNA DERECHA — Resumen y checkout
+           th:if: solo se muestra si hay ítems en el carrito.
            ================================================ -->
       <div class="col-lg-5" th:if="${cartItems != null and !cartItems.isEmpty()}">
+        <!-- cart-summary: tarjeta de resumen con sombra suave (main.css) -->
         <div class="cart-summary">
 
-          <h2 class="font-serif mb-4" style="font-size:1.4rem; color:var(--bs-primary);">Resumen de Compra</h2>
+          <!-- cart-summary-heading: serif + color primary (cart.css) -->
+          <h2 class="font-serif mb-4 cart-summary-heading">Resumen de Compra</h2>
 
-          <!-- Envío info -->
-          <div class="cart-summary-row mb-4 pb-3" style="border-bottom:1px solid var(--color-outline-l);">
+          <!-- Fila de información de envío -->
+          <!--
+            cart-summary-row: fila flex de la tarjeta (main.css).
+            cart-summary-row--bordered: añade border-bottom (cart.css).
+          -->
+          <div class="cart-summary-row mb-4 pb-3 cart-summary-row--bordered">
             <div class="d-flex align-items-center gap-3">
+              <!-- cart-summary-icon: contenedor del icono (main.css) -->
               <div class="cart-summary-icon">
-                <span class="material-symbols-outlined" style="color:var(--bs-primary);">local_shipping</span>
+                <!-- cart-summary-shipping-icon: color primary (cart.css) -->
+                <span class="material-symbols-outlined cart-summary-shipping-icon">local_shipping</span>
               </div>
               <div>
-                <p class="fw-bold mb-0" style="font-size:0.875rem; color:var(--bs-primary);">Envío estándar</p>
-                <p class="mb-0" style="font-size:0.75rem; color:var(--color-muted);">3-5 días hábiles</p>
+                <!-- cart-summary-shipping-title / desc: tamaños y colores (cart.css) -->
+                <p class="fw-bold mb-0 cart-summary-shipping-title">Envío estándar</p>
+                <p class="mb-0 cart-summary-shipping-desc">3-5 días hábiles</p>
               </div>
             </div>
           </div>
 
-          <!-- Totales -->
+          <!-- Filas de totales -->
           <div class="d-flex flex-column gap-3 mb-4">
-            <div class="d-flex justify-content-between" style="font-size:0.9rem;">
-              <span style="color:var(--color-muted);">Subtotal</span>
-              <span class="fw-bold" style="color:var(--bs-primary);"
+            <!--
+              cart-total-row: font-size:0.9rem (cart.css).
+              cart-total-label: color muted (cart.css).
+              cart-total-value: color primary (cart.css).
+              #numbers.formatDecimal(val, enteros, decimales): formatea el precio.
+            -->
+            <div class="d-flex justify-content-between cart-total-row">
+              <span class="cart-total-label">Subtotal</span>
+              <span class="fw-bold cart-total-value"
                     th:text="'€' + ${#numbers.formatDecimal(subtotal, 1, 2)}">€0.00</span>
             </div>
-            <div class="d-flex justify-content-between" style="font-size:0.9rem;">
-              <span style="color:var(--color-muted);">Envío editorial</span>
-              <span class="fw-bold" style="color:var(--bs-primary);"
+            <div class="d-flex justify-content-between cart-total-row">
+              <span class="cart-total-label">Envío editorial</span>
+              <span class="fw-bold cart-total-value"
                     th:text="'€' + ${#numbers.formatDecimal(shipping, 1, 2)}">€5.50</span>
             </div>
-            <div class="d-flex justify-content-between pt-3"
-                 style="border-top:1.5px dashed var(--color-outline-l); font-size:1.1rem;">
-              <span class="font-serif fw-bold" style="color:var(--bs-primary);">Total</span>
-              <span class="font-serif fw-bold" style="color:var(--bs-primary);"
+            <!--
+              cart-total-final: border-top discontinuo + font-size mayor (cart.css).
+            -->
+            <div class="d-flex justify-content-between pt-3 cart-total-final">
+              <span class="font-serif fw-bold cart-total-value">Total</span>
+              <span class="font-serif fw-bold cart-total-value"
                     th:text="'€' + ${#numbers.formatDecimal(total, 1, 2)}">€0.00</span>
             </div>
           </div>
 
-          <!-- Botón confirmar -->
+          <!-- Botón confirmar compra -->
+          <!--
+            cart-checkout-btn: aumenta el padding para hacerlo más prominente (cart.css).
+            w-100: Bootstrap — ancho completo del panel.
+            th:action: Thymeleaf genera la URL con el context path de la app.
+          -->
           <form th:action="@{/cart/checkout}" method="post">
-            <button type="submit" class="btn-primary-pill w-100" style="padding:1rem; font-size:1rem;">
+            <button type="submit" class="btn-primary-pill w-100 cart-checkout-btn">
               Confirmar Compra
             </button>
           </form>
 
-          <p class="text-center mt-3 d-flex align-items-center justify-content-center gap-1"
-             style="font-size:0.75rem; color:var(--color-outline);">
-            <span class="material-symbols-outlined" style="font-size:0.9rem;">verified_user</span>
+          <!-- Texto de seguridad bajo el botón -->
+          <!--
+            cart-secure-text: font-size muy pequeño + color outline (cart.css).
+            cart-secure-icon: tamaño del icono (cart.css).
+          -->
+          <p class="text-center mt-3 d-flex align-items-center justify-content-center gap-1 cart-secure-text">
+            <span class="material-symbols-outlined cart-secure-icon">verified_user</span>
             Transacción encriptada y segura
           </p>
 
@@ -207,19 +287,32 @@
     </div>
 
     <!-- ================================================
-         SUGERENCIAS
+         SUGERENCIAS: obras que pueden interesar al usuario
+         th:if: solo se muestra si hay sugerencias disponibles.
          ================================================ -->
     <section class="mt-5 pt-4" th:if="${suggestions != null and !suggestions.isEmpty()}">
       <div class="mb-4">
         <p class="filter-section-title mb-1">También te puede interesar</p>
-        <h2 class="font-serif mb-0" style="font-size:1.5rem; color:var(--bs-primary);">Más del catálogo</h2>
+        <!-- cart-suggestions-heading: serif + color primary (cart.css) -->
+        <h2 class="font-serif mb-0 cart-suggestions-heading">Más del catálogo</h2>
       </div>
 
+      <!--
+        row g-4 align-items-end: Bootstrap — grid con alineación en la base
+        para el efecto visual de alturas diferentes.
+      -->
       <div class="row g-4 align-items-end">
+        <!--
+          th:each="w, stat : ${suggestions}": itera con objeto de estado (stat.index).
+          th:classappend: añade la clase home-work-offset a los índices 1 y 3 para
+          crear un efecto escalonado alternando la altura de las cards.
+        -->
         <div th:each="w, stat : ${suggestions}"
              th:classappend="${stat.index == 1 or stat.index == 3} ? 'col-sm-6 col-lg-3 home-work-offset' : 'col-sm-6 col-lg-3'">
+          <!-- home-work-card: tarjeta de obra del catálogo (main.css) -->
           <div class="home-work-card">
             <a th:href="@{'/work/' + ${w.id}}" class="text-decoration-none">
+              <!-- home-work-cover-wrap / home-work-type-badge / home-work-cover: main.css -->
               <div class="home-work-cover-wrap">
                 <span class="home-work-type-badge"
                       th:text="${w.type != null ? w.type : ''}"></span>
@@ -233,11 +326,15 @@
               <p class="home-work-authors mb-2"
                  th:text="${w.authors != null and !w.authors.isEmpty() ? w.authors.get(0) : ''}"></p>
               <div class="d-flex align-items-center justify-content-between">
-                <span style="font-size:0.75rem; color:var(--color-outline); text-transform:uppercase; letter-spacing:0.05em;"
+                <!-- cart-work-demographic: uppercase + letter-spacing (cart.css) -->
+                <span class="cart-work-demographic"
                       th:text="${w.demographic != null ? w.demographic : ''}"></span>
+                <!--
+                  event-card-join-btn: botón pequeño del catálogo (main.css).
+                  text-decoration-none: Bootstrap — quita el subrayado.
+                -->
                 <a th:href="@{'/work/' + ${w.id}}"
-                   class="event-card-join-btn"
-                   style="text-decoration:none;">Ver obra</a>
+                   class="event-card-join-btn text-decoration-none">Ver obra</a>
               </div>
             </div>
           </div>
@@ -247,6 +344,7 @@
 
   </main>
 
+  <!-- FOOTER -->
   <div th:replace="~{fragments/footer :: footer}"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

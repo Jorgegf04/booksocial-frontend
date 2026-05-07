@@ -1,0 +1,123 @@
+/* ============================================================
+   admin-shared.css — Estilos comunes a todas las vistas del panel admin
+   Incluido en: works, inventory, authors, editorials, tomes,
+                volumes, chapters, editions, orders, users, comments, events
+   ============================================================ */
+
+/* === Icono en el botón "Nueva X" del topbar === */
+.admin-topbar-btn-icon { font-size: 1rem; }
+
+/* === Badge de recuento junto al título de tarjeta ("28 total") === */
+.admin-table-count {
+  font-size: 0.8rem;
+  color: var(--color-outline);
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
+/* === Celda vacía: "No hay X registrados" === */
+.admin-table-empty { color: var(--color-outline); font-size: 0.85rem; }
+
+/* === Nombre / título principal en celda de tabla === */
+.admin-table-name { font-size: 0.85rem; font-weight: 600; color: var(--bs-primary); }
+
+/* === Texto secundario pequeño en celda de tabla === */
+.admin-table-meta { font-size: 0.82rem; }
+
+/* === Columna de ID (muy pequeño, atenuado) === */
+.admin-table-id { font-size: 0.8rem; color: var(--color-outline); }
+
+/* === Icono placeholder en thumbnail de obra sin imagen === */
+.admin-table-thumb-icon { font-size: 1rem; color: var(--color-outline); }
+
+/* === Iconos de editar / eliminar en la columna de acciones === */
+.admin-table-action-icon { font-size: 0.9rem; }
+
+/* === Párrafo de confirmación en modales de eliminación === */
+.admin-modal-confirm { font-size: 0.9rem; }
+
+/* === Preview de URL de imagen bajo input file en modales de edición === */
+.admin-img-preview { font-size: 0.75rem; color: var(--color-muted); }
+
+/* ─── Works ─── */
+/* Valoración media: verde + negrita */
+.admin-work-rating       { font-size: 0.82rem; font-weight: 600; color: #2d7a4f; }
+/* Dash cuando no hay valoración */
+.admin-work-rating-empty { color: var(--color-outline); }
+
+/* ─── Inventory ─── */
+/* Subtítulo de edición bajo el nombre de la obra */
+.admin-inv-edition { font-size: 0.75rem; color: var(--color-outline); }
+/* ISBN en fuente monospace */
+.admin-inv-isbn    { font-size: 0.78rem; font-family: monospace; color: var(--color-muted); }
+/* Precio: verde y en negrita */
+.admin-inv-price   { font-weight: 700; color: #2d7a4f; }
+
+/* ─── Authors / Users ─── */
+/* Foto circular pequeña: autor o avatar de usuario en tabla */
+.admin-author-photo {
+  width: 2.2rem;
+  height: 2.2rem;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 1px solid var(--color-outline-variant);
+}
+/* Avatar de iniciales cuando no hay foto (modifica admin-user-avatar de main.css) */
+.admin-author-avatar-sm {
+  width: 2.2rem;
+  height: 2.2rem;
+  font-size: 0.75rem;
+}
+
+/* ─── Orders ─── */
+/* Número de pedido (#N) en negrita y color primary */
+.admin-order-id       { font-weight: 700; color: var(--bs-primary); }
+/* Líneas de pedido: preview comprimido en gris suave */
+.admin-order-lines    { font-size: 0.75rem; color: var(--color-muted); }
+/* Línea principal del modal de tracking */
+.admin-tracking-order    { font-size: 0.9rem; }
+/* Nota informativa en el modal de tracking */
+.admin-tracking-note     { font-size: 0.82rem; color: var(--color-muted); }
+/* Nombre de usuario resaltado dentro del modal de tracking */
+.admin-tracking-username { color: var(--bs-primary); }
+
+/* ─── Editions ─── */
+/* Hint "(manga/cómic)" junto a un label de formulario */
+.admin-label-hint   { font-weight: 400; font-size: 0.75rem; color: var(--color-muted); }
+/* Separador visual dentro del modal de edición */
+.admin-modal-divider { margin: 4px 0 8px; border-color: #e8e0d0; }
+/* Nota informativa dentro de un modal (ej: "se creará un producto") */
+.admin-modal-note    { font-size: 0.78rem; color: var(--color-muted); }
+
+/* ─── Users ─── */
+/* Badge de estado activo / inactivo */
+.admin-user-status-active   { font-size: 0.75rem; font-weight: 600; color: #2d7a4f; }
+.admin-user-status-inactive { font-size: 0.75rem; font-weight: 600; color: #a94442; }
+
+/* ─── Comments ─── */
+/* Nombre de usuario: negrita en color primary */
+.admin-comment-username   { font-size: 0.82rem; font-weight: 600; color: var(--bs-primary); }
+/* Fecha del comentario: muy pequeña + sin salto de línea */
+.admin-comment-date       { font-size: 0.78rem; color: var(--color-outline); white-space: nowrap; }
+/* Estado "Editado": naranja/ocre */
+.admin-comment-edited     { font-size: 0.75rem; font-weight: 600; color: #a07000; }
+/* Estado sin editar: atenuado */
+.admin-comment-not-edited { font-size: 0.75rem; color: var(--color-outline); }
+
+/* ─── Events ─── */
+/* Miniatura de evento en tabla */
+.admin-event-thumb {
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--color-outline-variant);
+}
+/* Placeholder cuando el evento no tiene imagen */
+.admin-event-no-img          { font-size: 0.75rem; color: var(--color-outline); }
+/* Celda de fecha: sin salto de línea */
+.admin-event-date-cell       { font-size: 0.82rem; white-space: nowrap; }
+/* Estado del evento según su fecha */
+.admin-event-status-upcoming { font-size: 0.75rem; font-weight: 600; color: #2d7a4f; }
+.admin-event-status-past     { font-size: 0.75rem; font-weight: 600; color: var(--color-outline); }
+.admin-event-status-none     { font-size: 0.75rem; color: var(--color-outline); }

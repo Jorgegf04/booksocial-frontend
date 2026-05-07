@@ -1,23 +1,21 @@
-<!--
-  Vista: Página principal — /home (y /)
-  Controlador: HomeController (GET /)
+<!--/*
+  ============================================================
+  Vista: Página principal
+  Ruta: / y /home
+  Controlador: HomeController#home()
 
-  Variables del modelo:
-  - featuredWorks : List<WorkResponseDTO> hasta 4 obras para la sección de destacados.
-                    Obtenidas via WorkClientService.getAllWorks() tomando los primeros 4.
-                    Si la llamada al backend falla, se usa lista vacía (fallback graceful).
+  Recibe del modelo:
+    - featuredWorks : List<WorkResponseDTO> → hasta 4 obras destacadas
+      (obtenidas via WorkClientService; lista vacía si el backend falla)
 
-  Secciones de la página:
-  1. Hero: imagen de fondo, título y CTAs hacia /catalog y /auth/register.
-  2. Obras destacadas: grid de hasta 4 cards con efecto escalonado (home-work-offset
-     en posiciones 1 y 3 del índice de iteración th:each stat.index).
-  3. Comunidad CTA: sección con texto y mini-cards de características (decorativas).
-  4. Catálogo por tipo: bento de estadísticas + enlaces a /catalog filtrados por tipo.
-  5. Suscripción: sección oscura con descripción del plan "Caja del Curador".
+  Fragmentos que incluye:
+    - fragments/navbar :: navbar
+    - fragments/footer :: footer
 
-  Las secciones de comunidad, tipo y suscripción son decorativas y no requieren
-  datos del modelo; sólo featuredWorks viene del backend.
--->
+  Secciones decorativas (sin datos del modelo):
+    - Comunidad CTA, Catálogo por tipo, Suscripción
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -25,23 +23,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>BookSocial — El Curador Digital</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Estilos globales: variables CSS, navbar, footer, cards, etc. -->
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos específicos de esta vista -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/home.css}">
 </head>
+<!--
+  home-main: añade padding-top para que el contenido no quede debajo
+  del navbar fixed-top (definido en home.css).
+-->
 <body>
 
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  <main style="padding-top: 5rem;">
+  <main class="home-main">
 
     <!-- ============================================================
-         HERO
+         HERO — Imagen de fondo con texto superpuesto y CTAs
          ============================================================ -->
+    <!--
+      home-hero: posición relativa y min-height para la sección de impacto.
+      d-flex align-items-center: centra verticalmente el contenido del hero.
+    -->
     <section class="home-hero d-flex align-items-center">
+      <!-- Overlay semitransparente para mejorar la legibilidad del texto -->
       <div class="home-hero-overlay"></div>
+      <!-- Imagen de fondo posicionada con object-fit: cover (main.css) -->
       <img class="home-hero-bg"
            src="/images/hero-bg.jpg"
            alt="Biblioteca moderna con grandes estanterías">
 
+      <!--
+        position-relative z-2: coloca el contenido por encima del overlay (z-index 1).
+        px-4 px-lg-5: padding horizontal responsive de Bootstrap.
+      -->
       <div class="container position-relative z-2 px-4 px-lg-5">
         <div class="home-hero-content">
           <span class="home-hero-tag">El Curador Digital</span>
@@ -52,6 +67,7 @@
           <p class="home-hero-sub">
             Más que una librería. Cubrimos ediciones premium de literatura, manga y novela gráfica para el coleccionista exigente.
           </p>
+          <!-- d-flex gap-3 flex-wrap: botones en fila que se apilan en pantallas muy pequeñas -->
           <div class="d-flex gap-3 flex-wrap">
             <a href="/catalog" class="btn-primary-pill home-cta-btn">
               Explorar Catálogo
@@ -65,33 +81,53 @@
     </section>
 
     <!-- ============================================================
-         OBRAS DESTACADAS
+         OBRAS DESTACADAS — Grid de hasta 4 cards con datos reales
          ============================================================ -->
-    <section class="py-5" style="background: var(--color-bg);">
+    <!-- home-section-bg: fondo neutro var(--color-bg) para alternar con secciones oscuras -->
+    <section class="py-5 home-section-bg">
       <div class="container px-4 px-lg-5">
 
+        <!-- Encabezado de sección con título y enlace "Ver todo" -->
+        <!-- justify-content-between: separa título y enlace a los extremos -->
         <div class="d-flex justify-content-between align-items-end mb-5">
           <div>
             <p class="filter-section-title mb-1">Este mes</p>
-            <h2 class="font-serif mb-0" style="font-size:2.25rem; color:var(--bs-primary);">
+            <!-- home-featured-heading: tamaño y color del titular (home.css) -->
+            <h2 class="font-serif mb-0 home-featured-heading">
               Destacados del Catálogo
             </h2>
           </div>
+          <!-- d-none d-md-flex: enlace visible solo en pantallas medianas o mayores -->
           <a href="/catalog" class="btn-ghost-pill d-none d-md-flex">
             Ver todo
-            <span class="material-symbols-outlined" style="font-size:1.1rem;">arrow_forward</span>
+            <!-- home-view-all-icon: ajusta el tamaño del icono de flecha (home.css) -->
+            <span class="material-symbols-outlined home-view-all-icon">arrow_forward</span>
           </a>
         </div>
 
-        <!-- Cards con obras reales -->
+        <!--
+          Grid de obras reales: condicional, solo si featuredWorks tiene elementos.
+          th:if con condición compuesta: protege contra null y lista vacía.
+          align-items-end: las cards se alinean desde abajo para el efecto escalonado.
+        -->
         <div th:if="${featuredWorks != null and !featuredWorks.isEmpty()}"
              class="row g-4 align-items-end">
 
+          <!--
+            th:each="w, stat : ${featuredWorks}": itera la lista; stat da acceso
+            al índice (stat.index), primero/último, etc.
+            th:classappend: añade 'home-work-offset' en posiciones 1 y 3 para el
+            efecto de escalonado visual sin modificar el HTML base de la card.
+          -->
           <div th:each="w, stat : ${featuredWorks}"
                th:classappend="${stat.index == 1 or stat.index == 3} ? 'col-sm-6 col-lg-3 home-work-offset' : 'col-sm-6 col-lg-3'">
 
             <a th:href="@{'/work/' + ${w.id}}" class="home-work-card">
               <div class="home-work-cover-wrap">
+                <!--
+                  th:if / th:unless: muestra la imagen si existe, placeholder si no.
+                  th:src, th:alt: Thymeleaf genera los atributos con los valores del DTO.
+                -->
                 <img th:if="${w.img != null and !w.img.isEmpty()}"
                      th:src="${w.img}"
                      th:alt="${w.title}"
@@ -101,18 +137,22 @@
                   <span class="material-symbols-outlined">menu_book</span>
                 </div>
 
-                <!-- Badge tipo -->
+                <!-- Badge con el tipo de obra (BOOK, MANGA, COMIC) -->
+                <!-- w.type.name(): convierte el enum a String (ej: "MANGA") -->
                 <span class="home-work-type-badge"
                       th:text="${w.type != null ? w.type.name() : ''}"></span>
               </div>
 
               <div class="home-work-info">
                 <h3 class="home-work-title font-serif" th:text="${w.title}">Título</h3>
+                <!-- #strings.listJoin: función Thymeleaf que une una lista con separador -->
                 <p class="home-work-authors mb-1"
                    th:text="${w.authors != null and !w.authors.isEmpty()} ? ${#strings.listJoin(w.authors, ', ')} : '—'">
                 </p>
+                <!-- Valoración media: solo se muestra si el backend la calcula -->
                 <div class="d-flex align-items-center gap-1" th:if="${w.averageRating != null}">
                   <span class="material-symbols-outlined home-star">star</span>
+                  <!-- #numbers.formatDecimal: 1 dígito entero, 1 decimal -->
                   <span class="home-work-rating" th:text="${#numbers.formatDecimal(w.averageRating, 1, 1)}">0.0</span>
                 </div>
               </div>
@@ -121,10 +161,11 @@
           </div>
         </div>
 
-        <!-- Estado vacío -->
+        <!-- Estado vacío: se muestra cuando featuredWorks está vacío o es null -->
+        <!-- home-empty-state: color atenuado; home-empty-icon: icono grande (home.css) -->
         <div th:if="${featuredWorks == null or featuredWorks.isEmpty()}"
-             class="text-center py-5" style="color:var(--color-outline);">
-          <span class="material-symbols-outlined d-block mb-2" style="font-size:3rem;">auto_stories</span>
+             class="text-center py-5 home-empty-state">
+          <span class="material-symbols-outlined d-block mb-2 home-empty-icon">auto_stories</span>
           <p class="mb-0">No hay obras disponibles en este momento.</p>
         </div>
 
@@ -132,50 +173,56 @@
     </section>
 
     <!-- ============================================================
-         COMUNIDAD — CTA
+         COMUNIDAD — CTA para registro con mini cards de características
          ============================================================ -->
+    <!-- home-community-section: fondo verde primario definido en main.css -->
     <section class="home-community-section py-5">
       <div class="container px-4 px-lg-5">
         <div class="row g-4">
 
-          <!-- Card principal -->
+          <!-- Card principal oscura con texto y botón CTA -->
           <div class="col-lg-7">
             <div class="home-community-card h-100">
               <div class="position-relative z-2">
-                <h2 class="font-serif mb-3" style="font-size:2.5rem; color:#fff;">
+                <!-- home-community-heading: tamaño y color blanco (home.css) -->
+                <h2 class="font-serif mb-3 home-community-heading">
                   El Círculo de Lectores
                 </h2>
-                <p class="mb-4" style="color:rgba(255,255,255,0.7); font-size:1.05rem; max-width:30rem; line-height:1.7;">
+                <!-- home-community-desc: color semi-transparente sobre fondo oscuro (home.css) -->
+                <p class="mb-4 home-community-desc">
                   Conecta con otros bibliófagos, únete a grupos de lectura y lleva un seguimiento de tus obras favoritas. Tu biblioteca personal te espera.
                 </p>
                 <a href="/auth/register" class="home-community-btn">
                   Crear cuenta gratis
                 </a>
               </div>
-              <!-- Decoración -->
-              <span class="material-symbols-outlined home-community-icon"
-                    style="font-variation-settings:'FILL' 1;">groups</span>
+              <!-- Icono decorativo de fondo: home-community-icon en main.css posiciona,
+                   home.css añade font-variation-settings:'FILL' 1 para el icono relleno -->
+              <span class="material-symbols-outlined home-community-icon">groups</span>
             </div>
           </div>
 
-          <!-- Mini cards -->
+          <!-- Mini cards de características de la comunidad -->
           <div class="col-lg-5 d-flex flex-column gap-4">
             <div class="home-feature-card">
               <div class="home-feature-icon">
-                <span class="material-symbols-outlined" style="color:var(--bs-primary); font-size:1.75rem;">forum</span>
+                <!-- Icono sin inline style: .home-feature-icon .material-symbols-outlined en home.css -->
+                <span class="material-symbols-outlined">forum</span>
               </div>
               <div>
-                <h4 class="font-serif mb-1" style="color:var(--bs-primary); font-size:1.1rem;">Discusiones en vivo</h4>
-                <p class="mb-0" style="font-size:0.875rem; color:var(--color-muted);">Clubes de lectura en tiempo real para cada género.</p>
+                <!-- home-feature-card__title: color y tamaño definidos en home.css -->
+                <h4 class="font-serif mb-1 home-feature-card__title">Discusiones en vivo</h4>
+                <!-- home-feature-card__desc: tamaño y color muted (home.css) -->
+                <p class="mb-0 home-feature-card__desc">Clubes de lectura en tiempo real para cada género.</p>
               </div>
             </div>
             <div class="home-feature-card">
               <div class="home-feature-icon">
-                <span class="material-symbols-outlined" style="color:var(--bs-primary); font-size:1.75rem;">loyalty</span>
+                <span class="material-symbols-outlined">loyalty</span>
               </div>
               <div>
-                <h4 class="font-serif mb-1" style="color:var(--bs-primary); font-size:1.1rem;">Recompensas del Curador</h4>
-                <p class="mb-0" style="font-size:0.875rem; color:var(--color-muted);">Canjea puntos por ediciones físicas exclusivas.</p>
+                <h4 class="font-serif mb-1 home-feature-card__title">Recompensas del Curador</h4>
+                <p class="mb-0 home-feature-card__desc">Canjea puntos por ediciones físicas exclusivas.</p>
               </div>
             </div>
           </div>
@@ -185,21 +232,25 @@
     </section>
 
     <!-- ============================================================
-         CATÁLOGO POR TIPO
+         CATÁLOGO POR TIPO — Bento visual + enlaces de categoría
          ============================================================ -->
-    <section class="py-5" style="background: var(--color-bg);">
+    <section class="py-5 home-section-bg">
       <div class="container px-4 px-lg-5">
+        <!-- order-lg-2 / order-lg-1: invierte el orden de columnas en escritorio -->
         <div class="row g-5 align-items-center">
 
-          <!-- Texto -->
+          <!-- Columna de texto y enlaces por tipo -->
           <div class="col-lg-5 order-lg-2">
             <p class="filter-section-title mb-2">Explora</p>
-            <h2 class="font-serif mb-4" style="font-size:2.5rem; color:var(--bs-primary);">
+            <!-- home-catalog-heading: tamaño 2.5rem y color primario (home.css) -->
+            <h2 class="font-serif mb-4 home-catalog-heading">
               Descubre las Mentes<br>detrás de las Obras
             </h2>
-            <p class="mb-5" style="color:var(--color-muted); line-height:1.8;">
+            <!-- home-catalog-desc: color muted y line-height cómodo (home.css) -->
+            <p class="mb-5 home-catalog-desc">
               No solo vendemos libros, celebramos a los creadores. Explora nuestro catálogo por tipo de obra y sumérgete en universos únicos.
             </p>
+            <!-- home-category-link: fila con flecha que se desplaza al hacer hover (main.css) -->
             <div class="d-flex flex-column gap-0">
               <a href="/catalog?type=BOOK" class="home-category-link">
                 <span class="font-serif fw-bold">Literatura y Novela</span>
@@ -216,18 +267,22 @@
             </div>
           </div>
 
-          <!-- Bento visual -->
+          <!-- Bento grid con estadísticas decorativas -->
           <div class="col-lg-7 order-lg-1">
             <div class="home-bento-grid">
+              <!-- Celda de estadística principal -->
               <div class="home-bento-stat">
                 <span class="font-serif home-bento-num">12k+</span>
                 <p class="home-bento-label">Títulos disponibles</p>
               </div>
+              <!-- Celda verde con icono y etiqueta -->
               <div class="home-bento-tag-card">
-                <span class="material-symbols-outlined mb-2"
-                      style="font-size:2.5rem; color:var(--bs-primary);">auto_stories</span>
-                <p class="font-serif fw-bold mb-0" style="color:var(--bs-primary);">Géneros para todos los gustos</p>
+                <!-- home-bento-tag-icon: tamaño y color del icono (home.css) -->
+                <span class="material-symbols-outlined mb-2 home-bento-tag-icon">auto_stories</span>
+                <!-- home-bento-tag-label: color primario para el texto (home.css) -->
+                <p class="font-serif fw-bold mb-0 home-bento-tag-label">Géneros para todos los gustos</p>
               </div>
+              <!-- Celda de estadística secundaria -->
               <div class="home-bento-stat home-bento-stat--alt">
                 <span class="font-serif home-bento-num">31</span>
                 <p class="home-bento-label">Géneros</p>
@@ -240,41 +295,52 @@
     </section>
 
     <!-- ============================================================
-         SUSCRIPCIÓN
+         SUSCRIPCIÓN — Sección oscura con descripción del plan Curador
          ============================================================ -->
+    <!-- home-sub-section: fondo verde primario (main.css) -->
     <section class="home-sub-section py-5">
       <div class="container px-4 px-lg-5">
+        <!-- home-sub-card: tarjeta verde muy oscura con bordes redondeados (main.css) -->
         <div class="home-sub-card">
           <div class="row g-5 align-items-center">
 
+            <!-- Columna de texto -->
             <div class="col-lg-7">
+              <!-- Separador decorativo + etiqueta de sección -->
               <div class="d-flex align-items-center gap-3 mb-4">
-                <span style="width:3rem; height:1px; background:var(--bs-secondary); display:block;"></span>
-                <span class="filter-section-title mb-0" style="color:var(--bs-secondary);">Suscripción</span>
+                <!-- home-sub-separator: línea horizontal verde claro (home.css) -->
+                <span class="home-sub-separator"></span>
+                <!-- home-sub-section-label: color secundario para la etiqueta (home.css) -->
+                <span class="filter-section-title mb-0 home-sub-section-label">Suscripción</span>
               </div>
-              <h2 class="font-serif mb-3" style="font-size:2.5rem; color:#fff;">
+              <!-- home-sub-heading: tamaño 2.5rem en blanco (home.css) -->
+              <h2 class="font-serif mb-3 home-sub-heading">
                 La Caja del Curador
               </h2>
-              <p class="mb-5" style="color:rgba(255,255,255,0.7); line-height:1.8; max-width:32rem;">
+              <!-- home-sub-desc: texto semi-transparente con max-width (home.css) -->
+              <p class="mb-5 home-sub-desc">
                 Una selección de 3 títulos premium en tu puerta cada mes. Incluye acceso a talleres digitales privados y entradas anticipadas a eventos exclusivos.
               </p>
 
+              <!-- Dos características de la suscripción en columnas -->
               <div class="row g-4 mb-5">
                 <div class="col-sm-6">
                   <div class="d-flex gap-3">
-                    <span class="material-symbols-outlined" style="color:var(--bs-secondary); font-variation-settings:'FILL' 1;">event</span>
+                    <!-- home-sub-feature-icon: color secundario + fill (home.css) -->
+                    <span class="material-symbols-outlined home-sub-feature-icon">event</span>
                     <div>
                       <p class="fw-bold text-white mb-1">Eventos Mensuales</p>
-                      <p class="mb-0" style="font-size:0.8rem; color:rgba(255,255,255,0.5);">Q&amp;A exclusivos con escritores internacionales.</p>
+                      <!-- home-sub-feature-text: texto pequeño semitransparente (home.css) -->
+                      <p class="mb-0 home-sub-feature-text">Q&amp;A exclusivos con escritores internacionales.</p>
                     </div>
                   </div>
                 </div>
                 <div class="col-sm-6">
                   <div class="d-flex gap-3">
-                    <span class="material-symbols-outlined" style="color:var(--bs-secondary); font-variation-settings:'FILL' 1;">local_shipping</span>
+                    <span class="material-symbols-outlined home-sub-feature-icon">local_shipping</span>
                     <div>
                       <p class="fw-bold text-white mb-1">Envío Gratuito</p>
-                      <p class="mb-0" style="font-size:0.8rem; color:rgba(255,255,255,0.5);">Envío sin coste en todas las cajas de suscripción.</p>
+                      <p class="mb-0 home-sub-feature-text">Envío sin coste en todas las cajas de suscripción.</p>
                     </div>
                   </div>
                 </div>
@@ -285,14 +351,19 @@
               </a>
             </div>
 
+            <!-- Columna visual: placeholder de imagen con badge superpuesto -->
             <div class="col-lg-5">
+              <!-- home-sub-img-wrap: aspect-ratio 4/5 con overflow visible para el badge (main.css) -->
               <div class="home-sub-img-wrap">
+                <!-- home-sub-badge: tarjeta superpuesta en la esquina inferior izquierda (main.css) -->
                 <div class="home-sub-badge">
-                  <p class="fw-bold text-white mb-1" style="font-size:0.9rem; line-height:1.4;">Próxima Caja: Colección Noir de Otoño</p>
-                  <p class="mb-0" style="font-size:0.65rem; color:rgba(255,255,255,0.5); text-transform:uppercase; letter-spacing:0.1em;">Envío 01 Oct</p>
+                  <!-- home-sub-badge__title / __date: tipografía del badge (home.css) -->
+                  <p class="fw-bold text-white mb-1 home-sub-badge__title">Próxima Caja: Colección Noir de Otoño</p>
+                  <p class="mb-0 home-sub-badge__date">Envío 01 Oct</p>
                 </div>
                 <div class="home-sub-img-placeholder">
-                  <span class="material-symbols-outlined" style="font-size:5rem; color:rgba(192,236,218,0.3); font-variation-settings:'FILL' 1;">package_2</span>
+                  <!-- home-sub-package-icon: icono grande y translúcido (home.css) -->
+                  <span class="material-symbols-outlined home-sub-package-icon">package_2</span>
                 </div>
               </div>
             </div>

@@ -1,0 +1,88 @@
+/* ============================================================
+   community.css — Estilos del directorio de usuarios
+   Vista: community/index.html
+   Controlador: CommunityController (GET /community, POST /community/{id}/follow|unfollow)
+   ============================================================ */
+
+/* === Espaciado del main (compensar navbar fixed) === */
+.community-main {
+  padding-top: 6rem;
+  padding-bottom: 5rem;
+}
+
+/* === Cabecera === */
+.community-heading { font-size: 2rem; color: var(--bs-primary); }
+
+/* === Buscador client-side === */
+.community-search-group { max-width: 280px; }
+.community-search-input { border-radius: 2rem 0 0 2rem; }
+.community-search-btn {
+  border-radius: 0 2rem 2rem 0;
+  background: var(--bs-primary);
+  border: none;
+}
+.community-search-icon { font-size: 1rem; color: #fff; }
+
+/* === Estado vacío (sin usuarios registrados) === */
+.community-empty {
+  background: var(--color-surface-l);
+  border-radius: 1rem;
+}
+.community-empty-icon { font-size: 3.5rem; color: var(--color-outline-l); }
+.community-empty-text { color: var(--bs-primary); font-size: 1.1rem; }
+
+/* === Tarjeta de usuario en el grid === */
+.community-user-card {
+  border-radius: 1rem;
+  border: 1px solid var(--color-outline-l);
+  background: var(--color-surface-l);
+  transition: box-shadow .2s;
+}
+
+/* Avatar: imagen redonda */
+.community-user-avatar {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* Placeholder de avatar con iniciales: modifica el tamaño del profile-avatar-placeholder */
+.community-avatar-placeholder {
+  width: 4rem;
+  height: 4rem;
+  font-size: 1.4rem;
+}
+
+/* Nombre de usuario y nombre completo */
+.community-user-name {
+  color: var(--bs-primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.community-user-fullname {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+/* Botón "Seguir": modificador de tamaño sobre btn-primary-pill */
+.community-follow-btn { padding: 0.45rem; font-size: 0.8rem; }
+
+/* Botón "Siguiendo ✓": ghost pill compacto */
+.community-unfollow-btn {
+  padding: 0.45rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1.5px solid var(--bs-primary);
+  border-radius: 2rem;
+  background: transparent;
+  color: var(--bs-primary);
+  cursor: pointer;
+}
+
+/* Enlace "Ver perfil" para usuarios sin sesión */
+.community-view-profile-btn { padding: 0.45rem; font-size: 0.8rem; }
+
+/* === Estado vacío tras búsqueda (controlado por JS, oculto por defecto) === */
+.community-search-empty-icon { font-size: 3rem; color: var(--color-outline-l); }
+.community-search-empty-text { color: var(--color-muted); }

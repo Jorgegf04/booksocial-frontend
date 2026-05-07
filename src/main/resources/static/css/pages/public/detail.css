@@ -1,0 +1,151 @@
+/* ============================================================
+   detail.css — Estilos de la página de detalle de obra
+   Vistas que lo usan: work/detail.html
+   Controlador: WorkDetailController (GET /work/{id})
+   ============================================================ */
+
+/* === Wrapper main: compensa el navbar fixed === */
+.detail-main {
+  padding-top: 6rem;
+  padding-bottom: 5rem;
+}
+
+/* Espaciado inferior extra entre secciones principales del detalle */
+.detail-section--spaced { margin-bottom: 5rem !important; }
+
+/* === Sección Hero: portada === */
+
+/* Placeholder cuando la obra no tiene imagen de portada */
+.detail-cover-placeholder {
+  color: var(--color-outline);
+  min-height: 20rem;
+}
+
+/* Icono grande dentro del placeholder de portada */
+.detail-cover-icon { font-size: 5rem; }
+
+/* === Sección Hero: columna de información === */
+
+/* Fecha de publicación junto al badge de tipo */
+.detail-pub-date { font-size: 0.85rem; color: var(--color-outline); }
+
+/* Título principal de la obra */
+.detail-title {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: var(--bs-primary);
+  line-height: 1.1;
+}
+
+/* Género/subtítulo en itálica bajo el título */
+.detail-genre { font-size: 1.05rem; color: var(--bs-primary); }
+
+/* Línea divisoria bajo el bloque de metadatos (autor, rating, demografía) */
+.detail-meta-divider { border-bottom: 1px solid var(--color-outline-l); }
+
+/* Enlace de autor con subrayado y color heredado */
+.detail-author-link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Icono de estrella junto a la valoración media */
+.detail-rating-star { font-size: 1rem; color: var(--bs-primary); }
+
+/* Descripción larga de la obra */
+.detail-description {
+  font-size: 1rem;
+  color: var(--color-muted);
+  line-height: 1.8;
+  max-width: 52ch;
+}
+
+/* === CTAs (biblioteca, comprar, wishlist) === */
+
+/* Iconos dentro de los botones de acción principales */
+.detail-action-icon { font-size: 1.1rem; vertical-align: middle; }
+
+/* Estado "ya en biblioteca": reduce la opacidad para indicar que ya está añadido */
+.detail-btn-library--active { opacity: 0.85; }
+
+/* Botón de compra: fondo verde más oscuro que el primario */
+.detail-btn-buy { background-color: #163528; }
+
+/* Mensaje de sin stock en la edición seleccionada */
+.detail-no-stock { font-size: 0.85rem; color: var(--color-outline); }
+
+/* === Sección Bento: listado de ediciones === */
+
+/* Wrapper del listado de ediciones (fondo gris claro) */
+.detail-editions-wrapper {
+  background: var(--color-surface-l);
+  border-radius: 1rem;
+}
+
+/* Tarjeta individual de cada edición */
+.detail-edition-card {
+  background: white;
+  border: 1px solid var(--color-outline-l);
+}
+
+/* Título/nombre de la edición dentro de la tarjeta */
+.detail-edition-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--bs-primary);
+}
+
+/* Metadatos de la edición: editorial, ISBN, fecha */
+.detail-edition-meta { font-size: 0.78rem; color: var(--color-muted); }
+
+/* === Sección de comentarios === */
+
+/* Contenedor de la sección, centrado y con ancho máximo */
+.detail-comments-section {
+  max-width: 52rem;
+  margin: 0 auto;
+}
+
+/* Cabecera de la sección: separador inferior */
+.detail-comments-header {
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-outline-l);
+}
+
+/* Titular "Diálogo de la comunidad" */
+.detail-comments-heading { font-size: 1.8rem; color: var(--bs-primary); }
+
+/* Bloque del contador de comentarios (icono + número) */
+.detail-comments-meta { color: var(--color-outline); }
+
+/* Texto con el total de comentarios */
+.detail-comments-count { font-weight: 700; font-size: 0.875rem; }
+
+/* Alertas de error en comentarios/tracking con bordes redondeados */
+.detail-comment-error {
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+}
+
+/* Textarea del formulario de comentario principal */
+.detail-comment-textarea { width: 100%; resize: vertical; }
+
+/* Botón de publicar comentario */
+.detail-comment-submit {
+  padding: 0.6rem 1.75rem;
+  font-size: 0.875rem;
+}
+
+/* Bloque visible para visitantes no autenticados en lugar del formulario */
+.detail-comment-guest { color: var(--color-muted); font-size: 0.9rem; }
+
+/* Icono de candado en la zona de invitado */
+.detail-lock-icon { font-size: 2rem; color: var(--color-outline); }
+
+/* Enlace "Inicia sesión" dentro del bloque de invitado */
+.detail-login-link { color: var(--bs-primary); font-weight: 600; }
+
+/* === Estado vacío de comentarios === */
+.detail-empty-comments      { color: var(--color-outline); }
+.detail-empty-comments-icon { font-size: 3rem; }
+.detail-empty-comments-text { font-size: 0.9rem; }

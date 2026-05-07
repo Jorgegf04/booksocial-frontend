@@ -1,3 +1,24 @@
+<!--/*
+  ============================================================
+  Vista: Listado de autores
+  Ruta: /authors
+  Controlador: AuthorController#list() (GET)
+
+  Recibe del modelo:
+    - authors : List<AuthorSummaryResponseDTO> — autores a mostrar (filtrados por q si se busca).
+    - q       : String (opcional)              — término de búsqueda pre-cargado en el input.
+
+  Funcionalidades:
+    · Formulario GET con parámetro q → recarga la página filtrando autores por nombre.
+    · Si authors está vacío o es null → muestra el estado vacío.
+    · Cards de autor: foto, nombre, nacionalidad, nº de obras y seguidores.
+    · Enlace en cada card → /author/{id} para ver el detalle del autor.
+
+  Fragmentos incluidos:
+    - fragments/navbar :: navbar
+    - fragments/footer :: footer
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,82 +27,134 @@
   <title>Autores — BookSocial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos del listado y detalle de autores -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/author.css}">
 </head>
 <body>
 
+<!-- NAVBAR -->
 <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-<main class="container" style="padding-top:6rem; padding-bottom:5rem;">
+<!-- author-main: padding-top compensa la navbar fixed (author.css) -->
+<main class="container author-main">
 
-  <!-- Cabecera -->
+  <!-- Cabecera: título + buscador alineados con justify-content-between -->
   <div class="d-flex align-items-end justify-content-between mb-4 flex-wrap gap-3">
     <div>
+      <!-- filter-section-title: etiqueta de sección en uppercase pequeño (main.css) -->
       <p class="filter-section-title mb-1">Catálogo</p>
-      <h1 class="font-serif mb-0" style="font-size:2rem; color:var(--bs-primary);">Autores</h1>
+      <!-- author-list-heading: font-size:2rem + color primary (author.css) -->
+      <h1 class="font-serif mb-0 author-list-heading">Autores</h1>
     </div>
+
+    <!--
+      Formulario de búsqueda GET: no usa POST porque la búsqueda
+      debe ser compartible por URL (/authors?q=tolkien).
+      author-search-group: limita el ancho del input-group (author.css).
+    -->
     <form action="/authors" method="get" class="d-flex gap-2">
-      <div class="input-group" style="max-width:280px;">
+      <div class="input-group author-search-group">
+        <!--
+          th:value="${q}": pre-rellena el input con el término de búsqueda anterior.
+          form-control-sm: Bootstrap — input de tamaño reducido.
+          author-search-input: border-radius redondeado en el lado izquierdo (author.css).
+        -->
         <input name="q" type="text"
                th:value="${q}"
-               class="form-control form-control-sm"
-               style="border-radius:2rem 0 0 2rem;"
+               class="form-control form-control-sm author-search-input"
                placeholder="Buscar autor...">
-        <button type="submit" class="input-group-text"
-                style="border-radius:0 2rem 2rem 0; background:var(--bs-primary); border:none; cursor:pointer;">
-          <span class="material-symbols-outlined" style="font-size:1rem; color:#fff;">search</span>
+        <!--
+          input-group-text: Bootstrap — elemento de sufijo del input-group.
+          author-search-btn: fondo primary + border-radius en lado derecho (author.css).
+        -->
+        <button type="submit" class="input-group-text author-search-btn">
+          <span class="material-symbols-outlined author-search-icon">search</span>
         </button>
       </div>
     </form>
   </div>
 
-  <!-- Sin autores -->
+  <!-- Estado vacío: se muestra si no hay autores en el resultado -->
+  <!--
+    th:if: Thymeleaf solo renderiza este div si la lista es null o está vacía.
+    author-empty: fondo gris claro + border-radius (author.css).
+  -->
   <div th:if="${authors == null or authors.isEmpty()}"
-       class="text-center py-5" style="background:var(--color-surface-l); border-radius:1rem;">
-    <span class="material-symbols-outlined d-block mb-2"
-          style="font-size:3.5rem; color:var(--color-outline-l);">person_search</span>
-    <p class="font-serif mb-1" style="color:var(--bs-primary); font-size:1.1rem;">
+       class="text-center py-5 author-empty">
+    <span class="material-symbols-outlined d-block mb-2 author-empty-icon">person_search</span>
+    <p class="font-serif mb-1 author-empty-text">
       No se encontraron autores.
     </p>
   </div>
 
-  <!-- Grid de autores -->
+  <!-- Grid de autores: 4 columnas en escritorio, 2 en tablet, 1 en móvil -->
+  <!--
+    th:unless: lo opuesto de th:if — renderiza si la lista NO está vacía.
+    row g-4: Bootstrap — grid con gutters de 1.5rem entre cards.
+  -->
   <div class="row g-4" th:unless="${authors == null or authors.isEmpty()}">
+
+    <!--
+      th:each="a : ${authors}": itera sobre la lista de autores.
+      col-sm-6 col-md-4 col-lg-3: 1 col en xs, 2 en sm, 3 en md, 4 en lg.
+    -->
     <div th:each="a : ${authors}" class="col-sm-6 col-md-4 col-lg-3">
+      <!--
+        author-card: tiene reglas de hover (author.css) que afectan a img y h3 hijos.
+        text-decoration-none: Bootstrap — quita el subrayado del enlace.
+        d-block: Bootstrap — el <a> ocupa toda la celda de la grid.
+        th:href con concatenación de string: genera /author/{id}.
+      -->
       <a th:href="@{'/author/' + ${a.id}}" class="text-decoration-none d-block author-card">
 
-        <div class="overflow-hidden mb-3"
-             style="aspect-ratio:3/4; background:var(--color-surface-l); border-radius:.5rem;">
+        <!--
+          author-card-img-wrap: aspecto 3:4 + fondo gris claro + border-radius (author.css).
+          overflow-hidden: Bootstrap — recorta la imagen al border-radius.
+          mb-3: Bootstrap — espacio entre la imagen y el texto.
+        -->
+        <div class="overflow-hidden mb-3 author-card-img-wrap">
+          <!--
+            th:if / th:unless: muestra imagen si existe, placeholder si no.
+            author-card-img-wrap img: width/height/object-fit/transition (author.css).
+          -->
           <img th:if="${a.img != null and !a.img.isEmpty()}"
-               th:src="${a.img}" th:alt="${a.name}"
-               style="width:100%; height:100%; object-fit:cover; transition:transform .5s;">
+               th:src="${a.img}" th:alt="${a.name}">
           <div th:unless="${a.img != null and !a.img.isEmpty()}"
                class="d-flex align-items-center justify-content-center h-100">
-            <span class="material-symbols-outlined"
-                  style="font-size:4rem; color:var(--color-outline-l);">person</span>
+            <!-- author-card-placeholder-icon: icono grande en gris claro (author.css) -->
+            <span class="material-symbols-outlined author-card-placeholder-icon">person</span>
           </div>
         </div>
 
-        <h3 class="font-serif mb-0"
-            style="font-size:1rem; color:var(--bs-primary);"
+        <!-- Nombre del autor -->
+        <!-- author-card-name: font-size:1rem + color primary (author.css) -->
+        <h3 class="font-serif mb-0 author-card-name"
             th:text="${a.name}">Nombre</h3>
-        <p style="font-size:.75rem; color:var(--color-muted); margin:.2rem 0 0;"
+
+        <!-- Nacionalidad y número de obras (concatenados con ·) -->
+        <!--
+          author-card-meta: font-size pequeño + color muted + margin-top (author.css).
+          Operador ternario en Thymeleaf: condición ? 'si' : 'no'.
+          #lists.size(): utilidad Thymeleaf para obtener el tamaño de una lista.
+        -->
+        <p class="author-card-meta"
            th:text="${(a.nationality != null ? a.nationality : '') +
                       (a.works != null and !a.works.isEmpty() ? ' · ' + #lists.size(a.works) + ' obras' : '')}"></p>
-        <p style="font-size:.72rem; color:var(--color-muted);"
+
+        <!-- Número de seguidores -->
+        <p class="author-card-followers"
            th:text="${(a.followerCount != null ? a.followerCount : 0) + ' seguidores'}"></p>
 
       </a>
     </div>
+
   </div>
 
 </main>
 
+<!-- FOOTER -->
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<style>
-  .author-card:hover img { transform: scale(1.04); }
-  .author-card:hover h3  { opacity: .75; }
-</style>
 </body>
 </html>

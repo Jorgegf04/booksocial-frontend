@@ -1,3 +1,46 @@
+<!--/*
+  ============================================================
+  Vista: Perfil de usuario
+  Ruta: /user/{id}
+  Controlador: ProfileController#profile() (GET)
+
+  Recibe del modelo:
+    - user           : UserResponseDTO               — datos del usuario del perfil.
+    - tracking       : List<TrackingWorkResponseDTO> — obras seguidas (biblioteca).
+    - isOwnProfile   : boolean                       — true si el visitante es el propietario.
+    - sessionUserId  : Long                          — ID del usuario en sesión (null si no hay).
+    - followers      : List<UserResponseDTO>         — usuarios que siguen a este perfil.
+    - following      : List<UserResponseDTO>         — usuarios a los que sigue este perfil.
+    - followersCount : int                           — total de seguidores.
+    - followingCount : int                           — total de seguidos.
+    - isFollowing    : boolean                       — true si la sesión sigue a este perfil.
+    - orders         : List<OrderResponseDTO>        — pedidos (solo perfil propio).
+    - orderTrackings : Map<Long, TrackingOrderResponseDTO> — último estado de cada pedido.
+    - updateForm     : UpdateUserRequestDTO          — datos pre-cargados en el form de edición.
+
+  Estructura de la página:
+    · Columna izquierda (col-lg-4):
+        - Hero card: avatar, username, rol, stats (Obras/Seguidores/Siguiendo),
+          botón seguir/dejar de seguir (si perfil ajeno y hay sesión),
+          botón panel admin (si isOwnProfile y role=='ADMIN'),
+          fecha de registro.
+        - Modales Bootstrap: lista de seguidores y seguidos (→ perfil).
+        - Formulario de edición de perfil (solo si isOwnProfile).
+    · Columna derecha (col-lg-8):
+        - Pestaña "Biblioteca": obras seguidas con filtros por estado (JS).
+        - Pestaña "Mis Pedidos": historial de pedidos con tracking (solo perfil propio).
+
+  Seguimiento de obras (biblioteca):
+    · Estado: READING, COMPLETED, PENDING, DROPPED.
+    · En perfil propio, clic en la tarjeta avanza el estado (ciclo PENDING→READING→COMPLETED→PENDING).
+    · Los filtros superiores filtran tarjetas sin recarga (JS).
+
+  Fragmentos incluidos:
+    - fragments/navbar   :: navbar
+    - fragments/messages :: messages
+    - fragments/footer   :: footer
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -6,57 +49,21 @@
   <title th:text="${user.username} + ' — BookSocial'">Perfil — BookSocial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos del perfil de usuario -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/profile.css}">
 </head>
 <body>
 
+  <!-- NAVBAR -->
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  <!--
-    ============================================================
-    Vista: user/profile.html
-    ============================================================
-    Muestra el perfil de un usuario (propio o ajeno).
-    Modelo recibido del ProfileController:
-      - user            : UserResponseDTO  — datos del usuario del perfil.
-      - tracking        : List<TrackingWorkResponseDTO> — obras seguidas.
-      - isOwnProfile    : boolean          — true si el visitante es el propietario.
-      - sessionUserId   : Long             — ID del usuario en sesión (null si no hay sesión).
-      - followers       : List<UserResponseDTO> — usuarios que siguen a este perfil.
-      - following       : List<UserResponseDTO> — usuarios a los que sigue este perfil.
-      - followersCount  : int              — total de seguidores (para mostrar en stats).
-      - followingCount  : int              — total de seguidos.
-      - isFollowing     : boolean          — true si el usuario en sesión sigue a este perfil.
-      - orders          : List<OrderResponseDTO> — pedidos (solo perfil propio).
-      - orderTrackings  : Map<Long, TrackingOrderResponseDTO> — último estado de cada pedido.
-      - updateForm      : UpdateUserRequestDTO — datos pre-cargados en el formulario de edición.
+  <!-- profile-main: padding-top compensa la navbar fixed (profile.css) -->
+  <main class="container profile-main">
 
-    Estructura de la página:
-      · Columna izquierda (col-lg-4):
-          - Hero card: avatar, username, rol, stats (Obras / Seguidores / Siguiendo),
-            botón seguir/dejar de seguir (si perfil ajeno y hay sesión),
-            fecha de registro.
-          - Modales Bootstrap: lista de seguidores y seguidos (clickables → perfil).
-          - Formulario de edición de perfil (solo si isOwnProfile).
-      · Columna derecha (col-lg-8):
-          - Pestaña "Biblioteca": lista de obras seguidas con filtros por estado.
-          - Pestaña "Mis Pedidos": historial de pedidos con tracking (solo perfil propio).
+    <!-- Mensajes flash (seguir/dejar de seguir, actualización de perfil, etc.) -->
+    <div th:replace="~{fragments/messages :: messages}"></div>
 
-    Seguimiento de obras (biblioteca):
-      - Cada tarjeta muestra el estado (READING, COMPLETED, PENDING, DROPPED).
-      - En perfil propio, hacer clic en la tarjeta avanza el estado (ciclo PENDING→READING→COMPLETED→PENDING).
-      - Los filtros de la barra superior filtran las tarjetas visibles sin recarga (JS).
-    ============================================================
-  -->
-
-  <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
-
-    <!-- Alert éxito actualización -->
-    <div th:if="${param.updated}" class="alert mb-4 d-flex align-items-center gap-2"
-         style="background-color:rgba(45,76,62,0.1); border:1px solid rgba(45,76,62,0.2); border-radius:0.75rem; color:var(--bs-primary);">
-      <span class="material-symbols-outlined">check_circle</span>
-      Perfil actualizado correctamente.
-    </div>
-
+    <!-- Layout dos columnas: izquierda fija + derecha con pestañas -->
     <div class="row g-4 align-items-start">
 
       <!-- ============================================================
@@ -64,72 +71,114 @@
            ============================================================ -->
       <div class="col-lg-4">
 
-        <!-- Hero card -->
+        <!-- Hero card: avatar, nombre, rol y estadísticas -->
+        <!--
+          profile-hero: tarjeta centrada con padding y sombra sutil (main.css).
+          text-center: Bootstrap — centra todo el contenido de la tarjeta.
+        -->
         <div class="profile-hero text-center">
 
-          <!-- Avatar -->
+          <!-- Avatar: imagen circular o placeholder con inicial -->
           <div class="d-flex justify-content-center mb-3">
+            <!--
+              profile-avatar: imagen redonda de tamaño fijo (main.css).
+            -->
             <img th:if="${user.img != null and !user.img.isEmpty()}"
                  th:src="${user.img}"
                  th:alt="${user.username}"
                  class="profile-avatar">
+            <!--
+              profile-avatar-placeholder: círculo con inicial del username (main.css).
+              #strings.substring(str,0,1).toUpperCase(): primera letra en mayúscula.
+            -->
             <div th:unless="${user.img != null and !user.img.isEmpty()}"
                  class="profile-avatar-placeholder"
                  th:text="${user.username != null ? #strings.substring(user.username, 0, 1).toUpperCase() : '?'}">
             </div>
           </div>
 
-          <!-- Nombre + badge rol -->
+          <!-- Nombre de usuario, nombre completo y badge de rol -->
+          <!-- profile-username / profile-fullname: tamaños y colores (main.css) -->
           <h1 class="profile-username" th:text="${user.username}">username</h1>
           <p class="profile-fullname mb-2"
              th:text="${(user.name != null ? user.name : '') + (user.secondName != null ? ' ' + user.secondName : '')}">
           </p>
+          <!--
+            profile-badge: pastilla de rol (main.css).
+            th:classappend: añade 'admin' o 'subscribed' según el rol del usuario.
+          -->
           <span class="profile-badge"
                 th:classappend="${user.role == 'ADMIN'} ? 'admin' : (${user.role == 'SUBSCRIBED'} ? 'subscribed' : '')"
                 th:text="${user.role != null ? user.role : 'USER'}">USER</span>
 
-          <!-- Stats -->
-          <div class="d-flex justify-content-center mt-4 pt-3"
-               style="border-top: 1px solid var(--color-outline-l);">
+          <!-- Bloque de estadísticas: Obras / Seguidores / Siguiendo -->
+          <!--
+            profile-stats-divider: border-top sobre el bloque de stats (profile.css).
+            d-flex justify-content-center: Bootstrap — stats en fila centrada.
+          -->
+          <div class="d-flex justify-content-center mt-4 pt-3 profile-stats-divider">
+
+            <!-- stat-num / stat-label: número grande + etiqueta pequeña (main.css) -->
             <div class="profile-stat">
               <span class="stat-num" th:text="${tracking != null ? tracking.size() : 0}">0</span>
               <span class="stat-label">Obras</span>
             </div>
-            <div class="profile-stat" style="cursor:pointer;"
+
+            <!--
+              profile-stat-clickable: cursor:pointer para indicar que es clicable (profile.css).
+              data-bs-toggle="modal" / data-bs-target="#followersModal":
+              Bootstrap JS — al hacer clic abre el modal indicado.
+            -->
+            <div class="profile-stat profile-stat-clickable"
                  data-bs-toggle="modal" data-bs-target="#followersModal">
               <span class="stat-num" th:text="${followersCount}">0</span>
               <span class="stat-label">Seguidores</span>
             </div>
-            <div class="profile-stat" style="cursor:pointer;"
+
+            <div class="profile-stat profile-stat-clickable"
                  data-bs-toggle="modal" data-bs-target="#followingModal">
               <span class="stat-num" th:text="${followingCount}">0</span>
               <span class="stat-label">Siguiendo</span>
             </div>
           </div>
 
-          <!-- Botón seguir / dejar de seguir (solo si no es perfil propio y hay sesión) -->
+          <!-- Botón seguir / dejar de seguir (solo perfil ajeno con sesión) -->
           <div th:if="${!isOwnProfile and sessionUserId != null}" class="mt-3">
+            <!--
+              profile-follow-btn: modificador de padding para btn-primary-pill (profile.css).
+            -->
             <form th:if="${!isFollowing}"
                   th:action="@{'/user/' + ${user.id} + '/follow'}" method="post">
-              <button type="submit" class="btn-primary-pill w-100"
-                      style="padding:0.55rem 1.5rem; font-size:0.875rem;">
+              <button type="submit" class="btn-primary-pill w-100 profile-follow-btn">
                 Seguir
               </button>
             </form>
+            <!--
+              profile-unfollow-btn: ghost pill de ancho completo (profile.css).
+            -->
             <form th:if="${isFollowing}"
                   th:action="@{'/user/' + ${user.id} + '/unfollow'}" method="post">
-              <button type="submit"
-                      style="width:100%; padding:0.55rem 1.5rem; font-size:0.875rem;
-                             border:1.5px solid var(--bs-primary); border-radius:2rem;
-                             background:transparent; color:var(--bs-primary);
-                             font-weight:600; cursor:pointer;">
+              <button type="submit" class="profile-unfollow-btn">
                 Siguiendo ✓
               </button>
             </form>
           </div>
 
-          <!-- Fecha registro -->
-          <p class="mt-3 mb-0" style="font-size:0.75rem; color:var(--color-outline);">
+          <!-- Enlace al panel de administrador (solo admins en su propio perfil) -->
+          <!--
+            profile-admin-btn: estilo de enlace-botón verde de ancho completo (profile.css).
+            profile-admin-icon: font-size del icono (profile.css).
+          -->
+          <div th:if="${isOwnProfile and user.role == 'ADMIN'}" class="mt-3">
+            <a href="/admin" class="profile-admin-btn">
+              <span class="material-symbols-outlined profile-admin-icon">admin_panel_settings</span>
+              Panel de Administrador
+            </a>
+          </div>
+
+          <!-- Fecha de registro al pie del hero -->
+          <!-- profile-member-since: font-size pequeño + color outline (profile.css) -->
+          <p class="mt-3 mb-0 profile-member-since">
             Miembro desde
             <span th:text="${user.registrationDate != null ? #temporals.format(user.registrationDate, 'MMMM yyyy') : '—'}"></span>
           </p>
@@ -137,28 +186,43 @@
         </div>
 
         <!-- Modal Seguidores -->
+        <!--
+          modal fade: Bootstrap — modal con animación de fundido.
+          tabindex="-1": elimina el modal del orden de tabulación normal.
+          modal-dialog-scrollable: Bootstrap — permite scroll dentro del modal si la lista es larga.
+        -->
         <div class="modal fade" id="followersModal" tabindex="-1">
           <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content" style="border-radius:1rem;">
-              <div class="modal-header" style="border-bottom:1px solid var(--color-outline-l);">
-                <h5 class="modal-title font-serif" style="color:var(--bs-primary);">Seguidores</h5>
+            <!-- profile-modal-content: border-radius redondeado (profile.css) -->
+            <div class="modal-content profile-modal-content">
+              <!-- profile-modal-header: border-bottom sutil (profile.css) -->
+              <div class="modal-header profile-modal-header">
+                <!-- profile-modal-title: color primary (profile.css) -->
+                <h5 class="modal-title font-serif profile-modal-title">Seguidores</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body p-0">
+                <!-- profile-modal-empty: color muted + font-size (profile.css) -->
                 <div th:if="${followers == null or followers.isEmpty()}"
-                     class="text-center py-4" style="color:var(--color-muted); font-size:0.9rem;">
+                     class="text-center py-4 profile-modal-empty">
                   Sin seguidores aún.
                 </div>
                 <ul th:if="${followers != null and !followers.isEmpty()}"
                     class="list-unstyled mb-0">
+                  <!--
+                    profile-modal-item: border-bottom en cada elemento de la lista (profile.css).
+                  -->
                   <li th:each="u : ${followers}"
-                      class="d-flex align-items-center gap-3 px-4 py-3"
-                      style="border-bottom:1px solid var(--color-outline-l);">
-                    <div class="profile-avatar-placeholder"
-                         style="width:2.2rem; height:2.2rem; font-size:0.9rem; flex-shrink:0;"
+                      class="d-flex align-items-center gap-3 px-4 py-3 profile-modal-item">
+                    <!--
+                      profile-avatar-placeholder: círculo con inicial (main.css).
+                      profile-modal-avatar: modifica el tamaño a 2.2rem (profile.css).
+                    -->
+                    <div class="profile-avatar-placeholder profile-modal-avatar"
                          th:text="${u.username != null ? #strings.substring(u.username,0,1).toUpperCase() : '?'}"></div>
+                    <!-- profile-modal-link: negrita + color primary + sin subrayado (profile.css) -->
                     <a th:href="@{'/user/' + ${u.id}}"
-                       style="font-weight:600; color:var(--bs-primary); text-decoration:none;"
+                       class="profile-modal-link"
                        th:text="${u.username}">username</a>
                   </li>
                 </ul>
@@ -167,29 +231,27 @@
           </div>
         </div>
 
-        <!-- Modal Siguiendo -->
+        <!-- Modal Siguiendo (misma estructura que el modal de seguidores) -->
         <div class="modal fade" id="followingModal" tabindex="-1">
           <div class="modal-dialog modal-dialog-scrollable">
-            <div class="modal-content" style="border-radius:1rem;">
-              <div class="modal-header" style="border-bottom:1px solid var(--color-outline-l);">
-                <h5 class="modal-title font-serif" style="color:var(--bs-primary);">Siguiendo</h5>
+            <div class="modal-content profile-modal-content">
+              <div class="modal-header profile-modal-header">
+                <h5 class="modal-title font-serif profile-modal-title">Siguiendo</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
               </div>
               <div class="modal-body p-0">
                 <div th:if="${following == null or following.isEmpty()}"
-                     class="text-center py-4" style="color:var(--color-muted); font-size:0.9rem;">
+                     class="text-center py-4 profile-modal-empty">
                   No sigue a nadie aún.
                 </div>
                 <ul th:if="${following != null and !following.isEmpty()}"
                     class="list-unstyled mb-0">
                   <li th:each="u : ${following}"
-                      class="d-flex align-items-center gap-3 px-4 py-3"
-                      style="border-bottom:1px solid var(--color-outline-l);">
-                    <div class="profile-avatar-placeholder"
-                         style="width:2.2rem; height:2.2rem; font-size:0.9rem; flex-shrink:0;"
+                      class="d-flex align-items-center gap-3 px-4 py-3 profile-modal-item">
+                    <div class="profile-avatar-placeholder profile-modal-avatar"
                          th:text="${u.username != null ? #strings.substring(u.username,0,1).toUpperCase() : '?'}"></div>
                     <a th:href="@{'/user/' + ${u.id}}"
-                       style="font-weight:600; color:var(--bs-primary); text-decoration:none;"
+                       class="profile-modal-link"
                        th:text="${u.username}">username</a>
                   </li>
                 </ul>
@@ -198,20 +260,32 @@
           </div>
         </div>
 
-        <!-- Formulario edición (solo perfil propio) -->
+        <!-- Formulario de edición de perfil (solo perfil propio) -->
+        <!--
+          profile-form-card: tarjeta secundaria debajo del hero (main.css).
+          th:if="${isOwnProfile}": solo se renderiza si el visitante es el dueño del perfil.
+        -->
         <div class="profile-form-card" th:if="${isOwnProfile}">
           <p class="filter-section-title mb-4">Editar perfil</p>
 
+          <!--
+            th:object="${updateForm}": vincula el formulario al DTO de edición.
+            enctype="multipart/form-data": necesario para enviar archivos (foto de perfil).
+          -->
           <form th:action="@{'/user/' + ${user.id} + '/update'}"
                 th:object="${updateForm}" method="post" enctype="multipart/form-data">
 
-            <!-- Avatar -->
             <div class="mb-3">
               <label class="form-label">Foto de perfil</label>
+              <!--
+                type="hidden" th:field="*{img}": mantiene la URL actual de la imagen.
+                Si el usuario sube un nuevo archivo, el controlador lo sobreescribe.
+              -->
               <input type="hidden" th:field="*{img}">
               <input type="file" name="avatarFile" accept="image/*" class="form-control">
+              <!-- profile-img-hint: indicación visual si ya hay imagen guardada (profile.css) -->
               <div th:if="${user.img != null and !user.img.isEmpty()}"
-                   style="font-size:0.72rem; color:var(--color-outline); margin-top:0.3rem;">
+                   class="profile-img-hint">
                 Imagen actual guardada. Selecciona un archivo para cambiarla.
               </div>
             </div>
@@ -237,8 +311,8 @@
               </div>
             </div>
 
-            <button type="submit" class="btn-primary-pill w-100"
-                    style="padding:0.7rem; font-size:0.875rem;">
+            <!-- profile-save-btn: modificador de padding sobre btn-primary-pill (profile.css) -->
+            <button type="submit" class="btn-primary-pill w-100 profile-save-btn">
               Guardar cambios
             </button>
 
@@ -248,7 +322,7 @@
       </div>
 
       <!-- ============================================================
-           COLUMNA DERECHA — Biblioteca + Pedidos (pestañas)
+           COLUMNA DERECHA — Biblioteca + Pedidos (pestañas Bootstrap)
            ============================================================ -->
       <div class="col-lg-8">
 
@@ -256,9 +330,16 @@
         <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
           <div>
             <p class="filter-section-title mb-1">Biblioteca personal</p>
-            <h2 class="font-serif mb-0" style="font-size:1.5rem; color:var(--bs-primary);"
+            <!-- profile-library-heading: serif + color primary (profile.css) -->
+            <h2 class="font-serif mb-0 profile-library-heading"
                 th:text="${user.username}">username</h2>
           </div>
+
+          <!--
+            profile-tabs: estilos de la barra de pestañas (main.css).
+            data-bs-toggle="pill" / data-bs-target="#id": Bootstrap JS — activa la pestaña.
+            role="tablist" / role="tab": atributos ARIA para accesibilidad.
+          -->
           <ul class="nav gap-1 profile-tabs" role="tablist">
             <li class="nav-item" role="presentation">
               <button class="profile-tab-btn active" id="tab-biblioteca"
@@ -267,11 +348,16 @@
                 Biblioteca
               </button>
             </li>
+            <!-- Pestaña "Mis Pedidos": solo visible en el perfil propio -->
             <li class="nav-item" th:if="${isOwnProfile}" role="presentation">
               <button class="profile-tab-btn" id="tab-pedidos"
                       data-bs-toggle="pill" data-bs-target="#pane-pedidos"
                       type="button" role="tab">
                 Mis Pedidos
+                <!--
+                  profile-tab-badge: número de pedidos en la pestaña (main.css).
+                  th:if: solo se muestra si hay pedidos.
+                -->
                 <span th:if="${orders != null and !orders.isEmpty()}"
                       class="ms-1 profile-tab-badge"
                       th:text="${orders.size()}">0</span>
@@ -280,16 +366,25 @@
           </ul>
         </div>
 
+        <!--
+          tab-content: Bootstrap — contenedor de los paneles de pestañas.
+          tab-pane fade show active: Bootstrap — panel visible y activo al cargar.
+        -->
         <div class="tab-content">
 
           <!-- ══════════════ PESTAÑA BIBLIOTECA ══════════════ -->
           <div class="tab-pane fade show active" id="pane-biblioteca" role="tabpanel">
 
-            <!-- Sub-cabecera con filtros -->
+            <!-- Sub-cabecera con filtros de estado -->
             <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-              <p class="mb-0" style="font-size:0.85rem; font-weight:600; color:var(--color-outline);">
-                Obras seguidas
-              </p>
+              <!-- profile-obras-label: texto pequeño en color outline (profile.css) -->
+              <p class="mb-0 profile-obras-label">Obras seguidas</p>
+
+              <!--
+                Botones de filtro: el JS añade/quita 'filter-active' y filtra las tarjetas.
+                tracking-status-pill READING/COMPLETED/PENDING/DROPPED: colores por estado (main.css).
+                data-filter: valor que el JS compara con data-status de cada tarjeta.
+              -->
               <div class="d-flex gap-2 flex-wrap" id="filterBar">
                 <button type="button" class="tracking-status-pill READING filter-btn" data-filter="READING">Leyendo</button>
                 <button type="button" class="tracking-status-pill COMPLETED filter-btn" data-filter="COMPLETED">Completadas</button>
@@ -298,16 +393,26 @@
               </div>
             </div>
 
-            <!-- Lista de tracking -->
+            <!-- Lista de obras en seguimiento -->
             <div class="d-flex flex-column gap-2" id="trackingList"
                  th:if="${tracking != null and !tracking.isEmpty()}">
 
+              <!--
+                tracking-card: tarjeta de seguimiento con dot de color (main.css).
+                tracking-card-interactive: añade cursor:pointer para el clic (main.css).
+                data-status: el JS usa este valor para filtrar.
+                data-form-id: el JS envía el formulario oculto al hacer clic en la tarjeta.
+              -->
               <div th:each="t : ${tracking}"
                    class="tracking-card"
                    th:classappend="${isOwnProfile} ? ' tracking-card-interactive' : ''"
                    th:attr="data-status=${t.status}, data-form-id=${'form-cycle-' + t.id}">
 
-                <!-- Formulario oculto para ciclar estado (solo perfil propio) -->
+                <!--
+                  Formulario oculto para ciclar estado (PENDING→READING→COMPLETED→PENDING).
+                  Solo se genera en perfil propio; el JS lo envía al hacer clic en la tarjeta.
+                  display:none es estado funcional de JS, no un estilo visual — queda inline.
+                -->
                 <form th:if="${isOwnProfile}"
                       th:id="'form-cycle-' + ${t.id}"
                       th:action="@{'/user/' + ${user.id} + '/tracking/' + ${t.id} + '/next-status'}"
@@ -315,25 +420,38 @@
                       style="display:none;">
                 </form>
 
+                <!-- tracking-status-dot + clase de estado: punto de color (main.css) -->
                 <div class="tracking-status-dot" th:classappend="${t.status}"></div>
 
                 <div class="flex-grow-1">
-                  <p class="mb-0" style="font-weight:700; font-size:0.9rem; color:var(--bs-primary);"
+                  <!-- profile-tracking-title: negrita + color primary (profile.css) -->
+                  <p class="mb-0 profile-tracking-title"
                      th:text="${t.workTitle}">Título</p>
-                  <p class="mb-0" style="font-size:0.75rem; color:var(--color-outline);"
+                  <!-- profile-tracking-date: font-size pequeño + color outline (profile.css) -->
+                  <p class="mb-0 profile-tracking-date"
                      th:text="${t.date != null ? #temporals.format(t.date, 'dd MMM yyyy') : '—'}"></p>
                 </div>
 
+                <!--
+                  tracking-status-pill + clase de estado: pastilla de color según estado (main.css).
+                  statusLabel: texto legible ("Leyendo", "Completado", etc.); status como fallback.
+                -->
                 <span class="tracking-status-pill"
                       th:classappend="${t.status}"
                       th:text="${t.statusLabel != null ? t.statusLabel : t.status}">
                 </span>
 
+                <!--
+                  Enlace de navegación: navega a la obra sin ciclar el estado.
+                  onclick="event.stopPropagation()": evita que el clic propague al tracking-card
+                  y active el formulario de cambio de estado.
+                -->
                 <a th:href="@{'/work/' + ${t.workId}}"
                    class="text-decoration-none"
                    title="Ver obra"
                    onclick="event.stopPropagation();">
-                  <span class="material-symbols-outlined" style="font-size:1rem; color:var(--color-outline-l);">
+                  <!-- profile-tracking-nav-icon: color outline-l + font-size (profile.css) -->
+                  <span class="material-symbols-outlined profile-tracking-nav-icon">
                     chevron_right
                   </span>
                 </a>
@@ -342,35 +460,35 @@
 
             </div>
 
-            <!-- Estado vacío (sin obras) -->
+            <!-- Estado vacío: sin obras en la biblioteca -->
+            <!--
+              profile-empty-state: fondo gris claro + border-radius (profile.css).
+              Reutilizado en biblioteca vacía, filtro sin resultados y pedidos vacíos.
+            -->
             <div th:if="${tracking == null or tracking.isEmpty()}"
                  id="emptyState"
-                 class="text-center py-5"
-                 style="background:var(--color-surface-l); border-radius:1rem;">
-              <span class="material-symbols-outlined d-block mb-2"
-                    style="font-size:3.5rem; color:var(--color-outline-l);">bookmarks</span>
-              <p class="font-serif mb-1" style="color:var(--bs-primary); font-size:1.1rem;">
+                 class="text-center py-5 profile-empty-state">
+              <span class="material-symbols-outlined d-block mb-2 profile-empty-icon">bookmarks</span>
+              <p class="font-serif mb-1 profile-empty-title">
                 Sin obras seguidas aún
               </p>
-              <p style="font-size:0.85rem; color:var(--color-muted);">
+              <p class="profile-empty-text">
                 Explora el catálogo y añade obras a tu biblioteca.
               </p>
-              <a th:href="@{/catalog}" class="btn-primary-pill d-inline-block mt-2"
-                 style="padding:0.6rem 1.5rem; font-size:0.875rem; text-decoration:none;">
+              <a th:href="@{/catalog}" class="btn-primary-pill d-inline-block mt-2 profile-catalog-btn">
                 Ver catálogo
               </a>
             </div>
 
-            <!-- Estado vacío filtro -->
+            <!-- Estado vacío del filtro activo (JS lo muestra/oculta; display:none es estado JS) -->
             <div id="emptyFilter"
-                 class="text-center py-5"
-                 style="background:var(--color-surface-l); border-radius:1rem; display:none;">
-              <span class="material-symbols-outlined d-block mb-2"
-                    style="font-size:3.5rem; color:var(--color-outline-l);">filter_list_off</span>
-              <p class="font-serif mb-1" style="color:var(--bs-primary); font-size:1.1rem;">
+                 class="text-center py-5 profile-empty-state"
+                 style="display:none;">
+              <span class="material-symbols-outlined d-block mb-2 profile-empty-icon">filter_list_off</span>
+              <p class="font-serif mb-1 profile-empty-title">
                 Sin obras con este estado
               </p>
-              <p style="font-size:0.85rem; color:var(--color-muted);">
+              <p class="profile-empty-text">
                 Prueba otro filtro o quita el filtro activo.
               </p>
             </div>
@@ -379,23 +497,24 @@
           <!-- fin pane-biblioteca -->
 
           <!-- ══════════════ PESTAÑA PEDIDOS ══════════════ -->
+          <!--
+            th:if="${isOwnProfile}": el panel de pedidos solo existe para el propio usuario.
+            tab-pane fade: Bootstrap — panel de pestaña con animación de entrada.
+          -->
           <div class="tab-pane fade" id="pane-pedidos" role="tabpanel"
                th:if="${isOwnProfile}">
 
-            <!-- Sin pedidos -->
+            <!-- Estado vacío: sin pedidos -->
             <div th:if="${orders == null or orders.isEmpty()}"
-                 class="text-center py-5"
-                 style="background:var(--color-surface-l); border-radius:1rem;">
-              <span class="material-symbols-outlined d-block mb-2"
-                    style="font-size:3.5rem; color:var(--color-outline-l);">receipt_long</span>
-              <p class="font-serif mb-1" style="color:var(--bs-primary); font-size:1.1rem;">
+                 class="text-center py-5 profile-empty-state">
+              <span class="material-symbols-outlined d-block mb-2 profile-empty-icon">receipt_long</span>
+              <p class="font-serif mb-1 profile-empty-title">
                 Todavía no tienes pedidos
               </p>
-              <p style="font-size:0.85rem; color:var(--color-muted);">
+              <p class="profile-empty-text">
                 Explora el catálogo y haz tu primera compra.
               </p>
-              <a th:href="@{/catalog}" class="btn-primary-pill d-inline-block mt-2"
-                 style="padding:0.6rem 1.5rem; font-size:0.875rem; text-decoration:none;">
+              <a th:href="@{/catalog}" class="btn-primary-pill d-inline-block mt-2 profile-catalog-btn">
                 Ver catálogo
               </a>
             </div>
@@ -404,53 +523,73 @@
             <div th:if="${orders != null and !orders.isEmpty()}"
                  class="d-flex flex-column gap-3">
 
+              <!--
+                order-card: tarjeta de pedido con cabecera y líneas (main.css).
+              -->
               <div th:each="order : ${orders}" class="order-card">
 
-                <!-- Cabecera del pedido -->
+                <!-- Cabecera del pedido: icono, ID, fecha, estado y total -->
                 <div class="order-card-header">
                   <div class="d-flex align-items-center gap-3">
+                    <!--
+                      order-card-icon: contenedor circular del icono (main.css).
+                      profile-order-icon: color primary para el icono (profile.css).
+                    -->
                     <div class="order-card-icon">
-                      <span class="material-symbols-outlined" style="color:var(--bs-primary);">package_2</span>
+                      <span class="material-symbols-outlined profile-order-icon">package_2</span>
                     </div>
                     <div>
-                      <p class="fw-bold mb-0" style="color:var(--bs-primary);">
+                      <!-- profile-order-id: color primary (profile.css) -->
+                      <p class="fw-bold mb-0 profile-order-id">
                         Pedido #<span th:text="${order.id}"></span>
                       </p>
-                      <p class="mb-0" style="font-size:0.78rem; color:var(--color-muted);"
+                      <!-- profile-order-date: font-size y color muted (profile.css) -->
+                      <p class="mb-0 profile-order-date"
                          th:text="${#temporals.format(order.date, 'dd MMM yyyy, HH:mm')}"></p>
                     </div>
                   </div>
+
                   <div class="d-flex flex-column align-items-end gap-1">
-                    <!-- Pastilla de estado del pedido -->
+                    <!--
+                      order-status-pill: pastilla de estado del pedido (main.css).
+                      th:classappend con el status: color según el estado del envío.
+                    -->
                     <span th:if="${orderTrackings.get(order.id) != null}"
                           class="order-status-pill"
                           th:classappend="${orderTrackings.get(order.id).status}"
                           th:text="${orderTrackings.get(order.id).statusLabel}">Estado</span>
                     <span th:unless="${orderTrackings.get(order.id) != null}"
                           class="order-status-pill PREPARING">En preparación</span>
-                    <!-- Total -->
+                    <!-- order-total-badge: importe total con formato (main.css) -->
                     <span class="order-total-badge"
                           th:text="'€' + ${#numbers.formatDecimal(order.total, 1, 2)}">€0.00</span>
-                    <p class="mb-0" style="font-size:0.72rem; color:var(--color-muted);"
+                    <!-- profile-order-items: número de artículos en color muted (profile.css) -->
+                    <p class="mb-0 profile-order-items"
                        th:text="${order.totalItems} + ' artículo(s)'"></p>
                   </div>
                 </div>
 
-                <!-- Líneas del pedido -->
+                <!-- Líneas del pedido: cada producto comprado -->
                 <div class="order-lines"
                      th:if="${order.orderLines != null and !order.orderLines.isEmpty()}">
                   <div th:each="line : ${order.orderLines}" class="order-line">
+                    <!--
+                      order-line-icon: contenedor del icono de línea (main.css).
+                      profile-order-line-icon: color outline + font-size (profile.css).
+                    -->
                     <div class="order-line-icon">
-                      <span class="material-symbols-outlined"
-                            style="font-size:1rem; color:var(--color-outline);">auto_stories</span>
+                      <span class="material-symbols-outlined profile-order-line-icon">auto_stories</span>
                     </div>
                     <div class="flex-grow-1">
-                      <p class="mb-0 fw-bold" style="font-size:0.875rem; color:var(--bs-primary);"
+                      <!-- profile-order-line-title: font-size + color primary (profile.css) -->
+                      <p class="mb-0 fw-bold profile-order-line-title"
                          th:text="${line.title}">Título</p>
-                      <p class="mb-0" style="font-size:0.75rem; color:var(--color-muted);"
+                      <!-- profile-order-line-meta: cantidad y precio unitario (profile.css) -->
+                      <p class="mb-0 profile-order-line-meta"
                          th:text="'x' + ${line.quantity} + ' · €' + ${#numbers.formatDecimal(line.price, 1, 2)} + ' c/u'"></p>
                     </div>
-                    <span class="fw-bold" style="font-size:0.875rem; color:var(--bs-primary);"
+                    <!-- profile-order-line-subtotal: subtotal de la línea (profile.css) -->
+                    <span class="fw-bold profile-order-line-subtotal"
                           th:text="'€' + ${#numbers.formatDecimal(line.subtotal, 1, 2)}">€0.00</span>
                   </div>
                 </div>
@@ -468,15 +607,16 @@
     </div>
   </main>
 
+  <!-- FOOTER -->
   <div th:replace="~{fragments/footer :: footer}"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     (function () {
-      // ── Filtro de estado ──────────────────────────────────────────────
-      const filterBtns = document.querySelectorAll('.filter-btn');
+      // ── Filtro de estado de la biblioteca ───────────────────────────
+      const filterBtns    = document.querySelectorAll('.filter-btn');
       const trackingCards = document.querySelectorAll('#trackingList .tracking-card');
-      const emptyFilter = document.getElementById('emptyFilter');
+      const emptyFilter   = document.getElementById('emptyFilter');
       const activeFilters = new Set();
 
       function applyFilters() {
@@ -505,7 +645,7 @@
         });
       });
 
-      // ── Clic en tarjeta para avanzar estado (solo perfil propio) ─────
+      // ── Clic en tarjeta para avanzar estado (solo perfil propio) ────
       trackingCards.forEach(card => {
         const formId = card.dataset.formId;
         if (!formId) return;
@@ -513,7 +653,7 @@
         if (!form) return;
 
         card.addEventListener('click', function (e) {
-          // Si el clic fue sobre el enlace de navegación, no ciclar
+          // Si el clic fue sobre el enlace de navegación → no ciclar el estado
           if (e.target.closest('a')) return;
           form.submit();
         });

@@ -1,41 +1,54 @@
-<!--
+<!--/*
+  ============================================================
   Fragmento: Barra de navegación global
-  Uso: th:replace="~{fragments/navbar :: navbar}" en todas las páginas.
+  Ruta: Se incluye en todas las páginas públicas y privadas
+  Controlador: — (fragmento, sin controlador propio)
+  Uso: <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  Comportamiento según estado de sesión (leído directamente de la sesión HTTP):
-  - session.userId == null  → se muestran los botones "Iniciar sesión" y "Registrarse".
-  - session.userId != null  → se muestra el nombre de usuario (session.username) con
-                              enlace a /user/me y el botón "Cerrar sesión" (/auth/logout).
+  Recibe de la SESIÓN HTTP (no del modelo del controlador):
+    - session.userId   : Long              → null si no hay sesión activa
+    - session.username : String            → nombre de usuario autenticado
+    - session.cart     : List<CartItemDTO> → ítems del carrito en sesión
 
-  Badge del carrito:
-  - session.cart es la List<CartItemDTO> almacenada en sesión por CartService.
-  - Si no está vacío se muestra un badge rojo con el número de ítems distintos.
+  Fragmentos incluidos: ninguno (es un fragmento raíz)
 
-  Búsqueda integrada:
-  - El campo "title" envía GET /catalog/filter con page=0 y title como parámetro,
-    reutilizando el mismo controlador de filtrado del catálogo.
-
-  Navegación:
-  - /catalog   → Catálogo de obras con filtros
-  - /events    → Página de eventos con join/leave
-  - /community → Página de comunidad con todos los usuarios y follow/unfollow
--->
+  Nota: incluye un bloque <script> al final para sincronizar
+  el carrito entre la sesión de servidor y localStorage.
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
+<!--
+  th:fragment="navbar" declara que este <nav> se puede insertar
+  en otras plantillas con th:replace="~{fragments/navbar :: navbar}".
+  fixed-top: Bootstrap fija la barra en la parte superior al hacer scroll.
+  nav-glass: clase custom de main.css que aplica el efecto blur/cristal.
+-->
 <nav th:fragment="navbar"
      class="navbar navbar-expand-lg fixed-top nav-glass py-3">
   <div class="container">
 
+    <!-- Logo / nombre del sitio -->
     <a class="navbar-brand" href="/">BookSocial</a>
 
+    <!--
+      navbar-toggler: botón hamburguesa visible solo en móvil (< lg).
+      data-bs-toggle/target: Bootstrap conecta el botón con el div#mainNav.
+      border-0: elimina el borde por defecto del botón.
+    -->
     <button class="navbar-toggler border-0" type="button"
             data-bs-toggle="collapse" data-bs-target="#mainNav"
             aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
 
+    <!--
+      collapse navbar-collapse: oculto en móvil, visible en escritorio.
+      me-auto: empuja el resto de elementos a la derecha (Bootstrap margin-end auto).
+      ms-4 gap-1: margen inicial y separación entre ítems.
+    -->
     <div class="collapse navbar-collapse" id="mainNav">
       <ul class="navbar-nav me-auto ms-4 gap-1">
         <li class="nav-item">
@@ -54,57 +67,78 @@
         </li>
       </ul>
 
-      <!-- Search -->
-      <form class="d-flex me-3" action="/catalog/filter" method="get" style="position:relative;">
+      <!-- Buscador integrado: envía GET /catalog/filter?title=...&page=0 -->
+      <form class="d-flex me-3 navbar-search-form" action="/catalog/filter" method="get">
         <input type="hidden" name="page" value="0">
-        <div class="input-group" style="width:240px;">
-          <input class="form-control form-control-sm"
-                 style="border-radius:2rem 0 0 2rem; padding-right:0.5rem;"
+        <!--
+          input-group: componente Bootstrap que une visualmente un input con un botón.
+          navbar-search-group: fija el ancho del buscador (definido en main.css).
+        -->
+        <div class="input-group navbar-search-group">
+          <!--
+            form-control form-control-sm: input estilizado por Bootstrap, versión pequeña.
+            navbar-search-input: redondea el lado izquierdo para acoplar con el botón.
+          -->
+          <input class="form-control form-control-sm navbar-search-input"
                  type="search" name="title" placeholder="Buscar obras..."
                  autocomplete="off">
-          <button class="btn btn-sm"
+          <!--
+            btn btn-sm: botón Bootstrap pequeño.
+            navbar-search-btn: aplica el color de marca y redondea el lado derecho.
+          -->
+          <button class="btn btn-sm navbar-search-btn"
                   type="submit"
-                  style="border-radius:0 2rem 2rem 0; background-color:var(--bs-primary); color:#fff; border:none; padding:0 0.75rem;"
                   aria-label="Buscar">
-            <span class="material-symbols-outlined" style="font-size:1rem; vertical-align:middle;">search</span>
+            <span class="material-symbols-outlined">search</span>
           </button>
         </div>
       </form>
 
-      <!-- Carrito -->
-      <a href="/cart" class="position-relative text-decoration-none"
-         style="color:var(--bs-primary);">
+      <!-- Icono de carrito con badge que muestra la cantidad de ítems distintos -->
+      <!--
+        position-relative: necesario para que el .cart-badge (absolute) se posicione
+        respecto a este enlace, no a otro ancestro.
+        th:if: Thymeleaf — renderiza el badge solo si el carrito tiene ítems.
+        #lists.size(): función utilitaria de Thymeleaf para obtener el tamaño de una lista.
+      -->
+      <a href="/cart" class="position-relative text-decoration-none navbar-cart-link">
         <span class="material-symbols-outlined">shopping_cart</span>
         <span th:if="${session.cart != null and !session.cart.isEmpty()}"
               class="cart-badge"
               th:text="${#lists.size(session.cart)}"></span>
       </a>
 
-      <!-- Auth actions -->
+      <!-- Zona de autenticación: cambia según si hay sesión activa o no -->
       <div class="d-flex align-items-center gap-2">
 
-        <!-- Not logged in -->
+        <!--
+          th:block: contenedor Thymeleaf que no genera HTML extra.
+          th:if: muestra este bloque cuando session.userId es null (no autenticado).
+        -->
         <th:block th:if="${session.userId == null}">
-          <a href="/auth/login" class="btn btn-sm"
-             style="color:var(--color-muted); font-weight:600;">
+          <!-- Botón de inicio de sesión (solo texto, sin fondo) -->
+          <a href="/auth/login" class="btn btn-sm navbar-btn-login">
             Iniciar sesión
           </a>
-          <a href="/auth/register" class="btn btn-sm rounded-pill px-3"
-             style="background-color:var(--bs-primary); color:#fff; font-weight:600;">
+          <!-- Botón de registro con fondo de marca -->
+          <a href="/auth/register" class="btn btn-sm rounded-pill px-3 navbar-btn-register">
             Registrarse
           </a>
         </th:block>
 
-        <!-- Logged in -->
+        <!-- Bloque visible cuando hay sesión activa (usuario autenticado) -->
         <th:block th:if="${session.userId != null}">
+          <!--
+            th:href="@{...}": genera la URL de forma segura con el contexto de la app.
+            th:text: reemplaza el contenido del <span> con el valor de session.username.
+          -->
           <a th:href="@{/user/me}"
-             class="d-flex align-items-center gap-2 text-decoration-none"
-             style="color:var(--bs-primary); font-weight:600; font-size:0.875rem;">
-            <span class="material-symbols-outlined" style="font-size:1.2rem;">account_circle</span>
+             class="d-flex align-items-center gap-2 text-decoration-none navbar-user-link">
+            <span class="material-symbols-outlined">account_circle</span>
             <span th:text="${session.username}">usuario</span>
           </a>
-          <a href="/auth/logout" class="btn btn-sm rounded-pill px-3"
-             style="border:1.5px solid var(--bs-primary); color:var(--bs-primary); font-weight:600;">
+          <!-- Botón de cierre de sesión con borde de marca -->
+          <a href="/auth/logout" class="btn btn-sm rounded-pill px-3 navbar-btn-logout">
             Cerrar sesión
           </a>
         </th:block>

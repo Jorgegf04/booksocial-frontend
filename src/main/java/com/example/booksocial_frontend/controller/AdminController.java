@@ -54,6 +54,7 @@ import com.example.booksocial_frontend.service.TrackingOrderClientService;
 import com.example.booksocial_frontend.service.UserClientService;
 import com.example.booksocial_frontend.service.VolumeClientService;
 import com.example.booksocial_frontend.service.WorkClientService;
+import com.example.booksocial_frontend.exception.ApiErrorUtils;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -87,31 +88,36 @@ public class AdminController {
     List<UserResponseDTO> users = List.of();
     try {
       users = userClientService.getAllUsers();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
 
     List<OrderResponseDTO> orders = List.of();
     try {
       orders = orderClientService.getAllOrders();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
 
     List<ProductResponseDTO> products = List.of();
     try {
       products = productClientService.getAvailableProducts();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
 
     List<EventResponseDTO> events = List.of();
     try {
       events = eventClientService.getUpcomingEvents();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
 
     List<WorkResponseDTO> works = List.of();
     try {
       works = workClientService.getAllWorks();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
 
     long totalUsers = users.size();
@@ -150,12 +156,14 @@ public class AdminController {
     List<WorkResponseDTO> works = List.of();
     try {
       works = workClientService.getAllWorks();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     List<AuthorResponseDTO> authors = List.of();
     try {
       authors = authorClientService.getAllAuthors();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("works", works);
     model.addAttribute("authors", authors);
@@ -211,11 +219,11 @@ public class AdminController {
             }
           }
         } catch (Exception e) {
-          log.warn("Error al notificar seguidores tras crear obra '{}': {}", created.getTitle(), e.getMessage());
+          log.warn("Error al notificar seguidores tras crear obra '{}': {}", created.getTitle(), ApiErrorUtils.extractApiError(e));
         }
       }
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear la obra: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear la obra: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/works";
   }
@@ -255,7 +263,7 @@ public class AdminController {
       workClientService.updateWork(id, dto);
       ra.addFlashAttribute("success", "Obra actualizada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar la obra: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar la obra: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/works";
   }
@@ -266,7 +274,7 @@ public class AdminController {
       workClientService.deleteWork(id);
       ra.addFlashAttribute("success", "Obra eliminada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar la obra: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar la obra: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/works";
   }
@@ -284,7 +292,7 @@ public class AdminController {
         log.info("Notificación enviada a {} sobre nueva obra '{}' de {}", follower.getEmail(), workTitle, authorName);
       }
     } catch (Exception e) {
-      log.warn("Error al notificar seguidores del autor '{}': {}", authorName, e.getMessage());
+      log.warn("Error al notificar seguidores del autor '{}': {}", authorName, ApiErrorUtils.extractApiError(e));
     }
   }
 
@@ -295,12 +303,14 @@ public class AdminController {
     List<AuthorResponseDTO> authors = List.of();
     try {
       authors = authorClientService.getAllAuthors();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     List<WorkResponseDTO> works = List.of();
     try {
       works = workClientService.getAllWorks();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("authors", authors);
     model.addAttribute("works", works);
@@ -329,7 +339,7 @@ public class AdminController {
       authorClientService.createAuthor(dto);
       ra.addFlashAttribute("success", "Autor creado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear el autor: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear el autor: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/authors";
   }
@@ -381,11 +391,11 @@ public class AdminController {
             }
           }
         } catch (Exception e) {
-          log.warn("Error al notificar seguidores tras actualizar autor {}: {}", id, e.getMessage());
+          log.warn("Error al notificar seguidores tras actualizar autor {}: {}", id, ApiErrorUtils.extractApiError(e));
         }
       }
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar el autor: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar el autor: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/authors";
   }
@@ -396,7 +406,7 @@ public class AdminController {
       authorClientService.deleteAuthor(id);
       ra.addFlashAttribute("success", "Autor eliminado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar el autor: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar el autor: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/authors";
   }
@@ -408,17 +418,20 @@ public class AdminController {
     List<EditionResponseDTO> editions = List.of();
     try {
       editions = editionClientService.getAllEditions();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     List<WorkResponseDTO> works = List.of();
     try {
       works = workClientService.getAllWorks();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     List<EditorialResponseDTO> editorials = List.of();
     try {
       editorials = editorialClientService.getAllEditorials();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("editions", editions);
     model.addAttribute("works", works);
@@ -453,7 +466,7 @@ public class AdminController {
       }
       ra.addFlashAttribute("success", "Edición creada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear la edición: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear la edición: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/editions";
   }
@@ -494,7 +507,7 @@ public class AdminController {
       }
       ra.addFlashAttribute("success", "Edición actualizada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar la edición: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar la edición: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/editions";
   }
@@ -505,7 +518,7 @@ public class AdminController {
       editionClientService.deleteEdition(id);
       ra.addFlashAttribute("success", "Edición eliminada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar la edición: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar la edición: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/editions";
   }
@@ -517,7 +530,8 @@ public class AdminController {
     List<EventResponseDTO> events = List.of();
     try {
       events = eventClientService.getAllEvents();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("events", events);
     return "admin/events";
@@ -542,7 +556,7 @@ public class AdminController {
       eventClientService.createEvent(dto);
       ra.addFlashAttribute("success", "Evento creado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear el evento: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear el evento: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/events";
   }
@@ -567,7 +581,7 @@ public class AdminController {
       eventClientService.updateEvent(id, dto);
       ra.addFlashAttribute("success", "Evento actualizado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar el evento: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar el evento: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/events";
   }
@@ -578,7 +592,7 @@ public class AdminController {
       eventClientService.deleteEvent(id);
       ra.addFlashAttribute("success", "Evento eliminado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar el evento: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar el evento: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/events";
   }
@@ -590,7 +604,8 @@ public class AdminController {
     List<UserResponseDTO> users = List.of();
     try {
       users = userClientService.getAllUsers();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("users", users);
     return "admin/users";
@@ -614,7 +629,7 @@ public class AdminController {
       userClientService.updateUser(id, dto);
       ra.addFlashAttribute("success", "Usuario actualizado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar el usuario: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar el usuario: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/users";
   }
@@ -625,7 +640,7 @@ public class AdminController {
       userClientService.deleteUser(id);
       ra.addFlashAttribute("success", "Usuario eliminado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar el usuario: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar el usuario: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/users";
   }
@@ -637,7 +652,8 @@ public class AdminController {
     List<CommentResponseDTO> comments = List.of();
     try {
       comments = commentClientService.getAllComments();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("comments", comments);
     return "admin/comments";
@@ -649,7 +665,7 @@ public class AdminController {
       commentClientService.deleteComment(id);
       ra.addFlashAttribute("success", "Comentario eliminado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar el comentario: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar el comentario: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/comments";
   }
@@ -661,7 +677,8 @@ public class AdminController {
     List<EditorialResponseDTO> editorials = List.of();
     try {
       editorials = editorialClientService.getAllEditorials();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("editorials", editorials);
     return "admin/editorials";
@@ -680,7 +697,7 @@ public class AdminController {
       editorialClientService.createEditorial(dto);
       ra.addFlashAttribute("success", "Editorial creada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear la editorial: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear la editorial: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/editorials";
   }
@@ -699,7 +716,7 @@ public class AdminController {
       editorialClientService.updateEditorial(id, dto);
       ra.addFlashAttribute("success", "Editorial actualizada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar la editorial: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar la editorial: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/editorials";
   }
@@ -710,7 +727,7 @@ public class AdminController {
       editorialClientService.deleteEditorial(id);
       ra.addFlashAttribute("success", "Editorial eliminada correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar la editorial: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar la editorial: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/editorials";
   }
@@ -722,12 +739,14 @@ public class AdminController {
     List<TomeResponseDTO> tomes = List.of();
     try {
       tomes = tomeClientService.getAllTomes();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     List<EditionResponseDTO> editions = List.of();
     try {
       editions = editionClientService.getAllEditions();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("tomes", tomes);
     model.addAttribute("editions", editions);
@@ -749,7 +768,7 @@ public class AdminController {
       tomeClientService.createTome(dto);
       ra.addFlashAttribute("success", "Tomo creado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear el tomo: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear el tomo: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/tomes";
   }
@@ -770,7 +789,7 @@ public class AdminController {
       tomeClientService.updateTome(id, dto);
       ra.addFlashAttribute("success", "Tomo actualizado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar el tomo: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar el tomo: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/tomes";
   }
@@ -781,7 +800,7 @@ public class AdminController {
       tomeClientService.deleteTome(id);
       ra.addFlashAttribute("success", "Tomo eliminado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar el tomo: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar el tomo: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/tomes";
   }
@@ -793,12 +812,14 @@ public class AdminController {
     List<ChapterResponseDTO> chapters = List.of();
     try {
       chapters = chapterClientService.getAllChapters();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     List<TomeResponseDTO> tomes = List.of();
     try {
       tomes = tomeClientService.getAllTomes();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("chapters", chapters);
     model.addAttribute("tomes", tomes);
@@ -820,7 +841,7 @@ public class AdminController {
       chapterClientService.createChapter(dto);
       ra.addFlashAttribute("success", "Capítulo creado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear el capítulo: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear el capítulo: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/chapters";
   }
@@ -841,7 +862,7 @@ public class AdminController {
       chapterClientService.updateChapter(id, dto);
       ra.addFlashAttribute("success", "Capítulo actualizado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar el capítulo: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar el capítulo: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/chapters";
   }
@@ -852,7 +873,7 @@ public class AdminController {
       chapterClientService.deleteChapter(id);
       ra.addFlashAttribute("success", "Capítulo eliminado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar el capítulo: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar el capítulo: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/chapters";
   }
@@ -864,12 +885,14 @@ public class AdminController {
     List<VolumeResponseDTO> volumes = List.of();
     try {
       volumes = volumeClientService.getAllVolumes();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     List<EditionResponseDTO> editions = List.of();
     try {
       editions = editionClientService.getAllEditions();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("volumes", volumes);
     model.addAttribute("editions", editions);
@@ -891,7 +914,7 @@ public class AdminController {
       volumeClientService.createVolume(dto);
       ra.addFlashAttribute("success", "Volumen creado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al crear el volumen: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al crear el volumen: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/volumes";
   }
@@ -912,7 +935,7 @@ public class AdminController {
       volumeClientService.updateVolume(id, dto);
       ra.addFlashAttribute("success", "Volumen actualizado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar el volumen: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar el volumen: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/volumes";
   }
@@ -923,7 +946,7 @@ public class AdminController {
       volumeClientService.deleteVolume(id);
       ra.addFlashAttribute("success", "Volumen eliminado correctamente");
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al eliminar el volumen: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al eliminar el volumen: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/volumes";
   }
@@ -955,7 +978,7 @@ public class AdminController {
 
       ra.addFlashAttribute("success", "Estado del pedido #" + orderId + " actualizado a: " + statusLabel);
     } catch (Exception e) {
-      ra.addFlashAttribute("error", "Error al actualizar el estado: " + e.getMessage());
+      ra.addFlashAttribute("error", "Error al actualizar el estado: " + ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/admin/orders";
   }
@@ -967,7 +990,8 @@ public class AdminController {
     List<OrderResponseDTO> orders = List.of();
     try {
       orders = orderClientService.getAllOrders();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("orders", orders);
     return "admin/orders";
@@ -978,7 +1002,8 @@ public class AdminController {
     List<ProductResponseDTO> products = List.of();
     try {
       products = productClientService.getAvailableProducts();
-    } catch (Exception ignored) {
+    } catch (Exception e) {
+      log.warn("[ADMIN] Error al cargar datos del backend: {}", e.getMessage());
     }
     model.addAttribute("products", products);
     return "admin/inventory";

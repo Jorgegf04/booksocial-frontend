@@ -1,0 +1,90 @@
+/* ============================================================
+   error.css — Estilos de la página de error de Spring Boot
+   Vista: error.html | Spring Boot inyecta: status, error, path
+   Complementa main.css (fuentes y colores base ya definidos allí).
+   ============================================================ */
+
+/* === Body: centra verticalmente la caja de error === */
+/* min-height y flex son los únicos overrides; background y font-family vienen de main.css */
+.error-body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* === Caja contenedora: tarjeta centrada con sombra suave === */
+.error-box {
+  max-width: 520px;
+  width: 100%;
+  background: #fff;
+  border-radius: 1.25rem;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 4px 32px rgba(45, 76, 62, 0.09);
+  text-align: center;
+}
+
+/* === Código de estado HTTP (404, 500…) en tamaño grande === */
+.error-code {
+  font-size: 5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #2D4C3E;
+  letter-spacing: -0.04em;
+}
+
+/* === Título amigable según el código de estado === */
+.error-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1c1c18;
+  margin: 0.75rem 0 0.5rem;
+}
+
+/* === Descripción del error en texto legible === */
+.error-msg {
+  font-size: 0.9rem;
+  color: #414844;
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+/* === Ruta de la petición fallida en fuente monospace === */
+.error-path {
+  font-size: 0.75rem;
+  color: #727974;
+  background: #f0eee8;
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  display: inline-block;
+  margin-bottom: 1.75rem;
+  font-family: monospace;
+}
+
+/* === Botón principal "Volver" === */
+.btn-back {
+  background: #2D4C3E;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.65rem 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-block;
+  transition: background 0.15s;
+}
+.btn-back:hover { background: #1e3a2f; color: #fff; }
+
+/* === Enlace secundario "Ir al catálogo" === */
+.btn-secondary-link {
+  font-size: 0.85rem;
+  color: #414844;
+  text-decoration: none;
+  margin-left: 1rem;
+}
+.btn-secondary-link:hover { color: #2D4C3E; text-decoration: underline; }
+
+/* === Branding al pie de la caja === */
+.error-branding        { margin-top: 2.5rem; font-size: 0.75rem; color: #727974; }
+.error-branding strong { color: #2D4C3E; }

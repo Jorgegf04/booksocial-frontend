@@ -1,0 +1,94 @@
+/* ============================================================
+   catalog.css — Estilos específicos del catálogo de obras
+   Vistas que lo usan: work/catalog.html
+   Controlador: WorkDetailController (GET /catalog, GET /catalog/filter)
+   ============================================================ */
+
+/* === Espaciado del main para compensar el navbar fixed === */
+.catalog-main {
+  padding-top: 6rem;
+  padding-bottom: 4rem;
+}
+
+/* === Cabecera de página === */
+.catalog-heading    { font-size: 2.2rem; color: var(--bs-primary); }
+.catalog-subheading { color: var(--color-muted); font-size: 0.9rem; }
+
+/* === Sidebar de filtros === */
+
+/* Label de cada género en el listado de checkboxes */
+.catalog-genre-label { font-size: 0.82rem; color: var(--color-muted); }
+
+/* Valor numérico del slider de rating mínimo */
+.catalog-rating-val {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--bs-primary);
+  min-width: 2ch;
+}
+
+/* Labels "Desde" / "Hasta" del filtro de fecha */
+.catalog-date-label { font-size: 0.72rem; color: var(--color-muted); }
+
+/* Botón "Aplicar filtros" */
+.catalog-filter-apply {
+  background-color: var(--bs-primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Botón "Limpiar filtros" */
+.catalog-filter-clear {
+  background-color: var(--color-surface-h);
+  color: var(--color-muted);
+  font-weight: 600;
+}
+
+/* === Sort bar (barra de resultados y ordenación) === */
+
+/* Texto "X obras encontradas — página Y de Z" */
+.catalog-results-text { font-size: 0.85rem; color: var(--color-muted); }
+
+/* Número resaltado dentro del texto de resultados */
+.catalog-results-count { font-weight: 700; color: var(--bs-primary); }
+
+/* Etiqueta "Ordenar por:" */
+.catalog-sort-label { font-size: 0.78rem; color: var(--color-muted); }
+
+/* Select de ordenación: ancho automático según el contenido */
+.catalog-sort-select { width: auto; font-size: 0.82rem; }
+
+/* === Cards de obras === */
+
+/* Div placeholder cuando la obra no tiene imagen */
+.catalog-cover-placeholder { color: var(--color-outline); }
+
+/* Icono del placeholder de portada */
+.catalog-cover-placeholder-icon { font-size: 3rem; }
+
+/* Texto "Sin portada" bajo el icono */
+.catalog-cover-placeholder-text { font-size: 0.7rem; }
+
+/* Texto "Sin valoraciones" cuando averageRating es null */
+.catalog-no-rating { font-size: 0.75rem; color: var(--color-outline); }
+
+/* Etiqueta de género dentro de la card */
+.catalog-genre-tag {
+  font-size: 0.7rem;
+  color: var(--color-outline);
+  font-weight: 600;
+}
+
+/* === Estado vacío (sin resultados) === */
+.catalog-empty-icon    { font-size: 4rem; color: var(--color-outline-l); }
+.catalog-empty-heading { color: var(--bs-primary); }
+.catalog-empty-text    { color: var(--color-muted); font-size: 0.9rem; }
+.catalog-empty-link    { color: var(--bs-primary); }
+
+/* === Paginación === */
+
+/* Iconos chevron_left / chevron_right dentro de los botones de página */
+.catalog-pager-icon { font-size: 1rem; }
+
+/* Puntos suspensivos "···" entre números de página */
+.catalog-ellipsis { letter-spacing: 0.05em; }

@@ -1,0 +1,94 @@
+/* ============================================================
+   home.css — Estilos específicos de la página principal (/)
+   Vista: home.html | Controlador: HomeController
+   Complementa main.css; no duplica reglas globales.
+   ============================================================ */
+
+/* === Wrapper principal: separa el contenido del navbar fixed === */
+.home-main { padding-top: 5rem; }
+
+/* === Fondo neutro reutilizado en secciones alternas === */
+.home-section-bg { background: var(--color-bg); }
+
+/* === Sección Destacados: encabezado principal === */
+.home-featured-heading {
+  font-size: 2.25rem;
+  color: var(--bs-primary);
+}
+
+/* === Icono flecha dentro del enlace "Ver todo" === */
+.home-view-all-icon { font-size: 1.1rem; }
+
+/* === Estado vacío cuando no hay obras que mostrar === */
+.home-empty-state { color: var(--color-outline); }
+.home-empty-icon  { font-size: 3rem; }
+
+/* === Sección Comunidad: textos sobre fondo verde oscuro === */
+.home-community-heading { font-size: 2.5rem; color: #fff; }
+.home-community-desc {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1.05rem;
+  max-width: 30rem;
+  line-height: 1.7;
+}
+
+/* Extiende la regla .home-community-icon de main.css añadiendo el fill al icono decorativo */
+.home-community-icon { font-variation-settings: 'FILL' 1; }
+
+/* === Mini cards de características (Comunidad) === */
+/* Selector: todos los iconos dentro del wrapper circular de la feature card */
+.home-feature-icon .material-symbols-outlined {
+  color: var(--bs-primary);
+  font-size: 1.75rem;
+}
+.home-feature-card__title { color: var(--bs-primary); font-size: 1.1rem; }
+.home-feature-card__desc  { font-size: 0.875rem; color: var(--color-muted); }
+
+/* === Sección "Catálogo por tipo": textos === */
+.home-catalog-heading {
+  font-size: 2.5rem;
+  color: var(--bs-primary);
+}
+.home-catalog-desc { color: var(--color-muted); line-height: 1.8; }
+
+/* === Bento grid: icono y etiqueta de la tarjeta verde === */
+.home-bento-tag-icon  { font-size: 2.5rem; color: var(--bs-primary); }
+.home-bento-tag-label { color: var(--bs-primary); }
+
+/* === Sección Suscripción: separador decorativo === */
+.home-sub-separator {
+  width: 3rem;
+  height: 1px;
+  background: var(--bs-secondary);
+  display: block;
+}
+.home-sub-section-label { color: var(--bs-secondary); }
+.home-sub-heading       { font-size: 2.5rem; color: #fff; }
+.home-sub-desc {
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+  max-width: 32rem;
+}
+
+/* === Iconos de características de la suscripción (event, local_shipping) === */
+.home-sub-feature-icon {
+  color: var(--bs-secondary);
+  font-variation-settings: 'FILL' 1;
+}
+.home-sub-feature-text { font-size: 0.8rem; color: rgba(255, 255, 255, 0.5); }
+
+/* === Badge "Próxima Caja" superpuesto sobre la imagen === */
+.home-sub-badge__title { font-size: 0.9rem; line-height: 1.4; }
+.home-sub-badge__date {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* === Icono decorativo del placeholder de imagen de suscripción === */
+.home-sub-package-icon {
+  font-size: 5rem;
+  color: rgba(192, 236, 218, 0.3);
+  font-variation-settings: 'FILL' 1;
+}

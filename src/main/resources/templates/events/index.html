@@ -1,28 +1,35 @@
-<!--
-  Vista: Eventos — /events
-  Controlador: EventsController (GET /events, POST /events/{id}/join, POST /events/{id}/leave)
+<!--/*
+  ============================================================
+  Vista: Eventos
+  Ruta: /events
+  Controlador: EventsController#index() (GET)
 
-  Variables del modelo:
-  - featured    : EventResponseDTO evento más próximo; mostrado en la tarjeta grande (col-lg-8)
-  - secondary   : EventResponseDTO segundo evento; mostrado en la tarjeta lateral (col-lg-4)
-  - upcoming    : List<EventResponseDTO> resto de eventos ordenados por fecha
-  - sessionUserId : Long id del usuario en sesión (null si no autenticado)
-  - successMsg  : String (opcional) mensaje de confirmación tras join/leave
-  - errorMsg    : String (opcional) mensaje de error
+  Recibe del modelo:
+    - featured      : EventResponseDTO             — evento más próximo (bento grande).
+    - secondary     : EventResponseDTO             — segundo evento (bento lateral).
+    - upcoming      : List<EventResponseDTO>       — resto de eventos ordenados por fecha.
+    - sessionUserId : Long                         — ID del usuario en sesión (null si no hay sesión).
+    - successMsg    : String (opcional)            — confirmación tras join/leave.
+    - errorMsg      : String (opcional)            — error tras join/leave.
 
   Lógica join/leave:
-  - Cada EventResponseDTO incluye userIds: List<Long> con los ids de participantes inscritos.
-  - Si sessionUserId está en userIds → se muestra el botón "Abandonar" (POST .../leave).
-  - Si sessionUserId NO está en userIds → se muestra el botón "Unirse" (POST .../join).
-  - Si sessionUserId == null (no autenticado) → enlace a /auth/login en lugar de botones.
-  - Los controladores POST llaman a EventClientService que delega al backend REST.
-  - totalParticipants es calculado en el backend como userIds.size().
+    · Cada EventResponseDTO incluye userIds: List<Long> con los IDs de participantes.
+    · Si sessionUserId está en userIds → botón "Abandonar" (POST .../leave).
+    · Si sessionUserId NO está en userIds → botón "Unirse" (POST .../join).
+    · Si sessionUserId == null → enlace a /auth/login.
+    · totalParticipants es calculado en el backend como userIds.size().
 
   Estructura de la página:
-  1. Hero header con título y descripción de la plataforma.
-  2. Bento grid: tarjeta destacada grande + tarjeta secundaria (si existen).
-  3. Lista de próximos eventos en grid de cards con badge "Inscrito" si el usuario ya participa.
--->
+    1. Hero header: título y descripción de la plataforma.
+    2. Bento grid: tarjeta destacada grande + tarjeta secundaria.
+    3. Lista de próximos eventos en grid de cards.
+
+  Fragmentos incluidos:
+    - fragments/navbar   :: navbar
+    - fragments/messages :: messages
+    - fragments/footer   :: footer
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -31,81 +38,121 @@
   <title>Eventos — BookSocial</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos de la página de eventos -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/events.css}">
 </head>
 <body>
 
+  <!-- NAVBAR -->
   <div th:replace="~{fragments/navbar :: navbar}"></div>
 
-  <main style="padding-top: 6rem; padding-bottom: 5rem;">
+  <!-- events-main: padding-top compensa la navbar fixed (events.css) -->
+  <main class="events-main">
     <div class="container px-4 px-lg-5">
 
-      <!-- Alerts -->
-      <div th:if="${successMsg}" class="alert d-flex align-items-center gap-2 mb-4"
-           style="background:rgba(45,76,62,0.08); border:1px solid rgba(45,76,62,0.2); border-radius:0.75rem; color:var(--bs-primary);">
-        <span class="material-symbols-outlined">check_circle</span>
-        <span th:text="${successMsg}"></span>
-      </div>
-      <div th:if="${errorMsg}" class="alert d-flex align-items-center gap-2 mb-4"
-           style="background:rgba(186,26,26,0.08); border:1px solid rgba(186,26,26,0.2); border-radius:0.75rem; color:#ba1a1a;">
-        <span class="material-symbols-outlined">error</span>
-        <span th:text="${errorMsg}"></span>
-      </div>
+      <!-- Mensajes flash de join/leave -->
+      <div th:replace="~{fragments/messages :: messages}"></div>
 
       <!-- ===================================================
-           HERO HEADER
+           HERO HEADER: título y descripción de la plataforma
            =================================================== -->
       <header class="mb-5 pt-2">
-        <div style="max-width: 44rem;">
+        <!--
+          events-hero-body: limita el ancho del bloque de texto (events.css).
+        -->
+        <div class="events-hero-body">
           <p class="filter-section-title mb-2">BookSocial</p>
-          <h1 class="font-serif mb-3" style="font-size: clamp(2.5rem,5vw,3.75rem); font-weight:700; color:var(--bs-primary); line-height:1.1;">
+          <!--
+            events-hero-heading: clamp() para tamaño responsive (events.css).
+            clamp(min, preferido, max): adapta el font-size entre 2.5rem y 3.75rem
+            según el viewport, priorizando el valor relativo 5vw.
+          -->
+          <h1 class="font-serif mb-3 events-hero-heading">
             Donde las Historias <br>
             <em class="fw-normal">Cobran Vida.</em>
           </h1>
-          <p class="mb-0" style="font-size:1.05rem; color:var(--color-muted); max-width:36rem; line-height:1.75;">
+          <!-- events-hero-desc: tamaño, color muted y line-height generoso (events.css) -->
+          <p class="mb-0 events-hero-desc">
             Únete a nuestro círculo curado de entusiastas literarios. Desde firmas de autores hasta talleres inmersivos de manga, descubre el pulso de la comunidad BookSocial.
           </p>
         </div>
       </header>
 
       <!-- ===================================================
-           BENTO GRID DESTACADOS
+           BENTO GRID: evento destacado + evento secundario
            =================================================== -->
       <section class="mb-5">
         <div class="row g-4">
 
-          <!-- Evento destacado -->
+          <!-- Evento destacado (columna ancha) -->
           <div class="col-lg-8" th:if="${featured != null}">
+            <!--
+              event-featured-card: tarjeta con fondo y borde del evento (main.css).
+            -->
             <div class="event-featured-card h-100">
 
-              <!-- Imagen placeholder -->
-              <div class="event-featured-img">
-                <span class="material-symbols-outlined" style="font-size:5rem; color:rgba(192,236,218,0.25); font-variation-settings:'FILL' 1;">auto_stories</span>
+              <!-- Imagen del evento destacado -->
+              <!--
+                events-featured-img-wrap: overflow:hidden + position:relative (events.css).
+                Necesario para que la imagen se posicione con inset:0 y el badge se superponga.
+                event-featured-img: dimensiones de la imagen (main.css).
+              -->
+              <div class="event-featured-img events-featured-img-wrap">
+                <img th:if="${featured.img != null and !#strings.isEmpty(featured.img)}"
+                     th:src="${featured.img}"
+                     th:alt="${featured.title}">
+                <!--
+                  events-featured-img-placeholder: icono grande semitransparente (events.css).
+                  font-variation-settings: 'FILL' 1: activa la variante rellena del icono.
+                -->
+                <span th:unless="${featured.img != null and !#strings.isEmpty(featured.img)}"
+                      class="material-symbols-outlined events-featured-img-placeholder">auto_stories</span>
+                <!-- event-editor-badge: badge "Próximo Destacado" (main.css) -->
                 <span class="event-editor-badge">Próximo Destacado</span>
               </div>
 
+              <!-- Body: fecha, título, descripción y CTAs -->
               <div class="event-featured-body">
+                <!--
+                  event-date-label: estilo de la etiqueta de fecha (main.css).
+                  events-featured-date-icon: font-size:1rem del icono de calendario (events.css).
+                  #strings.toUpperCase(): convierte la fecha formateada a mayúsculas.
+                -->
                 <div class="d-flex align-items-center gap-2 mb-3 event-date-label">
-                  <span class="material-symbols-outlined" style="font-size:1rem;">calendar_today</span>
+                  <span class="material-symbols-outlined events-featured-date-icon">calendar_today</span>
                   <span th:text="${#strings.toUpperCase(#temporals.format(featured.date, 'dd MMMM yyyy, HH:mm'))}"></span>
                 </div>
-                <h2 class="font-serif mb-3" style="font-size:2rem; font-weight:700; color:var(--bs-primary); line-height:1.2;"
+
+                <!-- events-featured-heading: serif 2rem en color primary (events.css) -->
+                <h2 class="font-serif mb-3 events-featured-heading"
                     th:text="${featured.title}">Título del evento</h2>
-                <p class="mb-4" style="color:var(--color-muted); line-height:1.7;"
+
+                <!-- events-featured-desc: color muted + line-height (events.css) -->
+                <p class="mb-4 events-featured-desc"
                    th:text="${featured.description != null ? featured.description : 'Sin descripción disponible.'}"></p>
 
                 <div class="d-flex align-items-center gap-3 flex-wrap">
-                  <!-- Participantes -->
-                  <div class="d-flex align-items-center gap-2" style="font-size:0.8rem; color:var(--color-muted);">
-                    <span class="material-symbols-outlined" style="font-size:1rem;">group</span>
+                  <!-- Contador de participantes -->
+                  <!-- events-featured-participants: font-size + color muted (events.css) -->
+                  <div class="d-flex align-items-center gap-2 events-featured-participants">
+                    <span class="material-symbols-outlined events-featured-participants-icon">group</span>
                     <span th:text="${featured.totalParticipants} + ' participantes'">0 participantes</span>
                   </div>
 
-                  <!-- Botón join/leave -->
+                  <!-- Botones join/leave: condicionales según si el usuario ya está inscrito -->
+                  <!--
+                    th:block con th:if / th:unless:
+                    - Si sessionUserId está en featured.userIds → "Abandonar".
+                    - Si no está → "Reserva tu lugar".
+                    - Si sessionUserId == null → enlace a login.
+                    #lists.contains(lista, valor): utilidad Thymeleaf para buscar en listas.
+                  -->
                   <th:block th:if="${sessionUserId != null}">
                     <th:block th:if="${featured.userIds != null and #lists.contains(featured.userIds, sessionUserId)}">
                       <form th:action="@{'/events/' + ${featured.id} + '/leave'}" method="post">
                         <button type="submit" class="event-leave-btn">
-                          <span class="material-symbols-outlined" style="font-size:1rem;">logout</span>
+                          <!-- events-action-icon: font-size:1rem para iconos en botones (events.css) -->
+                          <span class="material-symbols-outlined events-action-icon">logout</span>
                           Abandonar evento
                         </button>
                       </form>
@@ -113,7 +160,7 @@
                     <th:block th:unless="${featured.userIds != null and #lists.contains(featured.userIds, sessionUserId)}">
                       <form th:action="@{'/events/' + ${featured.id} + '/join'}" method="post">
                         <button type="submit" class="btn-primary-pill event-join-btn">
-                          <span class="material-symbols-outlined" style="font-size:1rem;">confirmation_number</span>
+                          <span class="material-symbols-outlined events-action-icon">confirmation_number</span>
                           Reserva tu lugar
                         </button>
                       </form>
@@ -121,7 +168,7 @@
                   </th:block>
                   <th:block th:if="${sessionUserId == null}">
                     <a href="/auth/login" class="btn-primary-pill event-join-btn text-decoration-none">
-                      <span class="material-symbols-outlined" style="font-size:1rem;">login</span>
+                      <span class="material-symbols-outlined events-action-icon">login</span>
                       Inicia sesión para unirte
                     </a>
                   </th:block>
@@ -130,30 +177,43 @@
             </div>
           </div>
 
-          <!-- Evento secundario -->
+          <!-- Evento secundario (columna estrecha, fondo verde oscuro) -->
           <div class="col-lg-4" th:if="${secondary != null}">
+            <!--
+              event-secondary-card: tarjeta oscura del evento lateral (main.css).
+              h-100: Bootstrap — misma altura que la tarjeta destacada.
+            -->
             <div class="event-secondary-card h-100">
               <div class="d-flex justify-content-between align-items-start mb-4">
+                <!--
+                  event-members-badge: pastilla "Próximo" (main.css).
+                  events-secondary-badge-icon: font-size:0.8rem para el icono (events.css).
+                -->
                 <span class="event-members-badge">
-                  <span class="material-symbols-outlined" style="font-size:0.8rem;">verified</span>
+                  <span class="material-symbols-outlined events-secondary-badge-icon">verified</span>
                   Próximo
                 </span>
-                <span class="material-symbols-outlined" style="color:var(--bs-secondary);">star</span>
+                <!-- events-secondary-star: color --bs-secondary (events.css) -->
+                <span class="material-symbols-outlined events-secondary-star">star</span>
               </div>
 
-              <h3 class="font-serif mb-3" style="font-size:1.6rem; font-weight:700; color:var(--bs-secondary); line-height:1.25;"
+              <!-- events-secondary-heading: serif en color secondary (events.css) -->
+              <h3 class="font-serif mb-3 events-secondary-heading"
                   th:text="${secondary.title}">Título</h3>
-              <p style="color:rgba(255,255,255,0.65); font-size:0.875rem; line-height:1.65;"
+              <!-- events-secondary-desc: blanco semitransparente (events.css) -->
+              <p class="events-secondary-desc"
                  th:text="${secondary.description != null ? secondary.description : 'Sin descripción.'}"></p>
 
               <div class="mt-auto pt-4">
-                <div class="d-flex align-items-center gap-2 mb-4" style="font-size:0.78rem; color:rgba(255,255,255,0.5);">
-                  <span class="material-symbols-outlined" style="font-size:0.9rem;">group</span>
+                <!-- events-secondary-meta: color semitransparente para la fecha y nº de inscritos -->
+                <div class="d-flex align-items-center gap-2 mb-4 events-secondary-meta">
+                  <span class="material-symbols-outlined events-secondary-meta-icon">group</span>
                   <span th:text="${secondary.totalParticipants} + ' inscritos'">0 inscritos</span>
                   <span>•</span>
                   <span th:text="${#temporals.format(secondary.date, 'dd MMM yyyy')}"></span>
                 </div>
 
+                <!-- Botones join/leave del evento secundario -->
                 <th:block th:if="${sessionUserId != null}">
                   <th:block th:if="${secondary.userIds != null and #lists.contains(secondary.userIds, sessionUserId)}">
                     <form th:action="@{'/events/' + ${secondary.id} + '/leave'}" method="post">
@@ -173,12 +233,13 @@
             </div>
           </div>
 
-          <!-- Estado vacío bento -->
+          <!-- Estado vacío del bento (no hay ningún evento próximo) -->
           <div class="col-12" th:if="${featured == null}">
-            <div class="text-center py-5" style="background:var(--color-surface-l); border-radius:1.25rem;">
-              <span class="material-symbols-outlined d-block mb-3" style="font-size:4rem; color:var(--color-outline-l);">event_busy</span>
-              <p class="font-serif mb-1" style="font-size:1.2rem; color:var(--bs-primary);">No hay eventos próximos</p>
-              <p style="color:var(--color-muted); font-size:0.875rem;">Vuelve pronto para descubrir nuevos eventos.</p>
+            <!-- events-empty: fondo gris + border-radius 1.25rem (events.css) -->
+            <div class="text-center py-5 events-empty">
+              <span class="material-symbols-outlined d-block mb-3 events-empty-icon">event_busy</span>
+              <p class="font-serif mb-1 events-empty-heading">No hay eventos próximos</p>
+              <p class="events-empty-text">Vuelve pronto para descubrir nuevos eventos.</p>
             </div>
           </div>
 
@@ -187,45 +248,78 @@
 
       <!-- ===================================================
            LISTA DE PRÓXIMOS EVENTOS
+           th:if="${!upcoming.isEmpty()}": solo si la lista tiene eventos.
            =================================================== -->
       <section th:if="${!upcoming.isEmpty()}">
         <div class="d-flex justify-content-between align-items-end mb-4">
           <div>
             <p class="filter-section-title mb-1">Agenda</p>
-            <h2 class="font-serif mb-0" style="font-size:1.75rem; color:var(--bs-primary);">Próximos Eventos</h2>
+            <!-- events-upcoming-heading: font-serif + color primary (events.css) -->
+            <h2 class="font-serif mb-0 events-upcoming-heading">Próximos Eventos</h2>
           </div>
         </div>
 
         <div class="row g-4">
           <div th:each="event : ${upcoming}" class="col-md-6 col-lg-4">
+            <!-- event-card: tarjeta de evento individual (main.css) -->
             <div class="event-card">
 
-              <!-- Imagen placeholder -->
-              <div class="event-card-img">
-                <span class="material-symbols-outlined" style="font-size:3rem; color:rgba(45,76,62,0.15); font-variation-settings:'FILL' 1;">auto_stories</span>
-                <!-- Badge si ya inscrito -->
+              <!-- Imagen de la card -->
+              <!--
+                events-card-img-wrap: overflow:hidden + position:relative (events.css).
+                event-card-img: dimensiones del contenedor de imagen (main.css).
+              -->
+              <div class="event-card-img events-card-img-wrap">
+                <img th:if="${event.img != null and !#strings.isEmpty(event.img)}"
+                     th:src="${event.img}"
+                     th:alt="${event.title}">
+                <!--
+                  events-card-img-placeholder: icono semitransparente (events.css).
+                -->
+                <span th:unless="${event.img != null and !#strings.isEmpty(event.img)}"
+                      class="material-symbols-outlined events-card-img-placeholder">auto_stories</span>
+
+                <!-- Badge "Inscrito" si el usuario ya participa -->
+                <!--
+                  event-joined-badge: pastilla verde "Inscrito" (main.css).
+                  events-joined-badge-icon: font-size:0.75rem del icono (events.css).
+                -->
                 <span th:if="${sessionUserId != null and event.userIds != null and #lists.contains(event.userIds, sessionUserId)}"
                       class="event-joined-badge">
-                  <span class="material-symbols-outlined" style="font-size:0.75rem;">check</span>
+                  <span class="material-symbols-outlined events-joined-badge-icon">check</span>
                   Inscrito
                 </span>
               </div>
 
               <div class="event-card-body">
-                <!-- Fecha -->
-                <div class="d-flex align-items-center gap-2 mb-2 event-date-label" style="font-size:0.72rem;">
-                  <span class="material-symbols-outlined" style="font-size:0.9rem;">calendar_today</span>
+                <!-- Fecha de la card: tamaño más pequeño que el del destacado -->
+                <!--
+                  event-date-label: color y estilo de fecha (main.css).
+                  events-card-date: font-size:0.72rem (events.css).
+                  events-card-date-icon: font-size:0.9rem del icono (events.css).
+                -->
+                <div class="d-flex align-items-center gap-2 mb-2 event-date-label events-card-date">
+                  <span class="material-symbols-outlined events-card-date-icon">calendar_today</span>
                   <span th:text="${#temporals.format(event.date, 'dd MMM yyyy • HH:mm')}"></span>
                 </div>
 
+                <!-- Título y descripción truncada de la card -->
+                <!-- event-card-title: font-serif + color (main.css) -->
                 <h4 class="font-serif mb-2 event-card-title" th:text="${event.title}">Título</h4>
+                <!--
+                  event-card-desc: font-size y color del texto de descripción (main.css).
+                  Thymeleaf ternario para truncar a 100 caracteres si es necesario.
+                -->
                 <p class="event-card-desc"
                    th:text="${event.description != null ? (event.description.length() > 100 ? event.description.substring(0, 100) + '…' : event.description) : ''}">
                 </p>
 
+                <!-- Footer de la card: participantes + botón join/leave -->
+                <!-- event-card-footer: border-top y layout flex (main.css) -->
                 <div class="d-flex align-items-center justify-content-between mt-auto pt-3 event-card-footer">
-                  <div class="d-flex align-items-center gap-1" style="font-size:0.78rem; color:var(--color-muted);">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">group</span>
+                  <!-- events-card-participants: font-size + color muted (events.css) -->
+                  <div class="d-flex align-items-center gap-1 events-card-participants">
+                    <span class="material-symbols-outlined events-card-participants-icon">group</span>
                     <span th:text="${event.totalParticipants}">0</span>
                   </div>
 
@@ -254,6 +348,7 @@
     </div>
   </main>
 
+  <!-- FOOTER -->
   <div th:replace="~{fragments/footer :: footer}"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

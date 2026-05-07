@@ -1,15 +1,36 @@
-<!--
+<!--/*
+  ============================================================
   Vista: Gestión de eventos — /admin/events
-  Acceso restringido: AdminInterceptor (role=ADMIN).
+  Controlador: AdminEventsController (GET/POST)
+  Acceso restringido: AdminInterceptor redirige a /auth/login si role != ADMIN.
 
-  Variables del modelo:
-  - events : List<EventResponseDTO> todos los eventos del sistema.
+  Recibe del modelo:
+    - events  : List<EventResponseDTO> — todos los eventos del sistema.
+                Cada EventResponseDTO expone: id, title, description, img,
+                date (LocalDateTime), totalParticipants.
+    - success : String (opcional) — mensaje flash tras operación correcta.
+    - error   : String (opcional) — mensaje flash tras error.
 
-  Permite crear, editar y eliminar eventos. Cada evento tiene título, descripción,
-  imagen, fecha y una lista de participantes (userIds). Los usuarios se unen/abandonan
-  desde la vista pública /events mediante los botones join/leave.
-  El sidebar se incluye con sidebar('events') para marcar el item activo.
--->
+  Columna "Estado":
+    Thymeleaf evalúa si el evento es futuro o pasado usando:
+      event.date.isAfter(#temporals.createNow())
+    #temporals.createNow(): utilidad Thymeleaf equivalente a LocalDateTime.now() en Java.
+    Se usa isAfter() directamente sobre el objeto LocalDateTime del modelo.
+    Dos th:if separados (no if/else) porque th:else no existe en Thymeleaf.
+    El th:unless final cubre el caso en que event.date == null.
+
+  Imagen del evento:
+    #strings.isEmpty(event.img): utilidad Thymeleaf para comprobar si una cadena está vacía.
+    Distinta de event.img != null: también cubre el caso de cadena vacía "" (sin URL).
+
+  Operaciones CRUD:
+    - Crear : POST /admin/events/create       (multipart/form-data, sube imagen)
+    - Editar: POST /admin/events/{id}/update  (multipart/form-data)
+    - Borrar: POST /admin/events/{id}/delete
+
+  CSS específico: /css/pages/admin/admin-shared.css
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -19,13 +40,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos comunes a todas las vistas de administración -->
+  <link rel="stylesheet" th:href="@{/css/pages/admin/admin-shared.css}">
 </head>
 <body class="admin-body">
 <div class="admin-layout">
 
+  <!-- Sidebar: argumento 'events' marca el enlace de Eventos como activo -->
   <div th:replace="~{admin/fragments/sidebar :: sidebar('events')}"></div>
 
   <main class="admin-main">
+
+    <!-- Topbar: título + botón para abrir el modal de creación -->
     <div class="admin-topbar">
       <div>
         <h1 class="admin-page-title">Eventos</h1>
@@ -33,12 +59,13 @@
       </div>
       <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
               data-bs-toggle="modal" data-bs-target="#createEventModal">
-        <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+        <!-- admin-topbar-btn-icon: reduce el icono al tamaño del botón (admin-shared.css) -->
+        <span class="material-symbols-outlined admin-topbar-btn-icon">add</span>
         Nuevo Evento
       </button>
     </div>
 
-    <!-- Flash messages -->
+    <!-- Mensajes flash -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
       <span th:text="${success}"></span>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -48,11 +75,16 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <!-- Tabla de eventos -->
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">
           Todos los eventos
-          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+          <!--
+            admin-table-count: badge de recuento junto al título (admin-shared.css).
+            #lists.size(events): número total de eventos.
+          -->
+          <span class="admin-table-count"
                 th:text="'(' + ${#lists.size(events)} + ' total)'"></span>
         </p>
       </div>
@@ -71,37 +103,61 @@
             </tr>
           </thead>
           <tbody>
+            <!-- th:each: itera sobre todos los eventos -->
             <tr th:each="event : ${events}">
-              <td style="font-size:0.8rem; color:var(--color-outline);" th:text="${event.id}">—</td>
+              <!-- admin-table-id: columna de id en pequeño y atenuado (admin-shared.css) -->
+              <td class="admin-table-id" th:text="${event.id}">—</td>
               <td>
+                <!--
+                  admin-event-thumb: miniatura cuadrada del evento (admin-shared.css).
+                  #strings.isEmpty: comprueba cadena vacía además de null.
+                -->
                 <img th:if="${event.img != null and !#strings.isEmpty(event.img)}"
                      th:src="${event.img}"
                      alt="Imagen evento"
-                     style="width:44px; height:44px; object-fit:cover; border-radius:6px; border:1px solid var(--color-outline-variant);">
+                     class="admin-event-thumb">
+                <!--
+                  admin-event-no-img: placeholder cuando no hay imagen (admin-shared.css).
+                -->
                 <span th:unless="${event.img != null and !#strings.isEmpty(event.img)}"
-                      style="font-size:0.75rem; color:var(--color-outline);">—</span>
+                      class="admin-event-no-img">—</span>
               </td>
               <td>
-                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
-                      th:text="${event.title}">—</span>
+                <!-- admin-table-name: título en negrita y color primary (admin-shared.css) -->
+                <span class="admin-table-name" th:text="${event.title}">—</span>
               </td>
-              <td style="font-size:0.82rem; max-width:20rem;">
+              <!--
+                max-width se mantiene inline: restricción de layout específica de esta columna.
+                admin-table-meta: reduce el font-size (admin-shared.css).
+                #strings.length / #strings.substring: truncan la descripción a 70 caracteres.
+              -->
+              <td class="admin-table-meta" style="max-width:20rem;">
                 <span th:if="${event.description != null}"
                       th:text="${#strings.length(event.description) > 70} ? ${#strings.substring(event.description, 0, 70)} + '…' : ${event.description}">—</span>
               </td>
-              <td style="font-size:0.82rem; white-space:nowrap;"
+              <!--
+                admin-event-date-cell: font-size reducido + white-space:nowrap (admin-shared.css).
+                white-space:nowrap evita que la fecha y hora se partan en líneas separadas.
+              -->
+              <td class="admin-event-date-cell"
                   th:text="${event.date != null} ? ${#temporals.format(event.date, 'dd/MM/yyyy HH:mm')} : '—'">—</td>
               <td>
                 <span class="admin-badge"
                       th:text="${event.totalParticipants != null} ? ${event.totalParticipants} + ' inscritos' : '0'">0</span>
               </td>
               <td>
+                <!--
+                  Dos th:if separados porque Thymeleaf no tiene th:else.
+                  event.date.isAfter(#temporals.createNow()): llama al método
+                  isAfter del LocalDateTime directamente desde la expresión Thymeleaf.
+                  admin-event-status-*: colores para próximo/finalizado (admin-shared.css).
+                -->
                 <span th:if="${event.date != null and event.date.isAfter(#temporals.createNow())}"
-                      style="font-size:0.75rem; color:#2d7a4f; font-weight:600;">Próximo</span>
+                      class="admin-event-status-upcoming">Próximo</span>
                 <span th:if="${event.date != null and !event.date.isAfter(#temporals.createNow())}"
-                      style="font-size:0.75rem; color:var(--color-outline); font-weight:600;">Finalizado</span>
+                      class="admin-event-status-past">Finalizado</span>
                 <span th:unless="${event.date != null}"
-                      style="font-size:0.75rem; color:var(--color-outline);">—</span>
+                      class="admin-event-status-none">—</span>
               </td>
               <td>
                 <div class="d-flex gap-1">
@@ -114,7 +170,8 @@
                           th:data-date="${event.date != null} ? ${event.date} : ''"
                           th:data-img="${event.img != null} ? ${event.img} : ''"
                           onclick="openEditEventModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                    <!-- admin-table-action-icon: icono reducido en botones de acción (admin-shared.css) -->
+                    <span class="material-symbols-outlined admin-table-action-icon">edit</span>
                   </button>
                   <button type="button" class="btn btn-sm btn-outline-danger p-1"
                           title="Eliminar"
@@ -122,13 +179,15 @@
                           th:data-id="${event.id}"
                           th:data-title="${event.title}"
                           onclick="openDeleteEventModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                    <span class="material-symbols-outlined admin-table-action-icon">delete</span>
                   </button>
                 </div>
               </td>
             </tr>
+            <!-- Fila vacía si no hay eventos -->
             <tr th:if="${events == null or events.isEmpty()}">
-              <td colspan="8" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <!-- admin-table-empty: mensaje de lista vacía (admin-shared.css) -->
+              <td colspan="8" class="text-center py-4 admin-table-empty">
                 No hay eventos registrados
               </td>
             </tr>
@@ -139,7 +198,15 @@
   </main>
 </div>
 
+<!-- ============================================================
+     MODALES BOOTSTRAP — fuera del .admin-layout
+     ============================================================ -->
+
 <!-- Modal: Crear Evento -->
+<!--
+  enctype="multipart/form-data": necesario para subir la imagen del evento.
+  type="datetime-local": input HTML5 para fecha y hora combinadas (YYYY-MM-DDTHH:MM).
+-->
 <div class="modal fade" id="createEventModal" tabindex="-1">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -160,12 +227,14 @@
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Fecha y hora <span class="text-danger">*</span></label>
+              <!-- datetime-local: permite seleccionar fecha y hora en un solo campo -->
               <input type="datetime-local" name="date" class="form-control form-control-sm" required>
             </div>
             <div class="col-md-6">
               <label class="form-label fw-semibold">Imagen</label>
               <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm"
                      onchange="previewImage(this, 'createEventImgPreview')">
+              <!-- text-muted d-block: Bootstrap — texto gris en línea propia -->
               <small id="createEventImgPreview" class="text-muted d-block mt-1"></small>
               <input type="text" name="img" class="form-control form-control-sm mt-1"
                      placeholder="O pega una URL de imagen">
@@ -232,7 +301,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar el evento
+        <!-- admin-modal-confirm: tamaño del párrafo de confirmación (admin-shared.css) -->
+        <p class="admin-modal-confirm">¿Seguro que quieres eliminar el evento
           <strong id="deleteEventName"></strong>?
           Esta acción no se puede deshacer.
         </p>
@@ -266,6 +336,7 @@
     document.getElementById('deleteEventName').textContent = '"' + btn.dataset.title + '"';
   }
 
+  /* Muestra el nombre del archivo seleccionado bajo el input file */
   function previewImage(input, previewId) {
     const preview = document.getElementById(previewId);
     if (input.files && input.files[0]) {

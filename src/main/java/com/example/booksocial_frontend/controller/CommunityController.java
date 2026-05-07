@@ -12,10 +12,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.example.booksocial_frontend.dto.UserResponseDTO;
+import com.example.booksocial_frontend.exception.ApiErrorUtils;
 import com.example.booksocial_frontend.service.UserClientService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controlador MVC de la página de Comunidad de BookSocial.
@@ -35,6 +37,7 @@ import lombok.RequiredArgsConstructor;
  * @version 1.4
  * @since 2026-04-22
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/community")
@@ -52,6 +55,7 @@ public class CommunityController {
           .filter(u -> sessionUserId == null || !u.getId().equals(sessionUserId))
           .collect(Collectors.toList());
     } catch (Exception e) {
+      log.warn("[COMMUNITY] Error al cargar usuarios: {}", e.getMessage());
       users = List.of();
     }
 
@@ -62,6 +66,7 @@ public class CommunityController {
             .map(UserResponseDTO::getId)
             .collect(Collectors.toSet());
       } catch (Exception e) {
+        log.warn("[COMMUNITY] Error al cargar seguidos de userId={}: {}", sessionUserId, e.getMessage());
         followingIds = Set.of();
       }
     }
@@ -74,20 +79,32 @@ public class CommunityController {
   }
 
   @PostMapping("/{id}/follow")
-  public String follow(@PathVariable Long id, HttpSession session) {
+  public String follow(@PathVariable Long id, HttpSession session,
+                       org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
     Long sessionUserId = (Long) session.getAttribute("userId");
     if (sessionUserId == null)
       return "redirect:/auth/login";
-    userService.followUser(sessionUserId, id);
+    try {
+      userService.followUser(sessionUserId, id);
+    } catch (Exception e) {
+      log.warn("[COMMUNITY] Error al seguir usuario id={}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
+    }
     return "redirect:/community";
   }
 
   @PostMapping("/{id}/unfollow")
-  public String unfollow(@PathVariable Long id, HttpSession session) {
+  public String unfollow(@PathVariable Long id, HttpSession session,
+                         org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
     Long sessionUserId = (Long) session.getAttribute("userId");
     if (sessionUserId == null)
       return "redirect:/auth/login";
-    userService.unfollowUser(sessionUserId, id);
+    try {
+      userService.unfollowUser(sessionUserId, id);
+    } catch (Exception e) {
+      log.warn("[COMMUNITY] Error al dejar de seguir usuario id={}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
+    }
     return "redirect:/community";
   }
 }

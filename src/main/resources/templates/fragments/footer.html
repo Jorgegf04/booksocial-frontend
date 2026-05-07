@@ -1,47 +1,62 @@
-<!--
+<!--/*
+  ============================================================
   Fragmento: Pie de página global
-  Uso: th:replace="~{fragments/footer :: footer}" en todas las páginas.
+  Ruta: Se incluye en todas las páginas con layout completo
+  Controlador: — (fragmento sin datos del modelo)
+  Uso: <div th:replace="~{fragments/footer :: footer}"></div>
 
-  Estructura del footer:
-  - Columna brand: logo, descripción breve y enlaces a redes sociales (decorativos).
-  - Columna Explorar: enlace activo a /catalog; el resto son placeholder (#).
-  - Columna Géneros: enlaces placeholder para filtrar por género en el catálogo.
-  - Columna Comunidad: enlaces placeholder para futuras funcionalidades.
-  - Columna Soporte: enlaces placeholder para páginas de ayuda y legales.
+  Recibe del modelo: — (no necesita datos del controlador)
 
-  Los enlaces marcados con href="#" son decorativos y no tienen controlador asociado.
-  El copyright muestra el año actual (2026) de forma estática.
--->
+  Estructura:
+    - Columna brand: logo, descripción y redes sociales (decorativos)
+    - Columna Explorar: enlace activo a /catalog; resto son placeholder (#)
+    - Columna Géneros: placeholders para futuras rutas de filtrado
+    - Columna Comunidad: placeholders para futuras funcionalidades
+    - Columna Soporte: placeholders para páginas legales
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 
+<!--
+  th:fragment="footer": define este <footer> como fragmento reutilizable.
+  site-footer: clase de main.css con fondo verde oscuro y padding.
+  container: Bootstrap — centra y limita el ancho del contenido.
+  row g-5: fila Bootstrap con gutters de 3rem entre columnas.
+-->
 <footer th:fragment="footer" class="site-footer">
   <div class="container">
     <div class="row g-5">
 
-      <!-- Brand -->
+      <!-- Columna de marca: logo, descripción y redes sociales -->
       <div class="col-lg-4">
+        <!-- footer-brand: serif italic en verde claro (main.css) -->
         <p class="footer-brand fst-italic mb-3">BookSocial</p>
-        <p class="mb-4" style="font-size:0.875rem; max-width:18rem;">
+        <!-- footer-brand-desc: reduce el tamaño y limita el ancho del párrafo -->
+        <p class="footer-brand-desc mb-4">
           Tu comunidad de lectores. Descubre, comenta y comparte las mejores obras de literatura, manga y cómic.
         </p>
+        <!-- d-flex gap-2: fila con separación entre iconos de redes -->
         <div class="d-flex gap-2">
+          <!-- social-icon: botón circular con borde tenue (main.css) -->
           <a href="#" class="social-icon" aria-label="Twitter">
-            <span class="material-symbols-outlined" style="font-size:1.1rem;">public</span>
+            <span class="material-symbols-outlined">public</span>
           </a>
           <a href="#" class="social-icon" aria-label="Instagram">
-            <span class="material-symbols-outlined" style="font-size:1.1rem;">photo_camera</span>
+            <span class="material-symbols-outlined">photo_camera</span>
           </a>
           <a href="#" class="social-icon" aria-label="Discord">
-            <span class="material-symbols-outlined" style="font-size:1.1rem;">forum</span>
+            <span class="material-symbols-outlined">forum</span>
           </a>
         </div>
       </div>
 
-      <!-- Explorar -->
+      <!-- Columna Explorar -->
       <div class="col-6 col-lg-2">
+        <!-- footer-heading: texto en mayúsculas pequeñas, color blanco -->
         <p class="footer-heading">Explorar</p>
+        <!-- list-unstyled: elimina los bullets de Bootstrap -->
         <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
           <li><a href="/catalog">Catálogo</a></li>
           <li><a href="#">Novedades</a></li>
@@ -51,7 +66,7 @@
         </ul>
       </div>
 
-      <!-- Géneros -->
+      <!-- Columna Géneros -->
       <div class="col-6 col-lg-2">
         <p class="footer-heading">Géneros</p>
         <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
@@ -63,7 +78,7 @@
         </ul>
       </div>
 
-      <!-- Comunidad -->
+      <!-- Columna Comunidad -->
       <div class="col-6 col-lg-2">
         <p class="footer-heading">Comunidad</p>
         <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
@@ -74,7 +89,7 @@
         </ul>
       </div>
 
-      <!-- Soporte -->
+      <!-- Columna Soporte -->
       <div class="col-6 col-lg-2">
         <p class="footer-heading">Soporte</p>
         <ul class="list-unstyled d-flex flex-column gap-2 mb-0">
@@ -87,12 +102,19 @@
 
     </div>
 
-    <hr style="border-color: rgba(192,236,218,0.15); margin-top: 3rem; margin-bottom: 1.5rem;">
+    <!-- Línea separadora entre columnas y barra de copyright -->
+    <!-- footer-divider: color y márgenes definidos en main.css -->
+    <hr class="footer-divider">
 
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2"
-         style="font-size:0.8rem;">
+    <!--
+      flex-column flex-md-row: apila verticalmente en móvil, fila en pantallas medianas.
+      justify-content-between align-items-center: separa los dos textos a los extremos.
+      footer-bottom-bar: reduce el font-size del bloque.
+    -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center gap-2 footer-bottom-bar">
       <span>&copy; 2026 BookSocial. Todos los derechos reservados.</span>
-      <span>Hecho con <span style="color:#c0ecda;">&#9825;</span> para los amantes de la lectura.</span>
+      <!-- footer-heart: colorea el símbolo de corazón en verde claro -->
+      <span>Hecho con <span class="footer-heart">&#9825;</span> para los amantes de la lectura.</span>
     </div>
   </div>
 </footer>

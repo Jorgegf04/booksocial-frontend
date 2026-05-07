@@ -1,0 +1,103 @@
+/* ============================================================
+   profile.css — Estilos del perfil de usuario
+   Vista: user/profile.html
+   Controlador: ProfileController (GET /user/{id})
+   ============================================================ */
+
+/* === Espaciado del main (compensar navbar fixed) === */
+.profile-main {
+  padding-top: 6rem;
+  padding-bottom: 5rem;
+}
+
+/* === Hero card: bloque de estadísticas === */
+/* Separador superior del bloque Obras / Seguidores / Siguiendo */
+.profile-stats-divider { border-top: 1px solid var(--color-outline-l); }
+/* Las stats de seguidores/siguiendo son clicables (abren modal) */
+.profile-stat-clickable { cursor: pointer; }
+
+/* === Botones de seguir / dejar de seguir === */
+/* Modificador de tamaño para btn-primary-pill en contexto de perfil */
+.profile-follow-btn { padding: 0.55rem 1.5rem; font-size: 0.875rem; }
+
+/* Botón "Siguiendo ✓": ghost pill de ancho completo */
+.profile-unfollow-btn {
+  width: 100%;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.875rem;
+  border: 1.5px solid var(--bs-primary);
+  border-radius: 2rem;
+  background: transparent;
+  color: var(--bs-primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* === Enlace al panel de administrador (solo para admins) === */
+.profile-admin-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.55rem 1.5rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background: var(--bs-primary);
+  color: #fff;
+  border-radius: 2rem;
+  text-decoration: none;
+  border: none;
+}
+.profile-admin-icon { font-size: 1rem; }
+
+/* Fecha de registro al pie del hero */
+.profile-member-since { font-size: 0.75rem; color: var(--color-outline); }
+
+/* === Modales de seguidores y siguiendo === */
+.profile-modal-content { border-radius: 1rem; }
+.profile-modal-header  { border-bottom: 1px solid var(--color-outline-l); }
+.profile-modal-title   { color: var(--bs-primary); }
+.profile-modal-empty   { color: var(--color-muted); font-size: 0.9rem; }
+.profile-modal-item    { border-bottom: 1px solid var(--color-outline-l); }
+/* Placeholder de avatar en los listados de los modales */
+.profile-modal-avatar  { width: 2.2rem; height: 2.2rem; font-size: 0.9rem; flex-shrink: 0; }
+.profile-modal-link    { font-weight: 600; color: var(--bs-primary); text-decoration: none; }
+
+/* === Formulario de edición de perfil === */
+.profile-img-hint { font-size: 0.72rem; color: var(--color-outline); margin-top: 0.3rem; }
+.profile-save-btn { padding: 0.7rem; font-size: 0.875rem; }
+
+/* === Encabezado de biblioteca + label "Obras seguidas" === */
+.profile-library-heading { font-size: 1.5rem; color: var(--bs-primary); }
+.profile-obras-label     { font-size: 0.85rem; font-weight: 600; color: var(--color-outline); }
+
+/* === Tarjetas de tracking (obras en biblioteca) === */
+.profile-tracking-title    { font-weight: 700; font-size: 0.9rem; color: var(--bs-primary); }
+.profile-tracking-date     { font-size: 0.75rem; color: var(--color-outline); }
+.profile-tracking-nav-icon { font-size: 1rem; color: var(--color-outline-l); }
+
+/* === Estados vacíos (biblioteca, filtro activo, pedidos) === */
+/* Reutilizado en los tres casos: sin obras, sin obras con ese estado, sin pedidos */
+.profile-empty-state {
+  background: var(--color-surface-l);
+  border-radius: 1rem;
+}
+.profile-empty-icon  { font-size: 3.5rem; color: var(--color-outline-l); }
+.profile-empty-title { color: var(--bs-primary); font-size: 1.1rem; }
+.profile-empty-text  { font-size: 0.85rem; color: var(--color-muted); }
+
+/* Botón "Ver catálogo" en estados vacíos */
+.profile-catalog-btn { padding: 0.6rem 1.5rem; font-size: 0.875rem; text-decoration: none; }
+
+/* === Pedidos: icono y textos de cabecera === */
+.profile-order-icon  { color: var(--bs-primary); }
+.profile-order-id    { color: var(--bs-primary); }
+.profile-order-date  { font-size: 0.78rem; color: var(--color-muted); }
+.profile-order-items { font-size: 0.72rem; color: var(--color-muted); }
+
+/* === Pedidos: líneas de detalle === */
+.profile-order-line-icon     { font-size: 1rem; color: var(--color-outline); }
+.profile-order-line-title    { font-size: 0.875rem; color: var(--bs-primary); }
+.profile-order-line-meta     { font-size: 0.75rem; color: var(--color-muted); }
+.profile-order-line-subtotal { font-size: 0.875rem; color: var(--bs-primary); }

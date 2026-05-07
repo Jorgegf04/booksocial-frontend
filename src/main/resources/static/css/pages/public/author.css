@@ -1,0 +1,169 @@
+/* ============================================================
+   author.css — Estilos del listado y detalle de autores
+   Vistas: author/list.html, author/detail.html
+   Controlador: AuthorController (GET /authors, GET /author/{id})
+   ============================================================ */
+
+/* === Espaciado del main (compensar navbar fixed) === */
+.author-main {
+  padding-top: 6rem;
+  padding-bottom: 5rem;
+}
+
+/* === Cabecera del listado === */
+.author-list-heading { font-size: 2rem; color: var(--bs-primary); }
+
+/* === Buscador de autores (compartido list y detail) === */
+.author-search-group  { max-width: 280px; }
+.author-search-input  { border-radius: 2rem 0 0 2rem; }
+.author-search-btn {
+  border-radius: 0 2rem 2rem 0;
+  background: var(--bs-primary);
+  border: none;
+  cursor: pointer;
+}
+.author-search-icon { font-size: 1rem; color: #fff; }
+
+/* === Estado vacío (sin autores o sin obras) === */
+.author-empty {
+  background: var(--color-surface-l);
+  border-radius: 1rem;
+}
+.author-empty-icon      { font-size: 3.5rem; color: var(--color-outline-l); }
+.author-empty-text      { color: var(--bs-primary); font-size: 1.1rem; }
+.author-works-empty-text { color: var(--bs-primary); font-size: 1rem; }
+
+/* === Cards del listado de autores === */
+
+/* Contenedor de la imagen de la card (aspect-ratio 3:4) */
+.author-card-img-wrap {
+  aspect-ratio: 3/4;
+  background: var(--color-surface-l);
+  border-radius: .5rem;
+}
+.author-card-img-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .5s;
+}
+/* Icono placeholder si el autor no tiene foto */
+.author-card-placeholder-icon { font-size: 4rem; color: var(--color-outline-l); }
+
+/* Texto de la card */
+.author-card-name      { font-size: 1rem; color: var(--bs-primary); }
+.author-card-meta      { font-size: .75rem; color: var(--color-muted); margin: .2rem 0 0; }
+.author-card-followers { font-size: .72rem; color: var(--color-muted); }
+
+/* Efectos hover en las cards del listado */
+.author-card:hover img { transform: scale(1.04); }
+.author-card:hover h3  { opacity: .75; }
+
+/* === Columna izquierda del detalle de autor === */
+
+/* sticky-top necesita top:6rem para no quedar bajo la navbar */
+.author-detail-sticky { top: 6rem; }
+
+/* Foto del autor: aspecto 3:4 */
+.author-detail-photo {
+  aspect-ratio: 3/4;
+  background: var(--color-surface-l);
+}
+.author-detail-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.author-detail-photo-placeholder { background: var(--color-surface-l); }
+.author-detail-placeholder-icon  { font-size: 6rem; color: var(--color-outline-l); }
+
+/* Nombre y nacionalidad */
+.author-detail-name { font-size: 2rem; color: var(--bs-primary); }
+.author-detail-nationality {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+/* Bloque de estadísticas: seguidores, obras, nacimiento */
+.author-detail-stats {
+  border-top: 1px solid var(--color-outline-l);
+  border-bottom: 1px solid var(--color-outline-l);
+}
+.author-stat-num {
+  font-size: 1.5rem;
+  color: var(--bs-primary);
+}
+.author-stat-label {
+  font-size: 0.72rem;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+/* Modificador de padding para los botones de acción del autor */
+.author-action-btn { padding: .75rem; }
+
+/* Botón "Siguiendo ✓": ghost pill con mismo padding */
+.author-unfollow-btn {
+  padding: .75rem;
+  font-weight: 600;
+  border: 1.5px solid var(--bs-primary);
+  border-radius: 2rem;
+  background: transparent;
+  color: var(--bs-primary);
+  cursor: pointer;
+}
+
+/* === Sección de obras del autor (columna derecha) === */
+.author-works-heading { font-size: 1.8rem; color: var(--bs-primary); }
+.author-works-divider { border-bottom: 1px solid var(--color-outline-l); margin-bottom: 4px; }
+
+/* === Cards de obras del autor (grid escalonado) === */
+
+/* Portada de la obra: aspecto 2:3 con position:relative para el badge */
+.author-work-cover {
+  aspect-ratio: 2/3;
+  background: var(--color-surface-l);
+  border-radius: .25rem;
+  position: relative;
+}
+.author-work-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform .6s ease;
+}
+.author-work-cover-icon { font-size: 4rem; color: var(--color-outline-l); }
+
+/* Badge de género superpuesto sobre la portada */
+.author-work-genre-badge {
+  top: .75rem;
+  right: .75rem;
+  background: var(--color-surface-l);
+  color: var(--bs-primary);
+  font-size: .65rem;
+  font-weight: 700;
+  padding: .25rem .6rem;
+  border-radius: .25rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+/* Título y meta de la obra */
+.author-work-title {
+  font-size: 1.1rem;
+  color: var(--bs-primary);
+  transition: opacity .2s;
+}
+.author-work-meta {
+  font-size: .75rem;
+  color: var(--color-muted);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+}
+
+/* Efectos hover en las cards de obras */
+.group-work:hover img { transform: scale(1.04); }
+.group-work:hover h3  { opacity: .75; }

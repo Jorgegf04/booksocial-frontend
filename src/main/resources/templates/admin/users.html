@@ -1,13 +1,34 @@
-<!--
+<!--/*
+  ============================================================
   Vista: Gestión de usuarios — /admin/users
-  Acceso restringido: AdminInterceptor (role=ADMIN).
+  Controlador: AdminUsersController (GET/POST)
+  Acceso restringido: AdminInterceptor redirige a /auth/login si role != ADMIN.
 
-  Variables del modelo:
-  - users : List<UserResponseDTO> todos los usuarios del sistema obtenidos via UserClientService.
+  Recibe del modelo:
+    - users   : List<UserResponseDTO> — todos los usuarios obtenidos via UserClientService.
+                Cada UserResponseDTO expone: id, username, email, name, secondName,
+                img, role (USER/SUBSCRIBED/ADMIN), registrationDate, active.
+    - success : String (opcional) — mensaje flash tras operación correcta.
+    - error   : String (opcional) — mensaje flash tras error.
 
-  Permite al administrador ver, activar/desactivar y eliminar usuarios.
-  El sidebar se incluye con sidebar('users') para marcar el item activo.
--->
+  Columna Rol con variantes de badge:
+    th:classappend con ternaria anidada:
+      role == 'ADMIN'      → 'admin-badge-admin'  (rojo/danger)
+      role == 'SUBSCRIBED' → 'admin-badge-sub'    (dorado)
+      else                 → sin modificador      (gris)
+    admin-badge-* son variantes de color definidas en main.css.
+
+  Columna Estado:
+    th:if="${user.active}" / th:unless: muestra "Activo" o "Inactivo"
+    con colores distintos usando admin-user-status-* de admin-shared.css.
+
+  Operaciones:
+    - Editar: POST /admin/users/{id}/update  (multipart/form-data, sube avatar)
+    - Borrar: POST /admin/users/{id}/delete
+
+  CSS específico: /css/pages/admin/admin-shared.css
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -17,13 +38,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos comunes a todas las vistas de administración -->
+  <link rel="stylesheet" th:href="@{/css/pages/admin/admin-shared.css}">
 </head>
 <body class="admin-body">
 <div class="admin-layout">
 
+  <!-- Sidebar: argumento 'users' marca el enlace de Usuarios como activo -->
   <div th:replace="~{admin/fragments/sidebar :: sidebar('users')}"></div>
 
   <main class="admin-main">
+
+    <!-- Topbar: sin botón de creación (los usuarios se registran solos) -->
     <div class="admin-topbar">
       <div>
         <h1 class="admin-page-title">Comunidad</h1>
@@ -31,7 +57,7 @@
       </div>
     </div>
 
-    <!-- Flash messages -->
+    <!-- Mensajes flash -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
       <span th:text="${success}"></span>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -41,10 +67,15 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <!-- Tabla de usuarios -->
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">Todos los usuarios
-          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+          <!--
+            admin-table-count: badge de recuento junto al título (admin-shared.css).
+            #lists.size(users): número total de usuarios.
+          -->
+          <span class="admin-table-count"
                 th:text="'(' + ${#lists.size(users)} + ' total)'"></span>
         </p>
       </div>
@@ -63,32 +94,53 @@
             </tr>
           </thead>
           <tbody>
+            <!-- th:each: itera sobre todos los usuarios del sistema -->
             <tr th:each="user : ${users}">
               <td>
+                <!--
+                  th:if / th:unless: muestra la foto o el chip de iniciales.
+                  admin-author-photo: clase circular reutilizada de authors (admin-shared.css).
+                -->
                 <img th:if="${user.img != null and !user.img.isEmpty()}"
                      th:src="${user.img}" alt="avatar"
-                     style="width:2.2rem; height:2.2rem; object-fit:cover; border-radius:50%; border:1px solid var(--color-outline-variant);">
+                     class="admin-author-photo">
+                <!--
+                  admin-user-avatar: chip de iniciales (main.css).
+                  admin-author-avatar-sm: ajusta el tamaño al de la tabla (admin-shared.css).
+                -->
                 <div th:unless="${user.img != null and !user.img.isEmpty()}"
-                     class="admin-user-avatar" style="width:2.2rem; height:2.2rem; font-size:0.75rem;"
+                     class="admin-user-avatar admin-author-avatar-sm"
                      th:text="${#strings.substring(user.username, 0, 1).toUpperCase()}">U</div>
               </td>
               <td>
-                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
-                      th:text="${user.username}">—</span>
+                <!-- admin-table-name: username en negrita y color primary (admin-shared.css) -->
+                <span class="admin-table-name" th:text="${user.username}">—</span>
               </td>
-              <td style="font-size:0.82rem;" th:text="${user.email}">—</td>
-              <td style="font-size:0.82rem;"
+              <!-- admin-table-meta: texto secundario reducido (admin-shared.css) -->
+              <td class="admin-table-meta" th:text="${user.email}">—</td>
+              <td class="admin-table-meta"
                   th:text="${user.name != null} ? ${user.name + (user.secondName != null ? ' ' + user.secondName : '')} : '—'">—</td>
               <td>
+                <!--
+                  admin-badge: pastilla de rol (main.css).
+                  th:classappend con ternaria anidada:
+                    ADMIN      → rojo (admin-badge-admin)
+                    SUBSCRIBED → dorado (admin-badge-sub)
+                    USER       → sin modificador de color
+                -->
                 <span class="admin-badge"
                       th:classappend="${user.role == 'ADMIN'} ? 'admin-badge-admin' : (${user.role == 'SUBSCRIBED'} ? 'admin-badge-sub' : '')"
                       th:text="${user.role}">—</span>
               </td>
-              <td style="font-size:0.82rem;"
+              <td class="admin-table-meta"
                   th:text="${user.registrationDate != null} ? ${#temporals.format(user.registrationDate, 'dd/MM/yyyy')} : '—'">—</td>
               <td>
-                <span th:if="${user.active}" style="font-size:0.75rem; color:#2d7a4f; font-weight:600;">Activo</span>
-                <span th:unless="${user.active}" style="font-size:0.75rem; color:#a94442; font-weight:600;">Inactivo</span>
+                <!--
+                  admin-user-status-active/inactive: verde o rojo según el estado (admin-shared.css).
+                  th:if / th:unless: muestran alternativamente el texto según user.active.
+                -->
+                <span th:if="${user.active}" class="admin-user-status-active">Activo</span>
+                <span th:unless="${user.active}" class="admin-user-status-inactive">Inactivo</span>
               </td>
               <td>
                 <div class="d-flex gap-1">
@@ -102,7 +154,8 @@
                           th:data-secondname="${user.secondName}"
                           th:data-img="${user.img}"
                           onclick="openEditUserModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                    <!-- admin-table-action-icon: icono reducido en botones de acción (admin-shared.css) -->
+                    <span class="material-symbols-outlined admin-table-action-icon">edit</span>
                   </button>
                   <button type="button" class="btn btn-sm btn-outline-danger p-1"
                           title="Eliminar"
@@ -110,13 +163,15 @@
                           th:data-id="${user.id}"
                           th:data-username="${user.username}"
                           onclick="openDeleteUserModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                    <span class="material-symbols-outlined admin-table-action-icon">delete</span>
                   </button>
                 </div>
               </td>
             </tr>
+            <!-- Fila vacía si no hay usuarios -->
             <tr th:if="${users == null or users.isEmpty()}">
-              <td colspan="8" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <!-- admin-table-empty: mensaje de lista vacía (admin-shared.css) -->
+              <td colspan="8" class="text-center py-4 admin-table-empty">
                 No hay usuarios registrados
               </td>
             </tr>
@@ -127,6 +182,10 @@
   </main>
 </div>
 
+<!-- ============================================================
+     MODALES BOOTSTRAP — fuera del .admin-layout
+     ============================================================ -->
+
 <!-- Modal: Editar Usuario -->
 <div class="modal fade" id="editUserModal" tabindex="-1">
   <div class="modal-dialog">
@@ -135,6 +194,7 @@
         <h5 class="modal-title">Editar Usuario</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
+      <!-- enctype="multipart/form-data": necesario para subir la foto de perfil -->
       <form id="editUserForm" method="post" enctype="multipart/form-data">
         <div class="modal-body">
           <div class="row g-3">
@@ -158,7 +218,8 @@
               <label class="form-label fw-semibold">Foto de perfil</label>
               <input type="hidden" id="editUserImg" name="img">
               <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
-              <div id="editUserImgPreview" class="mt-1" style="font-size:0.75rem; color:var(--color-muted);"></div>
+              <!-- admin-img-preview: hint con la URL de imagen actual (admin-shared.css) -->
+              <div id="editUserImgPreview" class="mt-1 admin-img-preview"></div>
             </div>
           </div>
         </div>
@@ -180,7 +241,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar al usuario
+        <!-- admin-modal-confirm: tamaño del párrafo de confirmación (admin-shared.css) -->
+        <p class="admin-modal-confirm">¿Seguro que quieres eliminar al usuario
           <strong id="deleteUserName"></strong>?
           Esta acción no se puede deshacer.
         </p>

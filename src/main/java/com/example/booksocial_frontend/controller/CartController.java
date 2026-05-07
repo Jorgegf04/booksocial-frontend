@@ -23,10 +23,12 @@ import com.example.booksocial_frontend.service.MailService;
 import com.example.booksocial_frontend.service.OrderClientService;
 import com.example.booksocial_frontend.service.ProductClientService;
 import com.example.booksocial_frontend.service.UserClientService;
+import com.example.booksocial_frontend.exception.ApiErrorUtils;
 import com.example.booksocial_frontend.service.WorkClientService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Controlador MVC del carrito de compra.
@@ -49,6 +51,7 @@ import lombok.RequiredArgsConstructor;
  * @version 1.4
  * @since 2026-04-22
  */
+@Slf4j
 @Controller
 @RequiredArgsConstructor
 @RequestMapping("/cart")
@@ -257,7 +260,8 @@ public class CartController {
 
       return "redirect:/orders";
     } catch (Exception e) {
-      ra.addFlashAttribute("cartError", "Error al procesar el pedido: " + e.getMessage());
+      log.warn("[CART] Error al procesar checkout userId={}: {}", userId, e.getMessage());
+      ra.addFlashAttribute("cartError", "Error al procesar el pedido: " + ApiErrorUtils.extractApiError(e));
       return "redirect:/cart";
     }
   }

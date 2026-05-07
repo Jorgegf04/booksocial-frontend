@@ -1,14 +1,29 @@
-<!--
+<!--/*
+  ============================================================
   Vista: Gestión de tomos — /admin/tomes
-  Acceso restringido: AdminInterceptor (role=ADMIN).
+  Controlador: AdminTomesController (GET/POST)
+  Acceso restringido: AdminInterceptor redirige a /auth/login si role != ADMIN.
 
-  Variables del modelo:
-  - tomes    : List<TomeResponseDTO> todos los tomos.
-  - editions : List<EditionResponseDTO> para el selector de edición.
+  Recibe del modelo:
+    - tomes    : List<TomeResponseDTO>    — todos los tomos registrados.
+                 Cada TomeResponseDTO expone: id, numberTome, title, editionId, editionTitle.
+    - editions : List<EditionResponseDTO> — para el selector de edición en los formularios.
+    - success  : String (opcional)        — mensaje flash tras operación correcta.
+    - error    : String (opcional)        — mensaje flash tras error.
 
-  Los tomos son las unidades físicas de los mangas, vinculados a una edición.
-  El sidebar se incluye con sidebar('tomes') para marcar el item activo.
--->
+  Concepto de tomo:
+    Los tomos son las unidades físicas numeradas de una edición de manga.
+    Por ejemplo, "Tomo 1" y "Tomo 2" de la edición española de Naruto.
+    Cada tomo pertenece a una edición (relación ManyToOne en el backend).
+
+  Operaciones CRUD:
+    - Crear : POST /admin/tomes/create
+    - Editar: POST /admin/tomes/{id}/update
+    - Borrar: POST /admin/tomes/{id}/delete
+
+  CSS específico: /css/pages/admin/admin-shared.css
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -18,13 +33,18 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
   <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos comunes a todas las vistas de administración -->
+  <link rel="stylesheet" th:href="@{/css/pages/admin/admin-shared.css}">
 </head>
 <body class="admin-body">
 <div class="admin-layout">
 
+  <!-- Sidebar: argumento 'tomes' marca el enlace de Tomos como activo -->
   <div th:replace="~{admin/fragments/sidebar :: sidebar('tomes')}"></div>
 
   <main class="admin-main">
+
+    <!-- Topbar: título + botón para abrir el modal de creación -->
     <div class="admin-topbar">
       <div>
         <h1 class="admin-page-title">Tomos</h1>
@@ -32,12 +52,13 @@
       </div>
       <button class="btn btn-sm btn-primary d-flex align-items-center gap-1"
               data-bs-toggle="modal" data-bs-target="#createTomeModal">
-        <span class="material-symbols-outlined" style="font-size:1rem;">add</span>
+        <!-- admin-topbar-btn-icon: reduce el icono al tamaño del botón (admin-shared.css) -->
+        <span class="material-symbols-outlined admin-topbar-btn-icon">add</span>
         Nuevo Tomo
       </button>
     </div>
 
-    <!-- Flash messages -->
+    <!-- Mensajes flash -->
     <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
       <span th:text="${success}"></span>
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -47,11 +68,16 @@
       <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 
+    <!-- Tabla de tomos -->
     <div class="admin-card">
       <div class="admin-card-header">
         <p class="admin-card-title">
           Todos los tomos
-          <span style="font-size:0.8rem; color:var(--color-outline); font-weight:400; margin-left:0.5rem;"
+          <!--
+            admin-table-count: badge de recuento junto al título (admin-shared.css).
+            #lists.size(tomes): cuenta los tomos en la lista del modelo.
+          -->
+          <span class="admin-table-count"
                 th:text="'(' + ${#lists.size(tomes)} + ' total)'"></span>
         </p>
       </div>
@@ -67,16 +93,25 @@
             </tr>
           </thead>
           <tbody>
+            <!-- th:each: itera sobre todos los tomos -->
             <tr th:each="tome : ${tomes}">
-              <td style="font-size:0.8rem; color:var(--color-outline);" th:text="${tome.id}">—</td>
+              <!-- admin-table-id: columna de id en pequeño y atenuado (admin-shared.css) -->
+              <td class="admin-table-id" th:text="${tome.id}">—</td>
               <td>
+                <!-- admin-badge: pastilla de numeración definida en main.css -->
                 <span class="admin-badge" th:text="'Tomo ' + ${tome.numberTome}">—</span>
               </td>
               <td>
-                <span style="font-size:0.85rem; font-weight:600; color:var(--bs-primary);"
+                <!-- admin-table-name: título en negrita y color primary (admin-shared.css) -->
+                <span class="admin-table-name"
                       th:text="${tome.title != null} ? ${tome.title} : '—'">—</span>
               </td>
-              <td style="font-size:0.82rem;"
+              <!--
+                admin-table-meta: texto secundario reducido (admin-shared.css).
+                Expresión ternaria encadenada: si hay título de edición lo muestra;
+                si no pero hay editionId, construye "Edición #N"; si no hay nada, '—'.
+              -->
+              <td class="admin-table-meta"
                   th:text="${tome.editionTitle != null} ? ${tome.editionTitle} : (${tome.editionId != null} ? 'Edición #' + ${tome.editionId} : '—')">—</td>
               <td>
                 <div class="d-flex gap-1">
@@ -88,7 +123,8 @@
                           th:data-title="${tome.title}"
                           th:data-editionid="${tome.editionId}"
                           onclick="openEditTomeModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">edit</span>
+                    <!-- admin-table-action-icon: icono reducido en botones de acción (admin-shared.css) -->
+                    <span class="material-symbols-outlined admin-table-action-icon">edit</span>
                   </button>
                   <button type="button" class="btn btn-sm btn-outline-danger p-1"
                           title="Eliminar"
@@ -96,13 +132,15 @@
                           th:data-id="${tome.id}"
                           th:data-title="${tome.title}"
                           onclick="openDeleteTomeModal(this)">
-                    <span class="material-symbols-outlined" style="font-size:0.9rem;">delete</span>
+                    <span class="material-symbols-outlined admin-table-action-icon">delete</span>
                   </button>
                 </div>
               </td>
             </tr>
+            <!-- Fila vacía si no hay tomos -->
             <tr th:if="${tomes == null or tomes.isEmpty()}">
-              <td colspan="5" class="text-center py-4" style="color:var(--color-outline); font-size:0.85rem;">
+              <!-- admin-table-empty: mensaje de lista vacía (admin-shared.css) -->
+              <td colspan="5" class="text-center py-4 admin-table-empty">
                 No hay tomos registrados
               </td>
             </tr>
@@ -112,6 +150,10 @@
     </div>
   </main>
 </div>
+
+<!-- ============================================================
+     MODALES BOOTSTRAP — fuera del .admin-layout
+     ============================================================ -->
 
 <!-- Modal: Crear Tomo -->
 <div class="modal fade" id="createTomeModal" tabindex="-1">
@@ -126,6 +168,7 @@
           <div class="row g-3">
             <div class="col-md-4">
               <label class="form-label fw-semibold">Nº Tomo <span class="text-danger">*</span></label>
+              <!-- min="1": el número de tomo debe ser al menos 1 -->
               <input type="number" name="numberTome" class="form-control form-control-sm" min="1" required>
             </div>
             <div class="col-md-8">
@@ -134,6 +177,10 @@
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Edición <span class="text-danger">*</span></label>
+              <!--
+                th:each sobre editions: genera un <option> por cada edición.
+                El texto usa el título si existe, o construye "Edición #N" como fallback.
+              -->
               <select name="editionId" class="form-select form-select-sm" required>
                 <option value="">— Seleccionar edición —</option>
                 <option th:each="e : ${editions}" th:value="${e.id}"
@@ -198,7 +245,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
-        <p style="font-size:0.9rem;">¿Seguro que quieres eliminar el tomo
+        <!-- admin-modal-confirm: tamaño del párrafo de confirmación (admin-shared.css) -->
+        <p class="admin-modal-confirm">¿Seguro que quieres eliminar el tomo
           <strong id="deleteTomeName"></strong>?
           Esta acción no se puede deshacer.
         </p>

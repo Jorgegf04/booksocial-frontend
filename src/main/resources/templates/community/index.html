@@ -1,192 +1,241 @@
+<!--/*
+  ============================================================
+  Vista: Comunidad — directorio de usuarios
+  Ruta: /community
+  Controlador: CommunityController#index() (GET)
+
+  Recibe del modelo:
+    - users         : List<UserResponseDTO> — usuarios a mostrar (excluye al propio).
+    - followingIds  : Set<Long>             — IDs de usuarios que ya sigue la sesión activa.
+    - sessionUserId : Long                  — ID del usuario en sesión (null si no hay sesión).
+
+  Funcionalidades:
+    · Botón "Seguir"      → POST /community/{id}/follow   (solo si hay sesión y no sigue).
+    · Botón "Siguiendo ✓" → POST /community/{id}/unfollow (si ya sigue).
+    · Sin sesión → botón "Ver perfil" en lugar de los botones de seguir.
+    · Buscador client-side: filtra tarjetas por username en tiempo real (JS, sin recarga).
+    · Avatar o nombre → navega al perfil público del usuario (/user/{id}).
+
+  Fragmentos incluidos:
+    - fragments/navbar    :: navbar
+    - fragments/messages  :: messages
+    - fragments/footer    :: footer
+  ============================================================
+*/-->
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Comunidad — BookSocial</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-      rel="stylesheet">
-    <link rel="stylesheet" th:href="@{/css/main.css}">
-  </head>
-  <body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comunidad — BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <!-- Estilos del directorio de usuarios -->
+  <link rel="stylesheet" th:href="@{/css/pages/public/community.css}">
+</head>
+<body>
 
-    <div th:replace="~{fragments/navbar :: navbar}"></div>
+  <!-- NAVBAR -->
+  <div th:replace="~{fragments/navbar :: navbar}"></div>
 
+  <!-- community-main: padding-top compensa la navbar fixed (community.css) -->
+  <main class="container community-main">
+
+    <!-- Mensajes flash de seguir / dejar de seguir -->
+    <div th:replace="~{fragments/messages :: messages}"></div>
+
+    <!-- Cabecera: título + buscador -->
+    <div class="d-flex align-items-end justify-content-between mb-4 flex-wrap gap-3">
+      <div>
+        <p class="filter-section-title mb-1">Lectores</p>
+        <!-- community-heading: font-serif + color primary (community.css) -->
+        <h1 class="font-serif mb-0 community-heading">Comunidad</h1>
+      </div>
+
+      <!--
+        Buscador client-side: filtra las tarjetas en tiempo real con JS sin recargar.
+        community-search-group: limita el ancho máximo del input-group (community.css).
+      -->
+      <div class="input-group community-search-group">
+        <!--
+          id="searchInput": el JS escucha el evento 'input' en este elemento.
+          community-search-input: border-radius redondeado en el lado izquierdo (community.css).
+        -->
+        <input id="searchInput" type="text"
+               class="form-control form-control-sm community-search-input"
+               placeholder="Buscar usuario...">
+        <!--
+          input-group-text: Bootstrap — sufijo visual del input-group.
+          community-search-btn: fondo primary + border-radius derecho (community.css).
+        -->
+        <span class="input-group-text community-search-btn">
+          <span class="material-symbols-outlined community-search-icon">search</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Estado vacío: ningún usuario en el sistema -->
+    <div th:if="${users == null or users.isEmpty()}"
+         class="text-center py-5 community-empty">
+      <span class="material-symbols-outlined d-block mb-2 community-empty-icon">group</span>
+      <p class="font-serif mb-1 community-empty-text">
+        Aún no hay otros lectores
+      </p>
+    </div>
+
+    <!-- Grid de usuarios -->
     <!--
-    ============================================================
-    Vista: community/index.html
-    ============================================================
-    Página de Comunidad: muestra todos los usuarios registrados
-    (excepto el usuario en sesión) en un grid de tarjetas.
+      id="userGrid": el JS oculta columnas individuales según la búsqueda.
+      th:if: Thymeleaf renderiza el grid solo si hay usuarios.
+    -->
+    <div id="userGrid" class="row g-3"
+         th:if="${users != null and !users.isEmpty()}">
 
-    Modelo recibido del CommunityController:
-      - users        : List<UserResponseDTO> — usuarios a mostrar (sin el propio).
-      - followingIds : Set<Long>             — IDs de usuarios que ya sigue la sesión activa.
-      - sessionUserId: Long                  — ID del usuario en sesión (null si no hay sesión).
+      <!--
+        th:each="u : ${users}": itera sobre la lista de usuarios.
+        user-card-col: clase usada por el JS para seleccionar columnas a ocultar.
+        th:attr="data-username=...": el JS filtra comparando este data-* con el input.
+      -->
+      <div th:each="u : ${users}"
+           class="col-sm-6 col-md-4 col-lg-3 user-card-col"
+           th:attr="data-username=${u.username}">
 
-    Funcionalidades:
-      · Botón "Seguir" → POST /community/{id}/follow  (solo si sessionUserId != null y no sigue).
-      · Botón "Siguiendo ✓" → POST /community/{id}/unfollow (si ya sigue).
-      · Sin sesión → botón "Ver perfil" en su lugar.
-      · Buscador client-side: filtra tarjetas por username en tiempo real (JS, sin recarga).
-      · Clic en avatar o nombre → navega al perfil público del usuario (/user/{id}).
-    ============================================================
-  -->
+        <!--
+          community-user-card: border-radius + border + bg gris claro (community.css).
+          card h-100: Bootstrap — tarjeta de altura completa para alinear el contenido.
+          text-center: Bootstrap — centra todo el contenido de la tarjeta.
+        -->
+        <div class="card h-100 text-center community-user-card">
 
-    <main class="container" style="padding-top: 6rem; padding-bottom: 5rem;">
+          <div class="card-body d-flex flex-column align-items-center pt-4 pb-3 gap-2">
 
-      <!-- Cabecera -->
-      <div
-        class="d-flex align-items-end justify-content-between mb-4 flex-wrap gap-3">
-        <div>
-          <p class="filter-section-title mb-1">Lectores</p>
-          <h1 class="font-serif mb-0"
-            style="font-size:2rem; color:var(--bs-primary);">Comunidad</h1>
-        </div>
-        <!-- Buscador local -->
-        <div class="input-group" style="max-width:280px;">
-          <input id="searchInput" type="text"
-            class="form-control form-control-sm"
-            style="border-radius:2rem 0 0 2rem;"
-            placeholder="Buscar usuario...">
-          <span class="input-group-text"
-            style="border-radius:0 2rem 2rem 0; background:var(--bs-primary); border:none;">
-            <span class="material-symbols-outlined"
-              style="font-size:1rem; color:#fff;">search</span>
-          </span>
-        </div>
-      </div>
-
-      <!-- Sin usuarios -->
-      <div th:if="${users == null or users.isEmpty()}"
-        class="text-center py-5"
-        style="background:var(--color-surface-l); border-radius:1rem;">
-        <span class="material-symbols-outlined d-block mb-2"
-          style="font-size:3.5rem; color:var(--color-outline-l);">group</span>
-        <p class="font-serif mb-1"
-          style="color:var(--bs-primary); font-size:1.1rem;">
-          Aún no hay otros lectores
-        </p>
-      </div>
-
-      <!-- Grid de usuarios -->
-      <div id="userGrid" class="row g-3"
-        th:if="${users != null and !users.isEmpty()}">
-
-        <div th:each="u : ${users}"
-          class="col-sm-6 col-md-4 col-lg-3 user-card-col"
-          th:attr="data-username=${u.username}">
-
-          <div class="card h-100 text-center"
-            style="border-radius:1rem; border:1px solid var(--color-outline-l);
-                    background:var(--color-surface-l); transition:box-shadow .2s;">
-
-            <div
-              class="card-body d-flex flex-column align-items-center pt-4 pb-3 gap-2">
-
-              <!-- Avatar -->
-              <a th:href="@{'/user/' + ${u.id}}" class="text-decoration-none">
-                <img th:if="${u.img != null and !u.img.isEmpty()}"
-                  th:src="${u.img}" th:alt="${u.username}"
-                  style="width:4rem; height:4rem; border-radius:50%; object-fit:cover;">
-                <div th:unless="${u.img != null and !u.img.isEmpty()}"
-                  class="profile-avatar-placeholder"
-                  style="width:4rem; height:4rem; font-size:1.4rem;"
-                  th:text="${u.username != null ? #strings.substring(u.username,0,1).toUpperCase() : '?'}">
-                </div>
-              </a>
-
-              <!-- Nombre -->
-              <a th:href="@{'/user/' + ${u.id}}"
-                class="text-decoration-none"
-                style="color:var(--bs-primary); font-weight:700; font-size:0.95rem;"
-                th:text="${u.username}">username</a>
-
-              <p class="mb-0"
-                style="font-size:0.78rem; color:var(--color-muted);"
-                th:text="${(u.name != null ? u.name : '') + (u.secondName != null ? ' ' + u.secondName : '')}"></p>
-
-              <!-- Badge rol -->
-              <span class="profile-badge"
-                th:classappend="${u.role == 'ADMIN'} ? 'admin' : (${u.role == 'SUBSCRIBED'} ? 'subscribed' : '')"
-                th:text="${u.role != null ? u.role : 'USER'}">USER</span>
-
-              <!-- Botón seguir / dejar de seguir -->
-              <div class="mt-auto pt-2 w-100"
-                th:if="${sessionUserId != null}">
-
-                <form th:if="${followingIds == null or !followingIds.contains(u.id)}"
-                  th:action="@{'/community/' + ${u.id} + '/follow'}"
-                  method="post">
-                  <button type="submit" class="btn-primary-pill w-100"
-                    style="padding:0.45rem; font-size:0.8rem;">
-                    Seguir
-                  </button>
-                </form>
-
-                <form th:if="${followingIds != null and followingIds.contains(u.id)}"
-                  th:action="@{'/community/' + ${u.id} + '/unfollow'}"
-                  method="post">
-                  <button type="submit" class="w-100"
-                    style="padding:0.45rem; font-size:0.8rem; font-weight:600;
-                               border:1.5px solid var(--bs-primary); border-radius:2rem;
-                               background:transparent; color:var(--bs-primary); cursor:pointer;">
-                    Siguiendo ✓
-                  </button>
-                </form>
-
+            <!-- Avatar: imagen o placeholder con inicial del username -->
+            <a th:href="@{'/user/' + ${u.id}}" class="text-decoration-none">
+              <!--
+                community-user-avatar: imagen redonda 4rem × 4rem (community.css).
+              -->
+              <img th:if="${u.img != null and !u.img.isEmpty()}"
+                   th:src="${u.img}" th:alt="${u.username}"
+                   class="community-user-avatar">
+              <!--
+                profile-avatar-placeholder: clase de main.css para el círculo con inicial.
+                community-avatar-placeholder: modifica el tamaño a 4rem (community.css).
+                #strings.substring(str,0,1).toUpperCase(): extrae la primera letra en mayúscula.
+              -->
+              <div th:unless="${u.img != null and !u.img.isEmpty()}"
+                   class="profile-avatar-placeholder community-avatar-placeholder"
+                   th:text="${u.username != null ? #strings.substring(u.username,0,1).toUpperCase() : '?'}">
               </div>
+            </a>
 
-              <!-- Sin sesión: solo ir al perfil -->
-              <div class="mt-auto pt-2 w-100" th:if="${sessionUserId == null}">
-                <a th:href="@{'/user/' + ${u.id}}"
-                  class="btn-primary-pill d-block text-center text-decoration-none"
-                  style="padding:0.45rem; font-size:0.8rem;">
-                  Ver perfil
-                </a>
-              </div>
+            <!-- Nombre de usuario enlazado al perfil -->
+            <!-- community-user-name: negrita + color primary (community.css) -->
+            <a th:href="@{'/user/' + ${u.id}}"
+               class="text-decoration-none community-user-name"
+               th:text="${u.username}">username</a>
+
+            <!-- Nombre completo (nombre + apellido, ambos opcionales) -->
+            <!-- community-user-fullname: font-size pequeño + color muted (community.css) -->
+            <p class="mb-0 community-user-fullname"
+               th:text="${(u.name != null ? u.name : '') + (u.secondName != null ? ' ' + u.secondName : '')}"></p>
+
+            <!--
+              profile-badge: pastilla de rol (main.css).
+              th:classappend: añade 'admin' o 'subscribed' al badge según el rol.
+              Resultado: class="profile-badge admin" o class="profile-badge subscribed"
+            -->
+            <span class="profile-badge"
+                  th:classappend="${u.role == 'ADMIN'} ? 'admin' : (${u.role == 'SUBSCRIBED'} ? 'subscribed' : '')"
+                  th:text="${u.role != null ? u.role : 'USER'}">USER</span>
+
+            <!-- Botones de seguir / dejar de seguir (solo si hay sesión) -->
+            <div class="mt-auto pt-2 w-100"
+                 th:if="${sessionUserId != null}">
+
+              <!--
+                th:if: muestra "Seguir" si followingIds no contiene el ID del usuario.
+                community-follow-btn: padding y font-size reducidos (community.css).
+                w-100: Bootstrap — botón de ancho completo.
+              -->
+              <form th:if="${followingIds == null or !followingIds.contains(u.id)}"
+                    th:action="@{'/community/' + ${u.id} + '/follow'}"
+                    method="post">
+                <button type="submit"
+                        class="btn-primary-pill w-100 community-follow-btn">
+                  Seguir
+                </button>
+              </form>
+
+              <!--
+                community-unfollow-btn: ghost pill compacto (community.css).
+              -->
+              <form th:if="${followingIds != null and followingIds.contains(u.id)}"
+                    th:action="@{'/community/' + ${u.id} + '/unfollow'}"
+                    method="post">
+                <button type="submit"
+                        class="w-100 community-unfollow-btn">
+                  Siguiendo ✓
+                </button>
+              </form>
 
             </div>
+
+            <!-- Sin sesión: solo enlace al perfil público del usuario -->
+            <div class="mt-auto pt-2 w-100" th:if="${sessionUserId == null}">
+              <!--
+                community-view-profile-btn: mismo tamaño que los botones de follow (community.css).
+              -->
+              <a th:href="@{'/user/' + ${u.id}}"
+                 class="btn-primary-pill d-block text-center text-decoration-none community-view-profile-btn">
+                Ver perfil
+              </a>
+            </div>
+
           </div>
         </div>
-
       </div>
 
-      <!-- Sin resultados tras búsqueda -->
-      <div id="emptySearch" class="text-center py-5" style="display:none;">
-        <span class="material-symbols-outlined d-block mb-2"
-          style="font-size:3rem; color:var(--color-outline-l);">search_off</span>
-        <p style="color:var(--color-muted);">Ningún usuario coincide con la
-          búsqueda.</p>
-      </div>
+    </div>
 
-    </main>
+    <!-- Estado vacío de búsqueda (oculto por defecto, JS lo muestra si no hay coincidencias) -->
+    <div id="emptySearch" class="text-center py-5" style="display:none;">
+      <span class="material-symbols-outlined d-block mb-2 community-search-empty-icon">search_off</span>
+      <p class="community-search-empty-text">Ningún usuario coincide con la búsqueda.</p>
+    </div>
 
-    <div th:replace="~{fragments/footer :: footer}"></div>
+  </main>
 
-    <script
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-    (function () {
-      const input = document.getElementById('searchInput');
-      const cols  = document.querySelectorAll('.user-card-col');
-      const empty = document.getElementById('emptySearch');
+  <!-- FOOTER -->
+  <div th:replace="~{fragments/footer :: footer}"></div>
 
-      if (!input) return;
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <!--
+    Buscador client-side: filtra tarjetas por data-username en tiempo real.
+    No hace petición al servidor — todo el filtrado es en el navegador.
+    IIFE (Immediately Invoked Function Expression): encapsula las variables para
+    no contaminar el scope global.
+  -->
+  <script>
+  (function () {
+    const input = document.getElementById('searchInput');
+    const cols  = document.querySelectorAll('.user-card-col');
+    const empty = document.getElementById('emptySearch');
 
-      input.addEventListener('input', function () {
-        const q = this.value.trim().toLowerCase();
-        let visible = 0;
-        cols.forEach(col => {
-          const name = (col.dataset.username || '').toLowerCase();
-          const show = !q || name.includes(q);
-          col.style.display = show ? '' : 'none';
-          if (show) visible++;
-        });
-        if (empty) empty.style.display = (q && visible === 0) ? '' : 'none';
+    if (!input) return;
+
+    input.addEventListener('input', function () {
+      const q = this.value.trim().toLowerCase();
+      let visible = 0;
+      cols.forEach(col => {
+        const name = (col.dataset.username || '').toLowerCase();
+        const show = !q || name.includes(q);
+        col.style.display = show ? '' : 'none';
+        if (show) visible++;
       });
-    })();
+      if (empty) empty.style.display = (q && visible === 0) ? '' : 'none';
+    });
+  })();
   </script>
-  </body>
+
+</body>
 </html>
