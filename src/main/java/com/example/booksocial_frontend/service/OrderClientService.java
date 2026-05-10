@@ -33,6 +33,13 @@ public class OrderClientService {
         .body(new ParameterizedTypeReference<List<OrderResponseDTO>>() {});
   }
 
+  public OrderResponseDTO getOrderById(Long id) {
+    return restClient.get()
+        .uri("/{id}", id)
+        .retrieve()
+        .body(OrderResponseDTO.class);
+  }
+
   public List<OrderResponseDTO> getOrdersByUser(Long userId) {
     return restClient.get()
         .uri("/user/{userId}", userId)
@@ -48,5 +55,12 @@ public class OrderClientService {
         .body(body)
         .retrieve()
         .body(OrderResponseDTO.class);
+  }
+
+  public void deleteOrder(Long id) {
+    restClient.delete()
+        .uri("/{id}", id)
+        .retrieve()
+        .toBodilessEntity();
   }
 }

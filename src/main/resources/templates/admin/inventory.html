@@ -52,6 +52,16 @@
       </div>
     </div>
 
+    <!-- Mensajes flash -->
+    <div th:if="${success}" class="alert alert-success alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${success}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show mx-0 mb-3" role="alert">
+      <span th:text="${error}"></span>
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
     <!-- Tabla de productos -->
     <div class="admin-card">
       <div class="admin-card-header">
@@ -73,6 +83,7 @@
               <th>ISBN</th>
               <th>Precio</th>
               <th>Stock</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -110,11 +121,23 @@
                       th:classappend="${p.stock == 0} ? 'admin-stock-empty' : (${p.stock <= 5} ? 'admin-stock-low' : 'admin-stock-ok')"
                       th:text="${p.stock} + ' uds.'">0</span>
               </td>
+              <td>
+                <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                        title="Ajustar stock"
+                        data-bs-toggle="modal" data-bs-target="#stockModal"
+                        th:data-editionid="${p.editionId}"
+                        th:data-worktitle="${p.workTitle}"
+                        th:data-isbn="${p.editionIsbn}"
+                        th:data-stock="${p.stock}"
+                        onclick="openStockModal(this)">
+                  <span class="material-symbols-outlined admin-table-action-icon">inventory</span>
+                </button>
+              </td>
             </tr>
             <!-- Fila vacía si no hay productos -->
             <tr th:if="${products == null or products.isEmpty()}">
               <!-- admin-table-empty: mensaje de lista vacía (admin-shared.css) -->
-              <td colspan="5" class="text-center py-4 admin-table-empty">
+              <td colspan="6" class="text-center py-4 admin-table-empty">
                 No hay productos disponibles
               </td>
             </tr>
@@ -125,6 +148,47 @@
   </main>
 </div>
 
+<!-- ============================================================
+     MODAL DE AJUSTE DE STOCK — fuera del .admin-layout
+     ============================================================ -->
+
+<!-- Modal: Ajustar stock -->
+<div class="modal fade" id="stockModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Ajustar stock</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="stockForm" method="post">
+        <div class="modal-body">
+          <p class="admin-tracking-order mb-1">
+            <strong id="stockWorkTitle"></strong>
+          </p>
+          <p class="admin-tracking-note mb-3">
+            ISBN: <span id="stockIsbn"></span>
+          </p>
+          <label class="form-label fw-semibold">Nuevo stock <span class="text-danger">*</span></label>
+          <input type="number" id="stockInput" name="newStock" class="form-control form-control-sm"
+                 min="0" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function openStockModal(btn) {
+    document.getElementById('stockForm').action = '/admin/inventory/' + btn.dataset.editionid + '/stock';
+    document.getElementById('stockWorkTitle').textContent = btn.dataset.worktitle || '—';
+    document.getElementById('stockIsbn').textContent = btn.dataset.isbn || '—';
+    document.getElementById('stockInput').value = btn.dataset.stock || 0;
+  }
+</script>
 </body>
 </html>

@@ -58,6 +58,17 @@ public class CommentClientService {
         .body(CommentResponseDTO.class);
   }
 
+  public void updateComment(Long id, String content) {
+    CommentRequestDTO req = new CommentRequestDTO();
+    req.setContent(content);
+    restClient.put()
+        .uri("/{id}", id)
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(req)
+        .retrieve()
+        .toBodilessEntity();
+  }
+
   public void deleteComment(Long id) {
     restClient.delete()
         .uri("/{id}", id)

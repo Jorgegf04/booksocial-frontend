@@ -140,15 +140,36 @@
                       th:text="${comment.replies != null} ? ${#lists.size(comment.replies)} + ' resp.' : '0'">0</span>
               </td>
               <td>
-                <button type="button" class="btn btn-sm btn-outline-danger p-1"
-                        title="Eliminar comentario"
-                        data-bs-toggle="modal" data-bs-target="#deleteCommentModal"
-                        th:data-id="${comment.id}"
-                        th:data-username="${comment.username}"
-                        onclick="openDeleteCommentModal(this)">
-                  <!-- admin-table-action-icon: icono reducido (admin-shared.css) -->
-                  <span class="material-symbols-outlined admin-table-action-icon">delete</span>
-                </button>
+                <div class="d-flex gap-1">
+                  <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                          title="Ver comentario completo"
+                          data-bs-toggle="modal" data-bs-target="#viewCommentModal"
+                          th:data-id="${comment.id}"
+                          th:data-username="${comment.username}"
+                          th:data-worktitle="${comment.workTitle}"
+                          th:data-date="${comment.date != null} ? ${#temporals.format(comment.date, 'dd/MM/yyyy HH:mm')} : ''"
+                          th:data-content="${comment.content}"
+                          onclick="openViewCommentModal(this)">
+                    <span class="material-symbols-outlined admin-table-action-icon">open_in_full</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-secondary p-1"
+                          title="Editar comentario"
+                          data-bs-toggle="modal" data-bs-target="#editCommentModal"
+                          th:data-id="${comment.id}"
+                          th:data-content="${comment.content}"
+                          onclick="openEditCommentModal(this)">
+                    <span class="material-symbols-outlined admin-table-action-icon">edit</span>
+                  </button>
+                  <button type="button" class="btn btn-sm btn-outline-danger p-1"
+                          title="Eliminar comentario"
+                          data-bs-toggle="modal" data-bs-target="#deleteCommentModal"
+                          th:data-id="${comment.id}"
+                          th:data-username="${comment.username}"
+                          th:data-worktitle="${comment.workTitle}"
+                          onclick="openDeleteCommentModal(this)">
+                    <span class="material-symbols-outlined admin-table-action-icon">delete</span>
+                  </button>
+                </div>
               </td>
             </tr>
             <!-- Fila vacía si no hay comentarios -->
@@ -166,8 +187,61 @@
 </div>
 
 <!-- ============================================================
-     MODAL DE ELIMINACIÓN — fuera del .admin-layout
+     MODALES BOOTSTRAP — fuera del .admin-layout
      ============================================================ -->
+
+<!-- Modal: Ver comentario completo -->
+<div class="modal fade" id="viewCommentModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Comentario completo</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <p class="admin-tracking-order mb-1">
+            Usuario: <span id="viewCommentUsername" class="admin-tracking-username"></span>
+          </p>
+          <p class="admin-tracking-note mb-0">
+            Obra: <span id="viewCommentWork"></span>
+            &nbsp;·&nbsp;
+            Fecha: <span id="viewCommentDate"></span>
+          </p>
+        </div>
+        <div class="p-3 bg-light rounded">
+          <p id="viewCommentContent" class="admin-table-meta mb-0" style="white-space:pre-wrap;"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Comentario -->
+<div class="modal fade" id="editCommentModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Editar Comentario</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="editCommentForm" method="post">
+        <div class="modal-body">
+          <label class="form-label fw-semibold">Contenido <span class="text-danger">*</span></label>
+          <textarea id="editCommentContent" name="content" class="form-control form-control-sm"
+                    rows="5" required></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <!-- Modal: Eliminar Comentario -->
 <div class="modal fade" id="deleteCommentModal" tabindex="-1">
@@ -180,7 +254,8 @@
       <div class="modal-body">
         <!-- admin-modal-confirm: tamaño del párrafo de confirmación (admin-shared.css) -->
         <p class="admin-modal-confirm">¿Seguro que quieres eliminar el comentario de
-          <strong id="deleteCommentUser"></strong>?
+          <strong id="deleteCommentUser"></strong>
+          sobre <em id="deleteCommentWork"></em>?
           Esta acción no se puede deshacer.
         </p>
       </div>
@@ -196,9 +271,22 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+  function openViewCommentModal(btn) {
+    document.getElementById('viewCommentUsername').textContent = btn.dataset.username || '—';
+    document.getElementById('viewCommentWork').textContent = btn.dataset.worktitle || '—';
+    document.getElementById('viewCommentDate').textContent = btn.dataset.date || '—';
+    document.getElementById('viewCommentContent').textContent = btn.dataset.content || '';
+  }
+
+  function openEditCommentModal(btn) {
+    document.getElementById('editCommentForm').action = '/admin/comments/' + btn.dataset.id + '/update';
+    document.getElementById('editCommentContent').value = btn.dataset.content || '';
+  }
+
   function openDeleteCommentModal(btn) {
     document.getElementById('deleteCommentForm').action = '/admin/comments/' + btn.dataset.id + '/delete';
     document.getElementById('deleteCommentUser').textContent = '"' + (btn.dataset.username || 'este usuario') + '"';
+    document.getElementById('deleteCommentWork').textContent = '"' + (btn.dataset.worktitle || 'esta obra') + '"';
   }
 </script>
 </body>

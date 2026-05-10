@@ -147,11 +147,10 @@
                     - Si sessionUserId == null → enlace a login.
                     #lists.contains(lista, valor): utilidad Thymeleaf para buscar en listas.
                   -->
-                  <th:block th:if="${sessionUserId != null}">
+                  <th:block th:if="${sessionUserId != null and sessionRole == 'SUBSCRIBED'}">
                     <th:block th:if="${featured.userIds != null and #lists.contains(featured.userIds, sessionUserId)}">
                       <form th:action="@{'/events/' + ${featured.id} + '/leave'}" method="post">
                         <button type="submit" class="event-leave-btn">
-                          <!-- events-action-icon: font-size:1rem para iconos en botones (events.css) -->
                           <span class="material-symbols-outlined events-action-icon">logout</span>
                           Abandonar evento
                         </button>
@@ -165,6 +164,12 @@
                         </button>
                       </form>
                     </th:block>
+                  </th:block>
+                  <th:block th:if="${sessionUserId != null and sessionRole != 'SUBSCRIBED'}">
+                    <a href="/subscription/premium" class="btn-primary-pill event-join-btn text-decoration-none">
+                      <span class="material-symbols-outlined events-action-icon">workspace_premium</span>
+                      Suscríbete para unirte
+                    </a>
                   </th:block>
                   <th:block th:if="${sessionUserId == null}">
                     <a href="/auth/login" class="btn-primary-pill event-join-btn text-decoration-none">
@@ -214,7 +219,7 @@
                 </div>
 
                 <!-- Botones join/leave del evento secundario -->
-                <th:block th:if="${sessionUserId != null}">
+                <th:block th:if="${sessionUserId != null and sessionRole == 'SUBSCRIBED'}">
                   <th:block th:if="${secondary.userIds != null and #lists.contains(secondary.userIds, sessionUserId)}">
                     <form th:action="@{'/events/' + ${secondary.id} + '/leave'}" method="post">
                       <button type="submit" class="event-secondary-leave w-100">Abandonar sesión</button>
@@ -225,6 +230,12 @@
                       <button type="submit" class="event-secondary-join w-100">Unirse a la sesión</button>
                     </form>
                   </th:block>
+                </th:block>
+                <th:block th:if="${sessionUserId != null and sessionRole != 'SUBSCRIBED'}">
+                  <a href="/subscription/premium" class="btn-primary-pill event-join-btn w-100 d-block text-center text-decoration-none">
+                    <span class="material-symbols-outlined events-action-icon">workspace_premium</span>
+                    Suscríbete para unirte
+                  </a>
                 </th:block>
                 <th:block th:if="${sessionUserId == null}">
                   <a href="/auth/login" class="event-secondary-join w-100 d-block text-center text-decoration-none">Inicia sesión</a>
@@ -323,7 +334,7 @@
                     <span th:text="${event.totalParticipants}">0</span>
                   </div>
 
-                  <th:block th:if="${sessionUserId != null}">
+                  <th:block th:if="${sessionUserId != null and sessionRole == 'SUBSCRIBED'}">
                     <th:block th:if="${event.userIds != null and #lists.contains(event.userIds, sessionUserId)}">
                       <form th:action="@{'/events/' + ${event.id} + '/leave'}" method="post">
                         <button type="submit" class="event-card-leave-btn">Abandonar</button>
@@ -334,6 +345,12 @@
                         <button type="submit" class="event-card-join-btn">Unirse</button>
                       </form>
                     </th:block>
+                  </th:block>
+                  <th:block th:if="${sessionUserId != null and sessionRole != 'SUBSCRIBED'}">
+                    <a href="/subscription/premium" class="btn-primary-pill event-join-btn text-decoration-none">
+                      <span class="material-symbols-outlined events-action-icon">workspace_premium</span>
+                      Suscríbete para unirte
+                    </a>
                   </th:block>
                   <th:block th:if="${sessionUserId == null}">
                     <a href="/auth/login" class="event-card-join-btn text-decoration-none">Unirse</a>

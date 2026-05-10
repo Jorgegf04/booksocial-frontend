@@ -13,4 +13,6 @@ public class UpdateUserRequestDTO {
   private String name;
   private String secondName;
   private String img;
+  private String role;
+  private Boolean active;
 }

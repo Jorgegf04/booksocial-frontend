@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Suscripción Premium — BookSocial</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" th:href="@{/css/main.css}">
+  <link rel="stylesheet" th:href="@{/css/pages/public/subscription.css}">
+</head>
+<body>
+
+  <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+  <main class="sub-premium-main">
+    <div class="container px-4 px-lg-5">
+
+      <div th:replace="~{fragments/messages :: messages}"></div>
+
+      <!-- Hero -->
+      <div class="text-center mb-5 pt-2">
+        <span class="sub-premium-badge">
+          <span class="material-symbols-outlined sub-premium-badge-icon">workspace_premium</span>
+          Premium
+        </span>
+        <h1 class="font-serif sub-premium-heading mb-3">La Caja del Curador</h1>
+        <p class="sub-premium-desc mx-auto mb-0">
+          Una selección mensual curada de títulos premium entregada en tu puerta.
+          Acceso a talleres digitales, entradas anticipadas a eventos exclusivos y envío siempre gratuito.
+        </p>
+      </div>
+
+      <!-- Tarjeta principal -->
+      <div class="sub-premium-card mb-5">
+
+        <!-- Grid de 4 beneficios -->
+        <div class="row g-4 mb-5">
+          <div class="col-sm-6 col-lg-3">
+            <div class="sub-premium-benefit-card">
+              <span class="material-symbols-outlined sub-premium-benefit-icon">menu_book</span>
+              <p class="sub-premium-benefit-title">3 Títulos Premium</p>
+              <p class="sub-premium-benefit-text">Selección mensual curada por nuestros editores</p>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="sub-premium-benefit-card">
+              <span class="material-symbols-outlined sub-premium-benefit-icon">local_shipping</span>
+              <p class="sub-premium-benefit-title">Envío Gratuito</p>
+              <p class="sub-premium-benefit-text">A toda España sin coste adicional</p>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="sub-premium-benefit-card">
+              <span class="material-symbols-outlined sub-premium-benefit-icon">event</span>
+              <p class="sub-premium-benefit-title">Eventos Exclusivos</p>
+              <p class="sub-premium-benefit-text">Q&amp;A con autores internacionales</p>
+            </div>
+          </div>
+          <div class="col-sm-6 col-lg-3">
+            <div class="sub-premium-benefit-card">
+              <span class="material-symbols-outlined sub-premium-benefit-icon">cancel</span>
+              <p class="sub-premium-benefit-title">Cancela cuando quieras</p>
+              <p class="sub-premium-benefit-text">Sin permanencia ni compromisos</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Precio y CTA -->
+        <div class="text-center">
+          <p class="mb-4">
+            <span class="sub-premium-price-cur">€</span><span class="sub-premium-price-num">29</span><span class="sub-premium-price-per">/mes</span>
+          </p>
+
+          <!-- Usuario con sesión y rol USER: formulario de activación -->
+          <th:block th:if="${canSubscribe}">
+            <form th:action="@{/subscription/activate}" method="post" class="d-inline">
+              <button type="submit" class="sub-premium-btn">
+                <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle;margin-right:0.3rem">workspace_premium</span>
+                Activar suscripción
+              </button>
+            </form>
+          </th:block>
+
+          <!-- Sin sesión: enlace a login -->
+          <th:block th:unless="${canSubscribe}">
+            <a href="/auth/login" class="sub-premium-login-link">
+              <span class="material-symbols-outlined sub-premium-login-icon">login</span>
+              Inicia sesión para suscribirte
+            </a>
+          </th:block>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <div th:replace="~{fragments/footer :: footer}"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -40,7 +40,7 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/catalog")
 public class CatalogController {
 
-  private static final int PAGE_SIZE = 10;
+  private static final int PAGE_SIZE = 12;
 
   private final WorkClientService workService;
 

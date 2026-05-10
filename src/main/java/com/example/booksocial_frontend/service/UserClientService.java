@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.example.booksocial_frontend.dto.CreateUserRequestDTO;
 import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
 import com.example.booksocial_frontend.dto.UpdateUserRequestDTO;
 import com.example.booksocial_frontend.dto.UserResponseDTO;
@@ -76,6 +77,15 @@ public class UserClientService {
         .uri("/{id}/following", userId)
         .retrieve()
         .body(new ParameterizedTypeReference<List<UserResponseDTO>>() {});
+  }
+
+  public UserResponseDTO createUser(CreateUserRequestDTO dto) {
+    return restClient.post()
+        .uri("")
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(dto)
+        .retrieve()
+        .body(UserResponseDTO.class);
   }
 
   public void followUser(Long followerId, Long targetId) {

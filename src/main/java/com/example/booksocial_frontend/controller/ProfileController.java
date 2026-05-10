@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.booksocial_frontend.dto.OrderResponseDTO;
+import com.example.booksocial_frontend.dto.SubscriptionResponseDTO;
 import com.example.booksocial_frontend.dto.TrackingOrderResponseDTO;
 import com.example.booksocial_frontend.dto.TrackingWorkRequestDTO;
 import com.example.booksocial_frontend.dto.TrackingWorkResponseDTO;
@@ -18,6 +19,7 @@ import com.example.booksocial_frontend.dto.UserResponseDTO;
 import com.example.booksocial_frontend.exception.ApiErrorUtils;
 import com.example.booksocial_frontend.service.FileUploadClientService;
 import com.example.booksocial_frontend.service.OrderClientService;
+import com.example.booksocial_frontend.service.SubscriptionClientService;
 import com.example.booksocial_frontend.service.TrackingOrderClientService;
 import com.example.booksocial_frontend.service.TrackingWorkClientService;
 import com.example.booksocial_frontend.service.UserClientService;
@@ -59,6 +61,7 @@ public class ProfileController {
   private final OrderClientService orderService;
   private final TrackingOrderClientService trackingOrderService;
   private final FileUploadClientService fileUploadClientService;
+  private final SubscriptionClientService subscriptionService;
 
   /** Perfil público de cualquier usuario */
   @GetMapping("/{id}")
@@ -115,6 +118,16 @@ public class ProfileController {
       }
     }
 
+    // Suscripción: solo para el propio perfil con rol SUBSCRIBED
+    SubscriptionResponseDTO subscription = null;
+    if (isOwnProfile && "SUBSCRIBED".equals(user.getRole())) {
+      try {
+        subscription = subscriptionService.getByUserId(id);
+      } catch (Exception e) {
+        log.warn("[PROFILE] No se pudo cargar suscripción del usuario {}: {}", id, e.getMessage());
+      }
+    }
+
     model.addAttribute("user", user);
     model.addAttribute("tracking", tracking);
     model.addAttribute("isOwnProfile", isOwnProfile);
@@ -126,9 +139,11 @@ public class ProfileController {
     model.addAttribute("isFollowing", isFollowing);
     model.addAttribute("orders", orders);
     model.addAttribute("orderTrackings", orderTrackings);
+    model.addAttribute("subscription", subscription);
     model.addAttribute("updateForm", new UpdateUserRequestDTO(
         user.getUsername(), user.getEmail(),
-        user.getName(), user.getSecondName(), user.getImg()));
+        user.getName(), user.getSecondName(), user.getImg(),
+        user.getRole(), user.getActive()));
 
     return "user/profile";
   }
@@ -207,6 +222,26 @@ public class ProfileController {
       case "READING" -> "COMPLETED";
       default -> "PENDING";
     };
+  }
+
+  /** Cancelar suscripción del usuario autenticado */
+  @PostMapping("/{id}/subscription/cancel")
+  public String cancelSubscription(@PathVariable Long id,
+                                   HttpSession session,
+                                   org.springframework.web.servlet.mvc.support.RedirectAttributes ra) {
+    Long sessionUserId = (Long) session.getAttribute("userId");
+    if (sessionUserId == null || !sessionUserId.equals(id)) {
+      return "redirect:/auth/login";
+    }
+    try {
+      subscriptionService.cancel(id);
+      session.setAttribute("role", "REGISTERED");
+      ra.addFlashAttribute("successMsg", "Suscripción cancelada correctamente.");
+    } catch (Exception e) {
+      log.warn("[PROFILE] Error al cancelar suscripción del usuario {}: {}", id, e.getMessage());
+      ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
+    }
+    return "redirect:/user/" + id;
   }
 
   /** Actualizar datos del perfil */

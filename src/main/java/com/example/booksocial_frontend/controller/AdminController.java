@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -20,6 +22,7 @@ import com.example.booksocial_frontend.dto.AuthorResponseDTO;
 import com.example.booksocial_frontend.dto.ChapterRequestDTO;
 import com.example.booksocial_frontend.dto.ChapterResponseDTO;
 import com.example.booksocial_frontend.dto.CommentResponseDTO;
+import com.example.booksocial_frontend.dto.CreateUserRequestDTO;
 import com.example.booksocial_frontend.dto.EditionRequestDTO;
 import com.example.booksocial_frontend.dto.EditionResponseDTO;
 import com.example.booksocial_frontend.dto.EditorialRequestDTO;
@@ -620,12 +623,14 @@ public class AdminController {
       @RequestParam(required = false) String secondName,
       @RequestParam(required = false) String img,
       @RequestParam(required = false) MultipartFile imgFile,
+      @RequestParam(required = false) String role,
+      @RequestParam(required = false) Boolean active,
       RedirectAttributes ra) {
 
     try {
       String finalImg = imgFile != null && !imgFile.isEmpty()
           ? fileUploadClientService.uploadImage(imgFile) : img;
-      UpdateUserRequestDTO dto = new UpdateUserRequestDTO(username, email, name, secondName, finalImg);
+      UpdateUserRequestDTO dto = new UpdateUserRequestDTO(username, email, name, secondName, finalImg, role, active);
       userClientService.updateUser(id, dto);
       ra.addFlashAttribute("success", "Usuario actualizado correctamente");
     } catch (Exception e) {
@@ -985,6 +990,17 @@ public class AdminController {
 
   // COMMERCE (sin CRUD)
 
+  @GetMapping("/orders/{id}")
+  @ResponseBody
+  public ResponseEntity<OrderResponseDTO> getOrderDetail(@PathVariable Long id) {
+    try {
+      OrderResponseDTO order = orderClientService.getOrderById(id);
+      return ResponseEntity.ok(order);
+    } catch (Exception e) {
+      return ResponseEntity.notFound().build();
+    }
+  }
+
   @GetMapping("/orders")
   public String orders(Model model) {
     List<OrderResponseDTO> orders = List.of();
@@ -1007,5 +1023,71 @@ public class AdminController {
     }
     model.addAttribute("products", products);
     return "admin/inventory";
+  }
+
+  @PostMapping("/inventory/{editionId}/stock")
+  public String updateStock(
+      @PathVariable Long editionId,
+      @RequestParam Integer newStock,
+      RedirectAttributes ra) {
+
+    try {
+      List<ProductResponseDTO> products = productClientService.getProductsByEdition(editionId);
+      if (products == null || products.isEmpty()) {
+        throw new RuntimeException("No hay producto registrado para esta edición");
+      }
+      ProductResponseDTO product = products.get(0);
+      productClientService.updateProduct(product.getId(), product.getPrice(), newStock, editionId);
+      ra.addFlashAttribute("success", "Stock actualizado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al actualizar el stock: " + ApiErrorUtils.extractApiError(e));
+    }
+    return "redirect:/admin/inventory";
+  }
+
+  @PostMapping("/orders/{id}/delete")
+  public String deleteOrder(@PathVariable Long id, RedirectAttributes ra) {
+    try {
+      orderClientService.deleteOrder(id);
+      ra.addFlashAttribute("success", "Pedido #" + id + " eliminado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al eliminar el pedido: " + ApiErrorUtils.extractApiError(e));
+    }
+    return "redirect:/admin/orders";
+  }
+
+  @PostMapping("/comments/{id}/update")
+  public String updateComment(
+      @PathVariable Long id,
+      @RequestParam String content,
+      RedirectAttributes ra) {
+
+    try {
+      commentClientService.updateComment(id, content);
+      ra.addFlashAttribute("success", "Comentario actualizado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al actualizar el comentario: " + ApiErrorUtils.extractApiError(e));
+    }
+    return "redirect:/admin/comments";
+  }
+
+  @PostMapping("/users/create")
+  public String createUser(
+      @RequestParam String username,
+      @RequestParam String password,
+      @RequestParam String email,
+      @RequestParam(required = false) String name,
+      @RequestParam(required = false) String secondName,
+      @RequestParam(defaultValue = "REGISTERED") String role,
+      RedirectAttributes ra) {
+
+    try {
+      CreateUserRequestDTO dto = new CreateUserRequestDTO(username, password, email, name, secondName, role);
+      userClientService.createUser(dto);
+      ra.addFlashAttribute("success", "Usuario '" + username + "' creado correctamente");
+    } catch (Exception e) {
+      ra.addFlashAttribute("error", "Error al crear el usuario: " + ApiErrorUtils.extractApiError(e));
+    }
+    return "redirect:/admin/users";
   }
 }

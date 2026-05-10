@@ -176,6 +176,37 @@
             </a>
           </div>
 
+          <!-- Gestión de suscripción (solo perfil propio con rol SUBSCRIBED) -->
+          <div th:if="${isOwnProfile and user.role == 'SUBSCRIBED'}" class="mt-3">
+
+            <!-- Suscripción activa -->
+            <div th:if="${subscription != null and subscription.activated}">
+              <span class="badge bg-success mb-1">Suscripción activa</span>
+              <small class="d-block text-muted mb-2"
+                     th:if="${subscription.endDate != null}"
+                     th:text="'Válida hasta: ' + ${#temporals.format(subscription.endDate, 'dd/MM/yyyy')}"></small>
+              <button type="button"
+                      class="btn btn-sm btn-outline-danger w-100"
+                      data-bs-toggle="modal" data-bs-target="#cancelSubscriptionModal">
+                <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle">cancel</span>
+                Cancelar suscripción
+              </button>
+            </div>
+
+            <!-- Suscripción pausada (activated == false) -->
+            <div th:if="${subscription != null and !subscription.activated}">
+              <span class="badge bg-warning text-dark d-block mb-1">Suscripción pausada</span>
+              <small class="d-block text-muted mb-2">Tu suscripción está pausada.</small>
+              <form th:action="@{'/subscription/reactivate'}" method="post">
+                <button type="submit" class="btn btn-sm btn-outline-success w-100">
+                  <span class="material-symbols-outlined" style="font-size:1rem;vertical-align:middle">refresh</span>
+                  Reactivar suscripción
+                </button>
+              </form>
+            </div>
+
+          </div>
+
           <!-- Fecha de registro al pie del hero -->
           <!-- profile-member-since: font-size pequeño + color outline (profile.css) -->
           <p class="mt-3 mb-0 profile-member-since">
@@ -255,6 +286,32 @@
                        th:text="${u.username}">username</a>
                   </li>
                 </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal: Cancelar suscripción -->
+        <div class="modal fade" id="cancelSubscriptionModal" tabindex="-1">
+          <div class="modal-dialog modal-sm">
+            <div class="modal-content profile-modal-content">
+              <div class="modal-header profile-modal-header">
+                <h5 class="modal-title font-serif profile-modal-title">¿Cancelar suscripción?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                <div class="alert alert-danger py-2 px-3 mb-3 d-flex align-items-start gap-2">
+                  <span class="material-symbols-outlined flex-shrink-0" style="font-size:1.1rem;margin-top:2px">warning</span>
+                  <span style="font-size:0.85rem">Perderás el acceso a eventos exclusivos, talleres digitales y envío gratuito.</span>
+                </div>
+                <p class="small text-muted mb-0">Esta acción no se puede deshacer.</p>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-outline-secondary"
+                        data-bs-dismiss="modal">No, mantener</button>
+                <form th:action="@{'/user/' + ${user.id} + '/subscription/cancel'}" method="post">
+                  <button type="submit" class="btn btn-sm btn-danger">Sí, cancelar</button>
+                </form>
               </div>
             </div>
           </div>

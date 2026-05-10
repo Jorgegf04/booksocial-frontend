@@ -230,20 +230,19 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Nueva Obra</h5>
+        <h5 class="modal-title">
+          <span class="material-symbols-outlined me-2" style="font-size:1.2rem;vertical-align:middle">book</span>Nueva Obra
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form method="post" th:action="@{/admin/works/create}" enctype="multipart/form-data">
         <div class="modal-body">
-          <!--
-            row g-3: Bootstrap — grid de columnas con gap de 1rem entre celdas.
-            col-md-8 / col-md-4: Bootstrap — anchos de columna en pantallas medianas+.
-          -->
           <div class="row g-3">
             <div class="col-md-8">
-              <!-- text-danger: Bootstrap — color rojo para el asterisco de campo obligatorio -->
-              <label class="form-label fw-semibold">Título <span class="text-danger">*</span></label>
-              <input type="text" name="title" class="form-control form-control-sm" required>
+              <label class="form-label fw-semibold required-label">Título</label>
+              <input type="text" name="title" class="form-control form-control-sm"
+                     required aria-required="true" aria-describedby="createTitleErr">
+              <div id="createTitleErr" class="invalid-feedback">El título es obligatorio.</div>
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Tipo</label>
@@ -281,8 +280,10 @@
             </div>
             <div class="col-md-8">
               <label class="form-label fw-semibold">Imagen de portada</label>
-              <!-- accept="image/*": el explorador de archivos filtra por imágenes -->
-              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
+              <input type="file" name="imgFile" accept="image/jpeg,image/png,image/webp"
+                     class="form-control form-control-sm admin-img-file-input">
+              <div class="form-text">Formatos: JPG, PNG, WEBP. Máx 5 MB.</div>
+              <img class="admin-img-preview-thumb mt-2 d-none" alt="Previsualización">
             </div>
             <div class="col-md-4">
               <label class="form-label fw-semibold">Rating</label>
@@ -300,8 +301,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-sm btn-primary">Crear Obra</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary admin-submit-btn">
+            <span class="spinner-border spinner-border-sm me-1 d-none admin-spinner"></span>Crear Obra
+          </button>
         </div>
       </form>
     </div>
@@ -317,7 +320,9 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Editar Obra</h5>
+        <h5 class="modal-title">
+          <span class="material-symbols-outlined me-2" style="font-size:1.2rem;vertical-align:middle">edit</span>Editar Obra
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <form id="editWorkForm" method="post" enctype="multipart/form-data">
@@ -365,9 +370,11 @@
             <div class="col-md-8">
               <label class="form-label fw-semibold">Imagen de portada</label>
               <input type="hidden" id="editWorkImg" name="img">
-              <input type="file" name="imgFile" accept="image/*" class="form-control form-control-sm">
-              <!-- admin-img-preview: hint pequeño con la URL actual (admin-shared.css) -->
+              <input type="file" name="imgFile" accept="image/jpeg,image/png,image/webp"
+                     class="form-control form-control-sm admin-img-file-input">
+              <div class="form-text">Formatos: JPG, PNG, WEBP. Máx 5 MB.</div>
               <div id="editWorkImgPreview" class="mt-1 admin-img-preview"></div>
+              <img id="editWorkThumb" class="admin-img-preview-thumb mt-2 d-none" alt="Previsualización actual">
             </div>
             <div class="col-12">
               <label class="form-label fw-semibold">Autores</label>
@@ -379,8 +386,10 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-sm btn-primary">Guardar Cambios</button>
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-sm btn-primary admin-submit-btn">
+            <span class="spinner-border spinner-border-sm me-1 d-none admin-spinner"></span>Guardar Cambios
+          </button>
         </div>
       </form>
     </div>
@@ -393,7 +402,9 @@
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">Eliminar Obra</h5>
+        <h5 class="modal-title">
+          <span class="material-symbols-outlined me-2 text-danger" style="font-size:1.2rem;vertical-align:middle">delete</span>Eliminar Obra
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
@@ -404,12 +415,11 @@
         </p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-        <!--
-          d-inline: Bootstrap — evita que el form ocupe todo el ancho y rompa el layout del footer.
-        -->
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
         <form id="deleteWorkForm" method="post" class="d-inline">
-          <button type="submit" class="btn btn-sm btn-danger">Eliminar</button>
+          <button type="submit" class="btn btn-sm btn-danger admin-submit-btn">
+            <span class="spinner-border spinner-border-sm me-1 d-none admin-spinner"></span>Eliminar
+          </button>
         </form>
       </div>
     </div>
@@ -418,7 +428,50 @@
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
-  /* Rellena el modal de edición con los datos del botón pulsado */
+  /* ── Spinner en submit ───────────────────────────────────────────────── */
+  document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', () => {
+      const btn = form.querySelector('.admin-submit-btn');
+      if (!btn) return;
+      btn.disabled = true;
+      const spinner = btn.querySelector('.admin-spinner');
+      if (spinner) spinner.classList.remove('d-none');
+    });
+  });
+
+  /* ── Previsualización de imagen al seleccionar archivo ──────────────── */
+  document.querySelectorAll('.admin-img-file-input').forEach(input => {
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      const thumb = input.parentElement.querySelector('.admin-img-preview-thumb');
+      if (!thumb) return;
+      if (file) {
+        thumb.src = URL.createObjectURL(file);
+        thumb.classList.remove('d-none');
+      } else {
+        thumb.classList.add('d-none');
+      }
+    });
+  });
+
+  /* ── Validación en tiempo real (blur) en campos required ────────────── */
+  document.querySelectorAll('[required]').forEach(input => {
+    input.addEventListener('blur', () => {
+      if (input.value.trim() === '') {
+        input.classList.add('is-invalid');
+        input.classList.remove('is-valid');
+      } else {
+        input.classList.remove('is-invalid');
+        input.classList.add('is-valid');
+      }
+    });
+    /* Limpiar estado al abrir el modal de nuevo */
+    input.closest('.modal')?.addEventListener('hidden.bs.modal', () => {
+      input.classList.remove('is-valid', 'is-invalid');
+    });
+  });
+
+  /* ── Rellena modal de edición con datos del botón pulsado ───────────── */
   function openEditWorkModal(btn) {
     const id = btn.dataset.id;
     document.getElementById('editWorkForm').action = '/admin/works/' + id + '/update';
@@ -429,8 +482,13 @@
     setSelectValue('editWorkDemographic', btn.dataset.demographic || '');
     document.getElementById('editWorkPublication').value = btn.dataset.publication || '';
     document.getElementById('editWorkImg').value = btn.dataset.img || '';
-    document.getElementById('editWorkImgPreview').textContent =
-        btn.dataset.img ? 'Actual: ' + btn.dataset.img : '';
+    const preview = document.getElementById('editWorkImgPreview');
+    if (preview) preview.textContent = btn.dataset.img ? 'Actual: ' + btn.dataset.img : '';
+    const thumb = document.getElementById('editWorkThumb');
+    if (thumb) {
+      if (btn.dataset.img) { thumb.src = btn.dataset.img; thumb.classList.remove('d-none'); }
+      else { thumb.classList.add('d-none'); }
+    }
     document.getElementById('editWorkRating').value = btn.dataset.rating || '';
     const currentAuthors = (btn.dataset.authors || '').split(',').map(s => s.trim()).filter(s => s);
     const authorSelect = document.getElementById('editWorkAuthors');
@@ -439,13 +497,13 @@
     }
   }
 
-  /* Configura el formulario de eliminación con el id y nombre de la obra */
+  /* ── Configura el formulario de eliminación ─────────────────────────── */
   function openDeleteModal(formId, id, basePath, suffix, name, nameSpanId) {
     document.getElementById(formId).action = basePath + id + '/delete';
     if (nameSpanId) document.getElementById(nameSpanId).textContent = '"' + name + '"';
   }
 
-  /* Marca como seleccionada la opción cuyo value coincide con value */
+  /* ── Selecciona opción por valor en un <select> ─────────────────────── */
   function setSelectValue(selectId, value) {
     const sel = document.getElementById(selectId);
     if (!sel) return;

@@ -2,6 +2,7 @@ package com.example.booksocial_frontend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 /**
  * Punto de entrada de la aplicación frontend de BookSocial.
@@ -14,7 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * @version 1.4
  * @since 2026-04-22
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = {UserDetailsServiceAutoConfiguration.class})
 public class BooksocialFrontendApplication {
 
 	public static void main(String[] args) {

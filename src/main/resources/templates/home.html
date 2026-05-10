@@ -295,80 +295,69 @@
     </section>
 
     <!-- ============================================================
-         SUSCRIPCIÓN — Sección oscura con descripción del plan Curador
+         SUSCRIPCIÓN — Sección informativa con tarjetas de beneficios
+         Oculta si el usuario en sesión ya tiene rol SUBSCRIBED.
          ============================================================ -->
-    <!-- home-sub-section: fondo verde primario (main.css) -->
-    <section class="home-sub-section py-5">
+    <section class="home-sub-section py-5" th:unless="${session.role == 'SUBSCRIBED'}">
       <div class="container px-4 px-lg-5">
-        <!-- home-sub-card: tarjeta verde muy oscura con bordes redondeados (main.css) -->
         <div class="home-sub-card">
-          <div class="row g-5 align-items-center">
 
-            <!-- Columna de texto -->
-            <div class="col-lg-7">
-              <!-- Separador decorativo + etiqueta de sección -->
-              <div class="d-flex align-items-center gap-3 mb-4">
-                <!-- home-sub-separator: línea horizontal verde claro (home.css) -->
-                <span class="home-sub-separator"></span>
-                <!-- home-sub-section-label: color secundario para la etiqueta (home.css) -->
-                <span class="filter-section-title mb-0 home-sub-section-label">Suscripción</span>
-              </div>
-              <!-- home-sub-heading: tamaño 2.5rem en blanco (home.css) -->
-              <h2 class="font-serif mb-3 home-sub-heading">
-                La Caja del Curador
-              </h2>
-              <!-- home-sub-desc: texto semi-transparente con max-width (home.css) -->
-              <p class="mb-5 home-sub-desc">
-                Una selección de 3 títulos premium en tu puerta cada mes. Incluye acceso a talleres digitales privados y entradas anticipadas a eventos exclusivos.
-              </p>
-
-              <!-- Dos características de la suscripción en columnas -->
-              <div class="row g-4 mb-5">
-                <div class="col-sm-6">
-                  <div class="d-flex gap-3">
-                    <!-- home-sub-feature-icon: color secundario + fill (home.css) -->
-                    <span class="material-symbols-outlined home-sub-feature-icon">event</span>
-                    <div>
-                      <p class="fw-bold text-white mb-1">Eventos Mensuales</p>
-                      <!-- home-sub-feature-text: texto pequeño semitransparente (home.css) -->
-                      <p class="mb-0 home-sub-feature-text">Q&amp;A exclusivos con escritores internacionales.</p>
-                    </div>
-                  </div>
-                </div>
-                <div class="col-sm-6">
-                  <div class="d-flex gap-3">
-                    <span class="material-symbols-outlined home-sub-feature-icon">local_shipping</span>
-                    <div>
-                      <p class="fw-bold text-white mb-1">Envío Gratuito</p>
-                      <p class="mb-0 home-sub-feature-text">Envío sin coste en todas las cajas de suscripción.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <a href="/auth/register" class="home-sub-btn">
-                Suscríbete por 29€/mes
-              </a>
+          <!-- Cabecera centrada -->
+          <div class="text-center mb-5">
+            <div class="d-flex align-items-center justify-content-center gap-3 mb-4">
+              <span class="home-sub-separator"></span>
+              <span class="filter-section-title mb-0 home-sub-section-label">Suscripción</span>
+              <span class="home-sub-separator"></span>
             </div>
-
-            <!-- Columna visual: placeholder de imagen con badge superpuesto -->
-            <div class="col-lg-5">
-              <!-- home-sub-img-wrap: aspect-ratio 4/5 con overflow visible para el badge (main.css) -->
-              <div class="home-sub-img-wrap">
-                <!-- home-sub-badge: tarjeta superpuesta en la esquina inferior izquierda (main.css) -->
-                <div class="home-sub-badge">
-                  <!-- home-sub-badge__title / __date: tipografía del badge (home.css) -->
-                  <p class="fw-bold text-white mb-1 home-sub-badge__title">Próxima Caja: Colección Noir de Otoño</p>
-                  <p class="mb-0 home-sub-badge__date">Envío 01 Oct</p>
-                </div>
-                <div class="home-sub-img-placeholder">
-                  <!-- home-sub-package-icon: icono grande y translúcido (home.css) -->
-                  <span class="material-symbols-outlined home-sub-package-icon">package_2</span>
-                </div>
-              </div>
-            </div>
-
+            <h2 class="font-serif mb-3 home-sub-heading">La Caja del Curador</h2>
+            <p class="mb-0 home-sub-desc mx-auto">
+              Una selección mensual curada de títulos premium entregada en tu puerta.
+              Acceso a talleres digitales, entradas anticipadas a eventos exclusivos y envío siempre gratuito.
+            </p>
           </div>
+
+          <!-- Grid de 4 tarjetas de beneficios -->
+          <div class="row g-4 mb-5">
+            <div class="col-sm-6 col-lg-3">
+              <div class="home-sub-benefit-card">
+                <span class="material-symbols-outlined home-sub-feature-icon home-sub-benefit-icon">menu_book</span>
+                <p class="fw-bold text-white mb-1">3 Títulos Premium</p>
+                <p class="mb-0 home-sub-feature-text">Selección mensual curada por nuestros editores</p>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="home-sub-benefit-card">
+                <span class="material-symbols-outlined home-sub-feature-icon home-sub-benefit-icon">local_shipping</span>
+                <p class="fw-bold text-white mb-1">Envío Gratuito</p>
+                <p class="mb-0 home-sub-feature-text">A toda España sin coste adicional</p>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="home-sub-benefit-card">
+                <span class="material-symbols-outlined home-sub-feature-icon home-sub-benefit-icon">event</span>
+                <p class="fw-bold text-white mb-1">Eventos Exclusivos</p>
+                <p class="mb-0 home-sub-feature-text">Q&amp;A con autores internacionales</p>
+              </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+              <div class="home-sub-benefit-card">
+                <span class="material-symbols-outlined home-sub-feature-icon home-sub-benefit-icon">cancel</span>
+                <p class="fw-bold text-white mb-1">Cancela cuando quieras</p>
+                <p class="mb-0 home-sub-feature-text">Sin permanencia ni compromisos</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Precio destacado y botón CTA -->
+          <div class="text-center">
+            <p class="mb-4">
+              <span class="home-sub-price-num">29</span><span class="home-sub-price-cur">€</span><span class="home-sub-price-per">/mes</span>
+            </p>
+            <a href="/subscription/premium" class="home-sub-btn">
+              Descubrir la suscripción
+            </a>
+          </div>
+
         </div>
       </div>
     </section>

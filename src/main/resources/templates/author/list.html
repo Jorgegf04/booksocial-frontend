@@ -52,21 +52,24 @@
       debe ser compartible por URL (/authors?q=tolkien).
       author-search-group: limita el ancho del input-group (author.css).
     -->
-    <form action="/authors" method="get" class="d-flex gap-2">
+    <form action="/authors" method="get" id="authorFilterForm" class="d-flex gap-2 flex-wrap align-items-center">
+      <input type="hidden" name="page" id="authorPageInput" value="0">
+      <select name="nationality"
+              class="form-select form-select-sm author-search-input"
+              style="width:auto;min-width:160px"
+              onchange="this.form.submit()">
+        <option value="" th:selected="${nationality == null or nationality == ''}">Todas las nacionalidades</option>
+        <option th:each="nat : ${nationalities}"
+                th:value="${nat}"
+                th:text="${nat}"
+                th:selected="${nat == nationality}">
+        </option>
+      </select>
       <div class="input-group author-search-group">
-        <!--
-          th:value="${q}": pre-rellena el input con el término de búsqueda anterior.
-          form-control-sm: Bootstrap — input de tamaño reducido.
-          author-search-input: border-radius redondeado en el lado izquierdo (author.css).
-        -->
         <input name="q" type="text"
                th:value="${q}"
                class="form-control form-control-sm author-search-input"
                placeholder="Buscar autor...">
-        <!--
-          input-group-text: Bootstrap — elemento de sufijo del input-group.
-          author-search-btn: fondo primary + border-radius en lado derecho (author.css).
-        -->
         <button type="submit" class="input-group-text author-search-btn">
           <span class="material-symbols-outlined author-search-icon">search</span>
         </button>
@@ -150,11 +153,52 @@
 
   </div>
 
+  <!-- PAGINACIÓN: solo visible si hay más de una página -->
+  <nav th:if="${totalPages > 1}" class="mt-5 d-flex justify-content-center" aria-label="Paginación de autores">
+    <ul class="pagination pagination-bs gap-1 mb-0">
+
+      <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+        <a class="page-link" href="#"
+           th:onclick="${currentPage > 0} ? 'goToAuthorPage(' + ${currentPage - 1} + '); return false;' : 'return false;'"
+           aria-label="Anterior">
+          <span class="material-symbols-outlined catalog-pager-icon">chevron_left</span>
+        </a>
+      </li>
+
+      <th:block th:each="p : ${pageNumbers}">
+        <li class="page-item disabled" th:if="${p == -1}">
+          <span class="page-link catalog-ellipsis">···</span>
+        </li>
+        <li class="page-item" th:if="${p != -1}"
+            th:classappend="${p == currentPage} ? 'active'">
+          <a class="page-link" href="#"
+             th:onclick="'goToAuthorPage(' + ${p} + '); return false;'"
+             th:text="${p + 1}">1</a>
+        </li>
+      </th:block>
+
+      <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+        <a class="page-link" href="#"
+           th:onclick="${currentPage < totalPages - 1} ? 'goToAuthorPage(' + ${currentPage + 1} + '); return false;' : 'return false;'"
+           aria-label="Siguiente">
+          <span class="material-symbols-outlined catalog-pager-icon">chevron_right</span>
+        </a>
+      </li>
+
+    </ul>
+  </nav>
+
 </main>
 
 <!-- FOOTER -->
 <div th:replace="~{fragments/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  function goToAuthorPage(pageNum) {
+    document.getElementById('authorPageInput').value = pageNum;
+    document.getElementById('authorFilterForm').submit();
+  }
+</script>
 </body>
 </html>

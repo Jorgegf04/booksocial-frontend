@@ -63,6 +63,7 @@ public class EventsController {
 
     Long userId = (Long) session.getAttribute("userId");
     model.addAttribute("sessionUserId", userId);
+    model.addAttribute("sessionRole", session.getAttribute("role"));
 
     return "events/index";
   }
@@ -72,6 +73,12 @@ public class EventsController {
                      RedirectAttributes ra) {
     Long userId = (Long) session.getAttribute("userId");
     if (userId == null) return "redirect:/auth/login";
+
+    if (!"SUBSCRIBED".equals(session.getAttribute("role"))) {
+      ra.addFlashAttribute("errorMsg",
+          "Solo los suscriptores pueden apuntarse a eventos. ¡Únete a La Caja del Curador!");
+      return "redirect:/events";
+    }
 
     try {
       eventService.joinEvent(id, userId);
@@ -88,6 +95,12 @@ public class EventsController {
                       RedirectAttributes ra) {
     Long userId = (Long) session.getAttribute("userId");
     if (userId == null) return "redirect:/auth/login";
+
+    if (!"SUBSCRIBED".equals(session.getAttribute("role"))) {
+      ra.addFlashAttribute("errorMsg",
+          "Solo los suscriptores pueden apuntarse a eventos. ¡Únete a La Caja del Curador!");
+      return "redirect:/events";
+    }
 
     try {
       eventService.leaveEvent(id, userId);

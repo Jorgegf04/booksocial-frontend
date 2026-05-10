@@ -121,3 +121,23 @@
 .admin-event-status-upcoming { font-size: 0.75rem; font-weight: 600; color: #2d7a4f; }
 .admin-event-status-past     { font-size: 0.75rem; font-weight: 600; color: var(--color-outline); }
 .admin-event-status-none     { font-size: 0.75rem; color: var(--color-outline); }
+
+/* ═══════════════════════════════════════════════════════════════
+   UX MODALES — mejoras de validación visual, spinner y previsualización
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Asterisco rojo en labels de campos obligatorios */
+.required-label::after {
+  content: " *";
+  color: #dc3545;
+  font-weight: 600;
+}
+
+/* Thumbnail de previsualización de imagen seleccionada */
+.admin-img-preview-thumb {
+  max-width: 120px;
+  max-height: 80px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--color-outline-variant);
+}
