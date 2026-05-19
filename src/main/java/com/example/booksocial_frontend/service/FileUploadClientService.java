@@ -2,6 +2,7 @@ package com.example.booksocial_frontend.service;
 
 import java.util.Objects;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
@@ -11,6 +12,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.booksocial_frontend.security.SessionJwtInterceptor;
+
 import jakarta.annotation.PostConstruct;
 
 @Service
@@ -19,11 +22,17 @@ public class FileUploadClientService {
     @Value("${api.base-url:http://localhost:9999/api}")
     private String apiBaseUrl;
 
+    @Autowired
+    private SessionJwtInterceptor jwtInterceptor;
+
     private RestClient restClient;
 
     @PostConstruct
     public void init() {
-        this.restClient = RestClient.create(Objects.requireNonNull(apiBaseUrl));
+        this.restClient = RestClient.builder()
+            .baseUrl(Objects.requireNonNull(apiBaseUrl))
+            .requestInterceptor(jwtInterceptor)
+            .build();
     }
 
     public String uploadImage(MultipartFile file) {

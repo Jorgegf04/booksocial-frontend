@@ -64,16 +64,25 @@ public class CartController {
   private final UserClientService userService;
   private final MailService mailService;
 
+  private static final double SUBSCRIBER_DISCOUNT = 0.30;
+
   /** Ver carrito */
   @GetMapping
   public String viewCart(HttpSession session, Model model) {
     List<CartItemDTO> items = cartService.getCart(session);
     double subtotal = cartService.getTotal(session);
     double shipping = items.isEmpty() ? 0.0 : 5.50;
-    double total = subtotal + shipping;
+
+    Object role = session.getAttribute("role");
+    boolean isSubscribed = "SUBSCRIBED".equals(role) || "ADMIN".equals(role);
+    double discountedSubtotal = isSubscribed ? subtotal * (1 - SUBSCRIBER_DISCOUNT) : subtotal;
+    double total = discountedSubtotal + shipping;
 
     model.addAttribute("cartItems", items);
     model.addAttribute("subtotal", subtotal);
+    model.addAttribute("discountedSubtotal", discountedSubtotal);
+    model.addAttribute("discountAmount", subtotal - discountedSubtotal);
+    model.addAttribute("isSubscribed", isSubscribed);
     model.addAttribute("shipping", shipping);
     model.addAttribute("total", total);
 
@@ -228,15 +237,21 @@ public class CartController {
     return ResponseEntity.ok().build();
   }
 
-  /** Confirmar compra → crea el pedido */
+  /** Confirmar compra -> crea el pedido */
   @PostMapping("/checkout")
-  public String checkout(HttpSession session, RedirectAttributes ra) {
+  public String checkout(@RequestParam(required = false) String guestEmail,
+                         HttpSession session,
+                         RedirectAttributes ra) {
     Long userId = (Long) session.getAttribute("userId");
-    if (userId == null) return "redirect:/auth/login";
 
     List<CartItemDTO> items = cartService.getCart(session);
     if (items.isEmpty()) {
       ra.addFlashAttribute("cartError", "El carrito está vacío.");
+      return "redirect:/cart";
+    }
+
+    if (userId == null && (guestEmail == null || guestEmail.isBlank())) {
+      ra.addFlashAttribute("cartError", "Introduce un email para recibir la confirmación del pedido.");
       return "redirect:/cart";
     }
 
@@ -248,17 +263,28 @@ public class CartController {
           ))
           .toList();
 
-      OrderResponseDTO order = orderService.createOrder(userId, lines);
+      String cleanGuestEmail = guestEmail != null ? guestEmail.trim() : null;
+      OrderResponseDTO order = orderService.createOrder(userId, cleanGuestEmail, lines);
       cartService.clearCart(session);
-      ra.addFlashAttribute("orderSuccess", true);
+
+      if (userId != null) {
+        ra.addFlashAttribute("orderSuccess", true);
+        try {
+          UserResponseDTO user = userService.getUserById(userId);
+          String username = (String) session.getAttribute("username");
+          mailService.sendOrderConfirmation(user.getEmail(), username, order);
+        } catch (Exception ignored) {}
+
+        return "redirect:/orders";
+      }
 
       try {
-        UserResponseDTO user = userService.getUserById(userId);
-        String username = (String) session.getAttribute("username");
-        mailService.sendOrderConfirmation(user.getEmail(), username, order);
+        mailService.sendOrderConfirmation(cleanGuestEmail, "cliente", order);
       } catch (Exception ignored) {}
 
-      return "redirect:/orders";
+      ra.addFlashAttribute("cartSuccess",
+          "Pedido #" + order.getId() + " confirmado. Te hemos enviado el resumen a " + cleanGuestEmail + ".");
+      return "redirect:/cart";
     } catch (Exception e) {
       log.warn("[CART] Error al procesar checkout userId={}: {}", userId, e.getMessage());
       ra.addFlashAttribute("cartError", "Error al procesar el pedido: " + ApiErrorUtils.extractApiError(e));

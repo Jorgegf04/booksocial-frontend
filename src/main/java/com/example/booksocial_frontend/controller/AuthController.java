@@ -7,7 +7,10 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.booksocial_frontend.dto.JwtResponseDTO;
 import com.example.booksocial_frontend.dto.LoginRequestDTO;
 import com.example.booksocial_frontend.dto.RegisterRequestDTO;
@@ -42,6 +45,7 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
   private final AuthClientService authClientService;
+  private final ObjectMapper objectMapper;
 
   /**
    * Endpoint que muestra la la vista de login en la pagina web
@@ -58,7 +62,9 @@ public class AuthController {
    */
   @GetMapping("/login")
   public String loginPage(Model model) {
-    model.addAttribute("loginRequest", new LoginRequestDTO());
+    if (!model.containsAttribute("loginRequest")) {
+      model.addAttribute("loginRequest", new LoginRequestDTO());
+    }
     return "auth/login";
   }
 
@@ -85,6 +91,7 @@ public class AuthController {
       JwtResponseDTO jwt = authClientService.login(request);
 
       if (jwt == null || jwt.getToken() == null || jwt.getUserId() == null) {
+        model.addAttribute("loginRequest", request);
         model.addAttribute("error", "Credenciales incorrectas. Verifica tu usuario y contraseña.");
         return "auth/login";
       }
@@ -103,10 +110,16 @@ public class AuthController {
 
       return "redirect:/catalog";
 
+    } catch (RestClientResponseException e) {
+      model.addAttribute("loginRequest", request);
+      model.addAttribute("error", extractErrorMessage(e));
+      return "auth/login";
     } catch (ResourceAccessException e) {
+      model.addAttribute("loginRequest", request);
       model.addAttribute("error", "El servidor no está disponible. Inténtelo más tarde.");
       return "auth/login";
     } catch (Exception e) {
+      model.addAttribute("loginRequest", request);
       model.addAttribute("error", "Credenciales incorrectas. Verifica tu usuario y contraseña.");
       return "auth/login";
     }
@@ -153,6 +166,28 @@ public class AuthController {
     cookie.setPath("/");
     cookie.setHttpOnly(httpOnly);
     response.addCookie(cookie);
+  }
+
+  private String extractErrorMessage(RestClientResponseException exception) {
+    String body = exception.getResponseBodyAsString();
+
+    if (body != null && !body.isBlank()) {
+      try {
+        JsonNode json = objectMapper.readTree(body);
+        JsonNode message = json.get("message");
+        if (message != null && !message.asText().isBlank()) {
+          return message.asText();
+        }
+      } catch (Exception ignored) {
+        // Si el backend no devuelve JSON, mostramos un mensaje estable en el login.
+      }
+    }
+
+    if (exception.getStatusCode().is4xxClientError()) {
+      return "Credenciales incorrectas. Verifica tu usuario y contrase\u00f1a.";
+    }
+
+    return "No se pudo iniciar sesi\u00f3n. Int\u00e9ntelo m\u00e1s tarde.";
   }
 
   /**

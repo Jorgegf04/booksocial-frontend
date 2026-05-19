@@ -74,7 +74,7 @@ public class EventsController {
     Long userId = (Long) session.getAttribute("userId");
     if (userId == null) return "redirect:/auth/login";
 
-    if (!"SUBSCRIBED".equals(session.getAttribute("role"))) {
+    if (!canJoinEvents(session)) {
       ra.addFlashAttribute("errorMsg",
           "Solo los suscriptores pueden apuntarse a eventos. ¡Únete a La Caja del Curador!");
       return "redirect:/events";
@@ -96,7 +96,7 @@ public class EventsController {
     Long userId = (Long) session.getAttribute("userId");
     if (userId == null) return "redirect:/auth/login";
 
-    if (!"SUBSCRIBED".equals(session.getAttribute("role"))) {
+    if (!canJoinEvents(session)) {
       ra.addFlashAttribute("errorMsg",
           "Solo los suscriptores pueden apuntarse a eventos. ¡Únete a La Caja del Curador!");
       return "redirect:/events";
@@ -110,5 +110,10 @@ public class EventsController {
       ra.addFlashAttribute("errorMsg", ApiErrorUtils.extractApiError(e));
     }
     return "redirect:/events";
+  }
+
+  private boolean canJoinEvents(HttpSession session) {
+    Object role = session.getAttribute("role");
+    return "SUBSCRIBED".equals(role) || "ADMIN".equals(role);
   }
 }

@@ -24,7 +24,7 @@
   font-size: 0.8rem;
   font-weight: 700;
   color: var(--bs-primary);
-  min-width: 2ch;
+  min-width: 4ch;
 }
 
 /* Labels "Desde" / "Hasta" del filtro de fecha */

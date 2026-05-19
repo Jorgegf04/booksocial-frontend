@@ -14,6 +14,7 @@ public class OrderResponseDTO {
   private Double total;
   private Long userId;
   private String username;
+  private String guestEmail;
   private Integer totalItems;
   private List<OrderLineResponseDTO> orderLines;
 }

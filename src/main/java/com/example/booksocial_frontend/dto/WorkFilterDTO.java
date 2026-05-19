@@ -23,5 +23,6 @@ public class WorkFilterDTO {
   private LocalDate publishedAfter;
   private LocalDate publishedBefore;
   private Long authorId;
+  private String sort;
 
 }

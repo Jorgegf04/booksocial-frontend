@@ -1,6 +1,7 @@
 package com.example.booksocial_frontend.controller;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -84,16 +85,13 @@ public class CatalogController {
       Model model) {
 
     // Normalizar título: trim + null si vacío
-    String title = filter.getTitle();
-    if (title != null) {
-      title = title.trim();
-      filter.setTitle(title.isEmpty() ? null : title);
-    }
+    normalizeFilter(filter);
 
     List<WorkResponseDTO> works = List.of();
     try {
       works = workService.getAllWorks();
       works = applyAllFilters(works, filter);
+      works = applySorting(works, filter.getSort());
     } catch (Exception e) {
       model.addAttribute("apiError", "No se pudo conectar con el servidor. Verifica que el backend esté activo.");
     }
@@ -129,6 +127,58 @@ public class CatalogController {
             || (w.getPublicationDate() != null && !w.getPublicationDate().isBefore(filter.getPublishedAfter())))
         .filter(w -> filter.getPublishedBefore() == null
             || (w.getPublicationDate() != null && !w.getPublicationDate().isAfter(filter.getPublishedBefore())))
+        .collect(Collectors.toList());
+  }
+
+  /**
+   * Normaliza filtros recibidos desde el formulario para evitar valores vacios
+   * o fuera de escala antes de filtrar.
+   */
+  private void normalizeFilter(WorkFilterDTO filter) {
+    String title = filter.getTitle();
+    if (title != null) {
+      title = title.trim();
+      filter.setTitle(title.isEmpty() ? null : title);
+    }
+
+    Double minRating = filter.getMinRating();
+    if (minRating != null) {
+      filter.setMinRating(Math.max(0, Math.min(10, minRating)));
+    }
+
+    String sort = filter.getSort();
+    if (sort != null) {
+      sort = sort.trim();
+      filter.setSort(sort.isEmpty() ? null : sort);
+    }
+  }
+
+  /**
+   * Ordena las obras cuando el usuario elige una opcion en el catalogo.
+   */
+  private List<WorkResponseDTO> applySorting(List<WorkResponseDTO> works, String sort) {
+    if (sort == null || sort.isBlank() || "relevance".equals(sort)) {
+      return works;
+    }
+
+    Comparator<WorkResponseDTO> comparator = switch (sort) {
+      case "rating" -> Comparator.comparing(
+          WorkResponseDTO::getAverageRating,
+          Comparator.nullsLast(Comparator.reverseOrder()));
+      case "newest" -> Comparator.comparing(
+          WorkResponseDTO::getPublicationDate,
+          Comparator.nullsLast(Comparator.reverseOrder()));
+      case "title" -> Comparator.comparing(
+          w -> w.getTitle() == null ? "" : w.getTitle().toLowerCase());
+      default -> null;
+    };
+
+    if (comparator == null) {
+      return works;
+    }
+
+    return works.stream()
+        .sorted(comparator)
         .collect(Collectors.toList());
   }
 

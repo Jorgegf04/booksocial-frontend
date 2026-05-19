@@ -72,6 +72,7 @@
 
           <!-- Campo oculto de paginación: resetPage() lo pone a 0 al cambiar filtro -->
           <input type="hidden" name="page" id="pageInput" th:value="${currentPage}">
+          <input type="hidden" name="sort" id="sortInput" th:value="${filter.sort}">
 
           <!-- Filtro por tipo de obra -->
           <div class="mb-4">
@@ -154,6 +155,12 @@
                 demographic-pill: botón tipo píldora con checkbox oculto (main.css).
                 El JS hace auto-submit cuando cambia la selección.
               -->
+              <label class="demographic-pill">
+                <input type="radio" name="demographic" class="d-none demographic-radio"
+                       value=""
+                       th:checked="${filter.demographic == null}">
+                <span>Todos</span>
+              </label>
               <label class="demographic-pill"
                      th:each="d : ${T(com.example.booksocial_frontend.domain.Demographic).values()}">
                 <!-- d-none: oculta el radio nativo; demographic-pill actúa de label -->
@@ -175,7 +182,7 @@
                 oninput: actualiza el span en tiempo real sin enviar el formulario.
               -->
               <input type="range" class="form-range flex-grow-1" name="minRating"
-                     min="0" max="5" step="0.5"
+                     min="0" max="10" step="0.5"
                      th:value="${filter.minRating != null ? filter.minRating : 0}"
                      id="ratingRange"
                      oninput="document.getElementById('ratingVal').textContent = this.value">
@@ -249,9 +256,9 @@
               form-select form-select-sm: Bootstrap estiliza el select.
               catalog-sort-select: ancho automático según el contenido (catalog.css).
             -->
-            <select class="form-select form-select-sm catalog-sort-select">
-              <option>Relevancia</option>
-              <option>Mejor valorados</option>
+            <select class="form-select form-select-sm catalog-sort-select" id="catalogSortSelect" th:data-current-sort="${filter.sort}">
+              <option value="relevance" th:selected="${filter.sort == null or filter.sort == 'relevance'}">Relevancia</option>
+              <option value="rating" th:selected="${filter.sort == 'rating'}">Mejor valorados</option>
               <option>Más nuevos</option>
               <option>Título A-Z</option>
             </select>
@@ -326,7 +333,7 @@
                   <th:block th:each="i : ${#numbers.sequence(1, 5)}">
                     <!-- th:classappend añade material-symbols-filled si la estrella está "llena" -->
                     <span class="material-symbols-outlined"
-                          th:classappend="${work.averageRating >= i} ? 'material-symbols-filled'"
+                          th:classappend="${work.averageRating >= i * 2} ? 'material-symbols-filled'"
                           style="font-size:0.9rem;">star</span>
                   </th:block>
                   <span class="reviews-count"
@@ -451,6 +458,23 @@
         document.getElementById('filterForm').submit();
       });
     });
+
+    const sortSelect = document.getElementById('catalogSortSelect');
+    const sortInput = document.getElementById('sortInput');
+    const sortValues = ['relevance', 'rating', 'newest', 'title'];
+    if (sortSelect && sortInput) {
+      const currentSort = sortSelect.dataset.currentSort || 'relevance';
+      const selectedIndex = sortValues.indexOf(currentSort);
+      if (selectedIndex >= 0) {
+        sortSelect.selectedIndex = selectedIndex;
+      }
+
+      sortSelect.addEventListener('change', () => {
+        sortInput.value = sortValues[sortSelect.selectedIndex] || 'relevance';
+        resetPage();
+        document.getElementById('filterForm').submit();
+      });
+    }
   </script>
 
 </body>
